@@ -52,45 +52,55 @@ jobs:
       contents: read
       packages: read
     steps:
-      - name: Prepare SSH key
-        run: |
-          mkdir -p /tmp/ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > /tmp/ssh/deploy_key
-          chmod 600 /tmp/ssh/deploy_key
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: vps7348.integrator.host
-          username: ${{ secrets.VPS_USER }}
-          key_path: /tmp/ssh/deploy_key
-          port: ${{ secrets.VPS_SSH_PORT }}
-          command_timeout: 10m
-          script: |
+        run: |
+          set -euo pipefail
+
+          mkdir -p ~/.ssh
+          ssh-keyscan -H vps7348.integrator.host >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_SSH_PORT }} ${{ secrets.VPS_USER }}@vps7348.integrator.host << REMOTE_SCRIPT
             set -euo pipefail
 
-            IMAGE="${{ env.IMAGE }}:${{ github.sha }}"
+            IMAGE="${IMAGE}"
+            CONTAINER="${CONTAINER}"
+            NETWORK="${NETWORK}"
+            TOKEN="${GITHUB_TOKEN}"
+            ACTOR="${GITHUB_ACTOR}"
+            ENV_CONTENT='${{ secrets.ENV_PROD_FILE }}'
 
             APP_DIR="/opt/apps/pospdv"
-            mkdir -p "$APP_DIR"
+            mkdir -p "\$APP_DIR"
 
-            # Write .env from secret (single-line in secret)
-            printf '%s\n' '${{ secrets.ENV_PROD_FILE }}' > "$APP_DIR/.env"
+            # Write .env on VPS
+            printf '%s\n' "\$ENV_CONTENT" > "\$APP_DIR/.env"
 
             # Stop old container
-            docker stop ${{ env.CONTAINER }} 2>/dev/null || true
-            docker rm ${{ env.CONTAINER }} 2>/dev/null || true
+            docker stop "\$CONTAINER" 2>/dev/null || true
+            docker rm "\$CONTAINER" 2>/dev/null || true
 
             # Pull new image
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-            docker pull "$IMAGE"
+            echo "\$TOKEN" | docker login ghcr.io -u "\$ACTOR" --password-stdin
+            docker pull "\$IMAGE"
 
             # Start container
             docker run -d \
-              --name ${{ env.CONTAINER }} \
+              --name "\$CONTAINER" \
               --restart unless-stopped \
-              --network ${{ env.NETWORK }} \
-              --env-file "$APP_DIR/.env" \
-              "$IMAGE"
+              --network "\$NETWORK" \
+              --env-file "\$APP_DIR/.env" \
+              "\$IMAGE"
 
-            echo "Deployed ${IMAGE}"
+            echo "Deployed \$IMAGE"
+          REMOTE_SCRIPT
+        env:
+          IMAGE: ${{ env.IMAGE }}:${{ github.sha }}
+          CONTAINER: ${{ env.CONTAINER }}
+          NETWORK: ${{ env.NETWORK }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
