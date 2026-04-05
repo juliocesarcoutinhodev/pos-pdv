@@ -13,32 +13,33 @@ const model = ref([
         label: 'Vendas',
         icon: 'pi pi-fw pi-shopping-cart',
         items: [
-            { label: 'PDV', icon: 'pi pi-fw pi-desktop', to: '/vendas/pdv' },
-            { label: 'Histórico de Vendas', icon: 'pi pi-fw pi-list', to: '/vendas/historico' }
+            { label: 'PDV', icon: 'pi pi-fw pi-desktop', to: '/sales/pos' },
+            { label: 'Histórico de Vendas', icon: 'pi pi-fw pi-list', to: '/sales/history' }
         ]
     },
     {
         label: 'Produtos',
         icon: 'pi pi-fw pi-box',
         items: [
-            { label: 'Lista de Produtos', icon: 'pi pi-fw pi-box', to: '/produtos/lista' },
-            { label: 'Estoque', icon: 'pi pi-fw pi-inbox', to: '/produtos/estoque' }
+            { label: 'Lista de Produtos', icon: 'pi pi-fw pi-box', to: '/products/list' },
+            { label: 'Estoque', icon: 'pi pi-fw pi-inbox', to: '/products/inventory' }
         ]
     },
     {
         label: 'Cadastros',
         icon: 'pi pi-fw pi-users',
         items: [
-            { label: 'Clientes', icon: 'pi pi-fw pi-user', to: '/entidades/clientes' },
-            { label: 'Fornecedores', icon: 'pi pi-fw pi-users', to: '/entidades/fornecedores' }
+            { label: 'Clientes', icon: 'pi pi-fw pi-user', to: '/entities/customers' },
+            { label: 'Fornecedores', icon: 'pi pi-fw pi-users', to: '/entities/suppliers' },
+            { label: 'Usuários', icon: 'pi pi-fw pi-user-plus', to: '/entities/users' }
         ]
     },
     {
         label: 'Relatórios',
         icon: 'pi pi-fw pi-chart-bar',
         items: [
-            { label: 'Vendas do Dia', icon: 'pi pi-fw pi-calendar', to: '/relatorios/vendas-dia' },
-            { label: 'Fechamento', icon: 'pi pi-fw pi-calculator', to: '/relatorios/fechamento' }
+            { label: 'Vendas do Dia', icon: 'pi pi-fw pi-calendar', to: '/reports/daily-sales' },
+            { label: 'Fechamento', icon: 'pi pi-fw pi-calculator', to: '/reports/closing' }
         ]
     },
     {
