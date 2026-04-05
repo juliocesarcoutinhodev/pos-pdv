@@ -32,9 +32,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE }}
-          tags: |
-            type=sha
-            type=ref,event=branch
+          tags: type=sha
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -52,53 +50,40 @@ jobs:
       contents: read
       packages: read
     steps:
-      - name: Write SSH key
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          echo '${{ secrets.VPS_SSH_KEY }}' > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          echo "IdentityFile ~/.ssh/deploy_key" > ~/.ssh/config
-          echo "StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
-
       - name: Deploy via SSH
-        run: |
-          set -euo pipefail
-
-          ssh -p 22 topone@vps7348.integrator.host << REMOTE_SCRIPT
+        uses: appleboy/ssh-action@master
+        with:
+          host: vps7348.integrator.host
+          username: topone
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          command_timeout: 10m
+          script: |
             set -euo pipefail
 
-            IMAGE="${IMAGE}"
-            CONTAINER="${CONTAINER}"
-            NETWORK="${NETWORK}"
-            TOKEN="${GITHUB_TOKEN}"
-            ACTOR="${GITHUB_ACTOR}"
+            IMAGE="${{ env.IMAGE }}:${{ github.sha }}"
+            CONTAINER="pospdv"
+            NETWORK="infra_app-network"
             ENV_CONTENT='${{ secrets.ENV_PROD_FILE }}'
+            GH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+            GH_ACTOR="${{ github.actor }}"
 
             APP_DIR="/opt/apps/pospdv"
-            mkdir -p "\$APP_DIR"
+            mkdir -p "$APP_DIR"
 
-            printf '%s\n' "\$ENV_CONTENT" > "\$APP_DIR/.env"
+            printf '%s\n' "$ENV_CONTENT" > "$APP_DIR/.env"
 
-            docker stop "\$CONTAINER" 2>/dev/null || true
-            docker rm "\$CONTAINER" 2>/dev/null || true
+            docker stop "$CONTAINER" 2>/dev/null || true
+            docker rm "$CONTAINER" 2>/dev/null || true
 
-            echo "\$TOKEN" | docker login ghcr.io -u "\$ACTOR" --password-stdin
-            docker pull "\$IMAGE"
+            echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
+            docker pull "$IMAGE"
 
             docker run -d \
-              --name "\$CONTAINER" \
+              --name "$CONTAINER" \
               --restart unless-stopped \
-              --network "\$NETWORK" \
-              --env-file "\$APP_DIR/.env" \
-              "\$IMAGE"
+              --network "$NETWORK" \
+              --env-file "$APP_DIR/.env" \
+              "$IMAGE"
 
-            echo "Deployed \$IMAGE"
-          REMOTE_SCRIPT
-        env:
-          IMAGE: ${{ env.IMAGE }}:${{ github.sha }}
-          CONTAINER: ${{ env.CONTAINER }}
-          NETWORK: ${{ env.NETWORK }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR: ${{ github.actor }}
+            echo "Deployed $IMAGE"
