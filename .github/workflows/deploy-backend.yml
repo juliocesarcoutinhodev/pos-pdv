@@ -5,11 +5,6 @@ on:
     branches: [main]
     paths: ['backend/**']
 
-env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/pospdv-backend
-  CONTAINER: pospdv
-  NETWORK: infra_app-network
-
 jobs:
   build-and-push:
     name: Build & Push Image
@@ -31,7 +26,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE }}
+          images: ghcr.io/${{ github.repository_owner }}/pospdv-backend
           tags: type=sha
 
       - name: Build and push
@@ -50,40 +45,48 @@ jobs:
       contents: read
       packages: read
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: vps7348.integrator.host
-          username: topone
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
-          command_timeout: 10m
-          script: |
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${SSH_KEY}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/id_ed25519
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Deploy
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/pospdv-backend:${{ github.sha }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+          ENV_FILE: ${{ secrets.ENV_PROD_FILE }}
+          VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -euo pipefail
+
+          ssh -o StrictHostKeyChecking=accept-new -p "${VPS_PORT}" "${VPS_USER}"@vps7348.integrator.host bash -s << EOF
             set -euo pipefail
 
-            IMAGE="${{ env.IMAGE }}:${{ github.sha }}"
-            CONTAINER="pospdv"
-            NETWORK="infra_app-network"
-            ENV_CONTENT='${{ secrets.ENV_PROD_FILE }}'
-            GH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
-            GH_ACTOR="${{ github.actor }}"
-
             APP_DIR="/opt/apps/pospdv"
-            mkdir -p "$APP_DIR"
+            mkdir -p "\${APP_DIR}"
 
-            printf '%s\n' "$ENV_CONTENT" > "$APP_DIR/.env"
+            printf '%s\n' "${ENV_FILE}" > "\${APP_DIR}/.env"
 
-            docker stop "$CONTAINER" 2>/dev/null || true
-            docker rm "$CONTAINER" 2>/dev/null || true
+            docker stop pospdv 2>/dev/null || true
+            docker rm pospdv 2>/dev/null || true
 
-            echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
-            docker pull "$IMAGE"
+            echo "\${TOKEN}" | docker login ghcr.io -u "\${ACTOR}" --password-stdin
+            docker pull "\${IMAGE}"
 
             docker run -d \
-              --name "$CONTAINER" \
+              --name pospdv \
               --restart unless-stopped \
-              --network "$NETWORK" \
-              --env-file "$APP_DIR/.env" \
-              "$IMAGE"
+              --network infra_app-network \
+              --env-file "\${APP_DIR}/.env" \
+              "\${IMAGE}"
 
-            echo "Deployed $IMAGE"
+            echo "Deployed \${IMAGE}"
+          EOF
