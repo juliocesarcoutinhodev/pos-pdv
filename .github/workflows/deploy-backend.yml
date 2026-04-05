@@ -52,19 +52,23 @@ jobs:
       contents: read
       packages: read
     steps:
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+      - name: Write SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          cat > ~/.ssh/deploy_key << 'KEY'
+          ${{ secrets.VPS_SSH_KEY }}
+          KEY
+          chmod 600 ~/.ssh/deploy_key
+          echo "IdentityFile ~/.ssh/deploy_key" > ~/.ssh/config
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
 
       - name: Deploy via SSH
         run: |
           set -euo pipefail
 
-          mkdir -p ~/.ssh
-          ssh-keyscan -H vps7348.integrator.host >> ~/.ssh/known_hosts 2>/dev/null || true
-
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_SSH_PORT }} ${{ secrets.VPS_USER }}@vps7348.integrator.host << REMOTE_SCRIPT
+          ssh -p ${{ secrets.VPS_SSH_PORT }} ${{ secrets.VPS_USER }}@vps7348.integrator.host << REMOTE_SCRIPT
             set -euo pipefail
 
             IMAGE="${IMAGE}"
@@ -77,18 +81,14 @@ jobs:
             APP_DIR="/opt/apps/pospdv"
             mkdir -p "\$APP_DIR"
 
-            # Write .env on VPS
             printf '%s\n' "\$ENV_CONTENT" > "\$APP_DIR/.env"
 
-            # Stop old container
             docker stop "\$CONTAINER" 2>/dev/null || true
             docker rm "\$CONTAINER" 2>/dev/null || true
 
-            # Pull new image
             echo "\$TOKEN" | docker login ghcr.io -u "\$ACTOR" --password-stdin
             docker pull "\$IMAGE"
 
-            # Start container
             docker run -d \
               --name "\$CONTAINER" \
               --restart unless-stopped \
