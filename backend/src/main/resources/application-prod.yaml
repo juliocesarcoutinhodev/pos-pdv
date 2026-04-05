@@ -1,6 +1,8 @@
 # Production profile
 
 spring:
+  servlet:
+    context-path: /pospdv
   jpa:
     show-sql: false
   web:
