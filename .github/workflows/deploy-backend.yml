@@ -27,7 +27,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/pospdv-backend
-          tags: type=sha
+          tags: type=sha,short=false
 
       - name: Build and push
         uses: docker/build-push-action@v6
