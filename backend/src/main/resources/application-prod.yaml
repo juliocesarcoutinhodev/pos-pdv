@@ -1,0 +1,22 @@
+# Production profile
+
+spring:
+  jpa:
+    show-sql: false
+  web:
+    error:
+      include-message: never
+      include-binding-errors: never
+      include-stacktrace: never
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    liveness state:
+      enabled: true
+    readiness state:
+      enabled: true
