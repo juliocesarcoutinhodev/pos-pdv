@@ -52,12 +52,18 @@ jobs:
       contents: read
       packages: read
     steps:
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: vps7348.integrator.host
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key_path: ~/.ssh/deploy_key
           port: ${{ secrets.VPS_SSH_PORT }}
           command_timeout: 10m
           script: |
@@ -65,12 +71,13 @@ jobs:
 
             IMAGE="${{ env.IMAGE }}:${{ github.sha }}"
 
-            # Write .env on VPS from secret
             APP_DIR="/opt/apps/pospdv"
             mkdir -p "$APP_DIR"
+
+            # Write .env from secret (single-line in secret)
             printf '%s\n' '${{ secrets.ENV_PROD_FILE }}' > "$APP_DIR/.env"
 
-            # Stop and remove old container
+            # Stop old container
             docker stop ${{ env.CONTAINER }} 2>/dev/null || true
             docker rm ${{ env.CONTAINER }} 2>/dev/null || true
 
@@ -78,7 +85,7 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             docker pull "$IMAGE"
 
-            # Run
+            # Start container
             docker run -d \
               --name ${{ env.CONTAINER }} \
               --restart unless-stopped \
