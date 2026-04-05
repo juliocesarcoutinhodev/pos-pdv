@@ -54,16 +54,16 @@ jobs:
     steps:
       - name: Prepare SSH key
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          mkdir -p /tmp/ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > /tmp/ssh/deploy_key
+          chmod 600 /tmp/ssh/deploy_key
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: vps7348.integrator.host
           username: ${{ secrets.VPS_USER }}
-          key_path: ~/.ssh/deploy_key
+          key_path: /tmp/ssh/deploy_key
           port: ${{ secrets.VPS_SSH_PORT }}
           command_timeout: 10m
           script: |
