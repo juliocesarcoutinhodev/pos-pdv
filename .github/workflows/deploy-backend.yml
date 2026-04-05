@@ -47,44 +47,38 @@ jobs:
     steps:
       - name: Deploy
         env:
-          IMAGE: ghcr.io/${{ github.repository_owner }}/pospdv-backend:${{ github.sha }}
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACTOR: ${{ github.actor }}
-          ENV_FILE: ${{ secrets.ENV_PROD_FILE }}
           VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |
           set -euo pipefail
 
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
           ssh -o StrictHostKeyChecking=accept-new \
               -o IdentitiesOnly=yes \
               -i ~/.ssh/id_rsa \
-              -p "${VPS_PORT}" "${VPS_USER}"@vps7348.integrator.host bash -s << EOF
+              -p "${VPS_PORT}" "${{ secrets.VPS_USER }}"@vps7348.integrator.host bash -s << EOF
             set -euo pipefail
 
             APP_DIR="/opt/apps/pospdv"
             mkdir -p "\${APP_DIR}"
 
-            printf '%s\n' "${ENV_FILE}" > "\${APP_DIR}/.env"
+            printf '%s\n' "${{ secrets.ENV_PROD_FILE }}" > "\${APP_DIR}/.env"
 
             docker stop pospdv 2>/dev/null || true
             docker rm pospdv 2>/dev/null || true
 
-            echo "\${TOKEN}" | docker login ghcr.io -u "\${ACTOR}" --password-stdin
-            docker pull "\${IMAGE}"
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            docker pull "ghcr.io/juliocesarcoutinhodev/pospdv-backend:${{ github.sha }}"
 
             docker run -d \
               --name pospdv \
               --restart unless-stopped \
               --network infra_app-network \
               --env-file "\${APP_DIR}/.env" \
-              "\${IMAGE}"
+              "ghcr.io/juliocesarcoutinhodev/pospdv-backend:${{ github.sha }}"
 
-            echo "Deployed \${IMAGE}"
+            echo "Deployed"
           EOF
