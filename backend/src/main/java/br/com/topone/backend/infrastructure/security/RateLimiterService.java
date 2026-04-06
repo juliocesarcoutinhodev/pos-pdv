@@ -46,7 +46,7 @@ public class RateLimiterService {
         var available = tokenBucket.bucket.getAvailableTokens();
 
         if (!consumed) {
-            var retryAfter = calculateRetryAfterSeconds();
+            var retryAfter = calculateRetryAfterSeconds(config);
             log.warn("Rate limit exceeded | ip={} | path={} | retryAfter={}s",
                     clientIdentifier, requestPath, retryAfter);
             return RateLimitResult.rejected(retryAfter, available, config.getCapacity());
@@ -66,9 +66,7 @@ public class RateLimiterService {
                 .build();
     }
 
-    private long calculateRetryAfterSeconds() {
-        // Use auth endpoint config for refill rate (strictest rate)
-        var config = properties.getConfigForPath("/api/v1/auth/");
+    private long calculateRetryAfterSeconds(RateLimitProperties.EndpointConfig config) {
         var refillDurationMinutes = config.getRefillDurationMinutes();
         var refillTokens = config.getRefillTokens();
         var refillRatePerSecond = (double) refillTokens / (refillDurationMinutes * 60);

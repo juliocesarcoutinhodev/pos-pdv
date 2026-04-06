@@ -21,7 +21,18 @@ public class CorsConfig {
         var config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(allowedOrigins));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "X-Correlation-Id"
+        ));
+        config.setExposedHeaders(List.of(
+                "X-Correlation-Id",
+                "X-RateLimit-Limit",
+                "X-RateLimit-Remaining",
+                "X-RateLimit-Retry-After-Seconds",
+                "Retry-After"
+        ));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
         source.registerCorsConfiguration("/**", config);

@@ -5,8 +5,6 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
-
 @Getter
 @Setter
 @Component
@@ -17,11 +15,6 @@ public class RateLimitProperties {
 
     private EndpointConfig auth = new EndpointConfig(5, 5, 1);
     private EndpointConfig defaultConfig = new EndpointConfig(100, 100, 1);
-
-    @PostConstruct
-    public void init() {
-        // ensure non-auth endpoints also get defaults if not explicitly configured
-    }
 
     public EndpointConfig getConfigForPath(String path) {
         if (path.startsWith("/api/v1/auth/")) {

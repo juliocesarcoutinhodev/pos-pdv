@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex) {
-        log.warn("Invalid login attempt | message={}", ex.getMessage());
+        log.warn("Invalid login attempt");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
                 "Não autorizado",

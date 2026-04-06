@@ -25,7 +25,7 @@ public class RegisterUserUseCase {
     @Transactional
     public RegisterUserResult execute(RegisterUserCommand command) {
         if (userRepository.existsByEmail(command.email())) {
-            throw new EmailAlreadyExistsException(command.email());
+            throw new EmailAlreadyExistsException();
         }
 
         var hashedPassword = passwordEncoder.encode(command.password());
