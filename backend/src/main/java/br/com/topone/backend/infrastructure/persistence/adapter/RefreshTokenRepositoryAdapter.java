@@ -50,15 +50,12 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
     }
 
     @Override
-    public void revokeAllByUserId(UUID userId) {
-        var entities = jpaRepository.findByUserIdAndRevokedAtIsNull(userId);
-        entities.forEach(e -> e.setRevokedAt(Instant.now()));
-        jpaRepository.saveAll(entities);
-    }
-
-    @Override
     public void deleteById(UUID id) {
         jpaRepository.deleteById(id);
     }
 
+    @Override
+    public void revokeAllByUserId(UUID userId) {
+        jpaRepository.findByUserIdAndRevokedAtIsNull(userId).forEach(e -> e.setRevokedAt(Instant.now()));
+    }
 }
