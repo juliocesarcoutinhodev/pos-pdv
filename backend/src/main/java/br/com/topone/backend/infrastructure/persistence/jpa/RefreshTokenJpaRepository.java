@@ -16,10 +16,8 @@ public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenEnt
 
     List<RefreshTokenEntity> findByUserId(UUID userId);
 
-    @Query("SELECT r FROM RefreshTokenEntity r WHERE r.user.id = :userId AND r.revokedAt IS NULL AND r.expiresAt > CURRENT_TIMESTAMP")
-    List<RefreshTokenEntity> findActiveByUserId(@Param("userId") UUID userId);
+    @Query("SELECT r FROM RefreshTokenEntity r WHERE r.user.id = :userId AND r.revokedAt IS NULL AND r.expiresAt > :now")
+    List<RefreshTokenEntity> findActiveByUserId(@Param("userId") UUID userId, @Param("now") java.time.Instant now);
 
-    @Modifying
-    @Query("UPDATE RefreshTokenEntity r SET r.revokedAt = CURRENT_TIMESTAMP WHERE r.user.id = :userId AND r.revokedAt IS NULL")
-    void revokeAllByUserId(@Param("userId") UUID userId);
+    List<RefreshTokenEntity> findByUserIdAndRevokedAtIsNull(UUID userId);
 }

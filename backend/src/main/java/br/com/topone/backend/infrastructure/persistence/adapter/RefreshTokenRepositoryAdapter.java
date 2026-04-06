@@ -6,6 +6,7 @@ import br.com.topone.backend.infrastructure.persistence.jpa.RefreshTokenJpaRepos
 import br.com.topone.backend.infrastructure.persistence.mapper.RefreshTokenMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,7 +46,14 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
 
     @Override
     public List<RefreshToken> findActiveByUserId(UUID userId) {
-        return mapper.toDomainList(jpaRepository.findActiveByUserId(userId));
+        return mapper.toDomainList(jpaRepository.findActiveByUserId(userId, Instant.now()));
+    }
+
+    @Override
+    public void revokeAllByUserId(UUID userId) {
+        var entities = jpaRepository.findByUserIdAndRevokedAtIsNull(userId);
+        entities.forEach(e -> e.setRevokedAt(Instant.now()));
+        jpaRepository.saveAll(entities);
     }
 
     @Override
@@ -53,8 +61,4 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
         jpaRepository.deleteById(id);
     }
 
-    @Override
-    public void revokeAllByUserId(UUID userId) {
-        jpaRepository.revokeAllByUserId(userId);
-    }
 }
