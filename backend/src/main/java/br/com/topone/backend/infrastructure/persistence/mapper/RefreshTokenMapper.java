@@ -19,6 +19,4 @@ public interface RefreshTokenMapper {
     RefreshTokenEntity toEntity(RefreshToken domain);
 
     List<RefreshToken> toDomainList(List<RefreshTokenEntity> entities);
-
-    List<RefreshTokenEntity> toEntityList(List<RefreshToken> domains);
 }
