@@ -3,8 +3,6 @@ package br.com.topone.backend.infrastructure.security;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RateLimiterServiceTest {
@@ -16,6 +14,8 @@ class RateLimiterServiceTest {
     void setUp() {
         properties = new RateLimitProperties();
         properties.setEnabled(true);
+        properties.getCache().setExpiryMinutes(10);
+        properties.getCache().setMaximumSize(100_000);
         properties.getAuth().setCapacity(3);
         properties.getAuth().setRefillTokens(3);
         properties.getAuth().setRefillDurationMinutes(1);

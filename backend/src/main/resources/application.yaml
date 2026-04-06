@@ -41,6 +41,30 @@ security:
     secret: ${JWT_SECRET:}
     issuer: ${JWT_ISSUER:pospdv}
     access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:3600}
+    refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800}
+  refresh-cookie:
+    max-age: ${JWT_REFRESH_TOKEN_EXPIRATION:604800}
+
+app:
+  rate-limit:
+    enabled: true
+    cache:
+      expiry-minutes: 10
+      maximum-size: 100000
+    auth:
+      capacity: 5
+      refill-tokens: 5
+      refill-duration-minutes: 1
+    default-config:
+      capacity: 100
+      refill-tokens: 100
+      refill-duration-minutes: 1
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:5173
+    allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+    allowed-headers: Authorization,Content-Type,X-Correlation-Id
+    exposed-headers: X-Correlation-Id,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Retry-After-Seconds,Retry-After
+    max-age: 3600
 
 management:
   endpoints:

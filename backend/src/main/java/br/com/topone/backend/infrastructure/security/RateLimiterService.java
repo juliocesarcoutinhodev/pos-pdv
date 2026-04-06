@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -15,17 +14,19 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class RateLimiterService {
 
-    private static final int CACHE_EXPIRY_MINUTES = 10;
-
     private final RateLimitProperties properties;
+    private final Cache<String, TokenBucket> buckets;
 
-    private final Cache<String, TokenBucket> buckets = Caffeine.newBuilder()
-            .expireAfterAccess(CACHE_EXPIRY_MINUTES, TimeUnit.MINUTES)
-            .maximumSize(100_000)
-            .build();
+    public RateLimiterService(RateLimitProperties properties) {
+        this.properties = properties;
+        var cacheProps = properties.getCache();
+        this.buckets = Caffeine.newBuilder()
+                .expireAfterAccess(cacheProps.getExpiryMinutes(), TimeUnit.MINUTES)
+                .maximumSize(cacheProps.getMaximumSize())
+                .build();
+    }
 
     public RateLimitResult consume(String clientIdentifier, String requestPath) {
         if (!properties.isEnabled()) {
