@@ -63,6 +63,7 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 | `SERVER_PORT`                          | `8080`        | Porta HTTP do servidor             |
 | `SPRING_PROFILES_ACTIVE`               | `local`       | Perfil Spring ativo                |
 | `MANAGEMENT_ENDPOINTS_WEB_EXPOSURE`    | `health,info` | Endpoints Actuator expostos        |
+| `APP_CORS_ALLOWED_ORIGINS`             | `http://localhost:3000` | Origens permitidas no CORS |
 
 ## Endpoints
 
