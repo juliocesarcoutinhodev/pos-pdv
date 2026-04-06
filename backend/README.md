@@ -158,9 +158,42 @@ Revoga todos os refresh tokens do usuário e limpa o cookie.
 }
 ```
 
+### Administrativo (requer role ADMIN)
+
+| Metodo | Path                     | Auth | Descricao                 |
+| ------ | ------------------------ | ---- | ------------------------- |
+| GET    | `/api/v1/admin/ping`     | Sim  | Endpoint de teste ADMIN   |
+| GET    | `/api/v1/admin-only`     | Sim  | Endpoint protegido ADMIN  |
+
+**GET `/api/v1/admin/ping`** — 200 OK
+```
+Admin area
+```
+
+Sem role ADMIN → `403 Forbidden` com body padrao:
+```json
+{
+  "error": "Proibido",
+  "message": "Acesso negado. Você não tem permissão para acessar este recurso.",
+  "timestamp": "..."
+}
+```
+
 ### Protegidos (requerem JWT)
 
 Qualquer endpoint fora das rotas publicas retorna `401` se o token nao for fornecido ou for invalido.
+
+### Controle de Acesso (RBAC)
+
+Apos a autenticacao, o framework de autorizacao do Spring Security utiliza roles como `GrantedAuthority` para verificar acesso:
+
+| Regra                 | Comportamento                                   |
+| --------------------- | ----------------------------------------------- |
+| `anyRequest().authenticated()` | Qualquer endpoint protegido exige JWT  |
+| `/api/v1/admin/**`   | Exige role `ADMIN` — retorna 403 caso contrario |
+| `@PreAuthorize`       | Usado em endpoints administrativos              |
+| Sem token             | Retorna 401                                     |
+| Token valido sem role | Retorna 403 em endpoints restritos              |
 
 ## Logging
 

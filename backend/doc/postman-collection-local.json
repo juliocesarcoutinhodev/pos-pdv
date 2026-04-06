@@ -198,7 +198,12 @@
             }
           ],
           "response": []
-        },
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
         {
           "name": "Get Current User Info",
           "request": {
@@ -215,7 +220,52 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "me"]
             },
-            "description": "Get current authenticated user info. Requires valid JWT token."
+            "description": "Get current authenticated user info including roles."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin (requires ADMIN role)",
+      "item": [
+        {
+          "name": "Admin Ping",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/ping",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "ping"]
+            },
+            "description": "Admin-only endpoint. Returns 403 if user does not have ADMIN role."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Only",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin-only",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin-only"]
+            },
+            "description": "Admin-only endpoint via @PreAuthorize. Returns 403 if user does not have ADMIN role."
           },
           "response": []
         }
