@@ -37,3 +37,8 @@ logging:
 security:
   jwt:
     access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900}
+  refresh-cookie:
+    enabled: true
+    domain: ${REFRESH_COOKIE_DOMAIN:.seudominio.com}
+    secure: true
+    same-site: None

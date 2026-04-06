@@ -1,9 +1,8 @@
 package br.com.topone.backend.interfaces.dto;
 
 public record LoginResponse(
-        UserResponse user,
+        LoginResponse.UserResponse user,
         String accessToken,
-        String refreshToken,
         Long expiresIn
 ) {
     public record UserResponse(
@@ -11,5 +10,6 @@ public record LoginResponse(
             String email,
             String name,
             String provider
-    ) {}
+    ) {
+    }
 }

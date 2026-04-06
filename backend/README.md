@@ -68,6 +68,40 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 | `JWT_ISSUER`                        | `pospdv`                             | Issuer do JWT                    |
 | `JWT_ACCESS_TOKEN_EXPIRATION`       | `3600` (local) / `900` (prod)        | TTL do access token em segundos  |
 | `JWT_REFRESH_TOKEN_EXPIRATION`      | `604800` (7 dias)                    | TTL do refresh token em segundos  |
+| `SECURITY_REFRESH_COOKIE_SECURE`    | `false` (local) / `true` (prod)      | Flag Secure no cookie            |
+| `SECURITY_REFRESH_COOKIE_SAME_SITE` | `Lax` (local) / `None` (prod)        | Atributo SameSite do cookie      |
+| `SECURITY_REFRESH_COOKIE_DOMAIN`    | vazio (local) / `.seudominio.com` (prod) | Domínio do cookie (para subdomínios) |
+
+## Autenticacao com Cookies
+
+O refresh token é entregue e recebido **exclusivamente via cookie HttpOnly**, impedindo acesso via JavaScript e protegendo contra ataques XSS.
+
+### Comportamento por perfil
+
+| Perfil | `Secure` | `SameSite` | `Domain`           |
+| ------ | -------- | ---------- | ------------------ |
+| local  | false    | Lax        | (vazio)            |
+| prod   | true     | None       | `${REFRESH_COOKIE_DOMAIN}` |
+
+### Fluxo
+
+1. **Login** → access token no body, refresh token no cookie HttpOnly
+2. **Refresh** → lê cookie automaticamente, retorna novo access token + atualiza cookie
+3. **Logout** → revoga todos os tokens do usuário, limpa cookie (Max-Age=0)
+
+### Frontend
+
+O frontend deve incluir `credentials: "include"` em todas as requisições fetch/axios para enviar cookies automaticamente.
+
+```js
+// Exemplo com fetch
+fetch("http://api.exemplo.com/api/v1/auth/login", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password })
+});
+```
 
 ## Endpoints
 
@@ -91,30 +125,22 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 {
   "user": { "id": "...", "email": "user@test.com", "name": "Test User", "provider": "LOCAL" },
   "accessToken": "eyJ...",
-  "refreshToken": "eyJ...",
   "expiresIn": 604800
 }
 ```
+Refresh token entregue via cookie HttpOnly (não visível no body).
 
 **POST `/refresh`** — 200 OK
 ```json
 {
   "accessToken": "eyJ...",
-  "refreshToken": "eyJ...",
   "expiresIn": 604800
 }
 ```
-
-O refresh token é rotacionado a cada uso — o anterior é invalidado e um novo é retornado.
+Lê refresh token do cookie automaticamente, retorna novo access token e atualiza o cookie (rotação).
 
 **POST `/logout`** — 204 No Content
-```json
-{
-  "refreshToken": "eyJ..."
-}
-```
-
-Enviar `revokeAll: true` no body para revogar todos os refresh tokens do usuário. Após logout, qualquer tentativa de usar o refresh token revogado retorna `401`.
+Revoga todos os refresh tokens do usuário e limpa o cookie.
 
 ### Protegidos (requerem JWT)
 

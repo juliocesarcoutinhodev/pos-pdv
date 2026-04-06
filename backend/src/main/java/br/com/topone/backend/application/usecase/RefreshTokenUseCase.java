@@ -25,8 +25,8 @@ public class RefreshTokenUseCase {
     private final TokenHashService tokenHashService;
 
     @Transactional
-    public RefreshTokenResult execute(RefreshTokenCommand command) {
-        var tokenHash = tokenHashService.hash(command.refreshToken());
+    public RefreshTokenResult execute(String refreshToken) {
+        var tokenHash = tokenHashService.hash(refreshToken);
 
         var storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(RefreshTokenNotFoundException::new);

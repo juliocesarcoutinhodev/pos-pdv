@@ -16,6 +16,11 @@ spring:
 security:
   jwt:
     access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:3600}
+  refresh-cookie:
+    enabled: true
+    domain: ""
+    secure: false
+    same-site: Lax
 
 logging:
   level:

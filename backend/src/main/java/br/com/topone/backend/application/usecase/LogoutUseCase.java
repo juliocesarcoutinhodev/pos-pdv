@@ -17,23 +17,20 @@ public class LogoutUseCase {
     private final TokenHashService tokenHashService;
 
     @Transactional
-    public void execute(LogoutCommand command) {
-        var tokenHash = tokenHashService.hash(command.refreshToken());
+    public void execute(String refreshToken) {
+        var tokenHash = tokenHashService.hash(refreshToken);
 
         var storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(InvalidTokenException::new);
-
-        if (command.revokeAll()) {
-            var userId = storedToken.getUser().getId();
-            refreshTokenRepository.revokeAllByUserId(userId);
-            log.info("All tokens revoked | userId={}", userId);
-            return;
-        }
 
         if (!storedToken.isRevoked()) {
             storedToken.revoke();
             refreshTokenRepository.save(storedToken);
             log.info("Token revoked | tokenId={}", storedToken.getId());
         }
+
+        var userId = storedToken.getUser().getId();
+        refreshTokenRepository.revokeAllByUserId(userId);
+        log.info("All tokens revoked for user | userId={}", userId);
     }
 }

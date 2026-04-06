@@ -19,7 +19,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,59 +58,36 @@ class LogoutUseCaseTest {
     }
 
     @Test
-    void shouldRevokeSingleToken() {
-        var command = new LogoutCommand(rawToken, false);
-
+    void shouldRevokeToken() {
         when(tokenHashService.hash(rawToken)).thenReturn(hashedToken);
         when(refreshTokenRepository.findByTokenHash(hashedToken)).thenReturn(Optional.of(activeToken));
         when(refreshTokenRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
 
-        useCase.execute(command);
+        useCase.execute(rawToken);
 
         assertThat(activeToken.getRevokedAt()).isNotNull();
-        verify(refreshTokenRepository).save(activeToken);
-        verify(refreshTokenRepository, never()).revokeAllByUserId(any());
-    }
-
-    @Test
-    void shouldRevokeAllTokensWhenRevokeAllIsTrue() {
-        var command = new LogoutCommand(rawToken, true);
-
-        when(tokenHashService.hash(rawToken)).thenReturn(hashedToken);
-        when(refreshTokenRepository.findByTokenHash(hashedToken)).thenReturn(Optional.of(activeToken));
-
-        useCase.execute(command);
-
         verify(refreshTokenRepository).revokeAllByUserId(user.getId());
-        verify(refreshTokenRepository, never()).save(any());
     }
 
     @Test
     void shouldThrowWhenTokenNotFound() {
-        var command = new LogoutCommand(rawToken, false);
-
         when(tokenHashService.hash(rawToken)).thenReturn(hashedToken);
         when(refreshTokenRepository.findByTokenHash(hashedToken)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.execute(command))
+        assertThatThrownBy(() -> useCase.execute(rawToken))
                 .isInstanceOf(InvalidTokenException.class)
                 .hasMessage("Invalid refresh token");
-
-        verify(refreshTokenRepository, never()).revokeAllByUserId(any());
     }
 
     @Test
     void shouldNotSaveIfTokenAlreadyRevoked() {
         activeToken.setRevokedAt(Instant.now());
 
-        var command = new LogoutCommand(rawToken, false);
-
         when(tokenHashService.hash(rawToken)).thenReturn(hashedToken);
         when(refreshTokenRepository.findByTokenHash(hashedToken)).thenReturn(Optional.of(activeToken));
 
-        useCase.execute(command);
+        useCase.execute(rawToken);
 
         verify(refreshTokenRepository, never()).save(any());
-        verify(refreshTokenRepository, never()).revokeAllByUserId(any());
     }
 }

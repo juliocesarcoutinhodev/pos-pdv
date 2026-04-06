@@ -11,28 +11,23 @@
       "type": "string"
     },
     {
-      "key": "access_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "refresh_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "user_email",
+      "key": "email",
       "value": "user@example.com",
       "type": "string"
     },
     {
-      "key": "user_name",
+      "key": "name",
       "value": "Test User",
       "type": "string"
     },
     {
-      "key": "user_password",
+      "key": "password",
       "value": "password123",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
       "type": "string"
     }
   ],
@@ -88,45 +83,6 @@
       "name": "Auth",
       "item": [
         {
-          "name": "Login",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "login"]
-            },
-            "description": "Authenticate user and receive JWT token"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Login successful\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    var body = pm.response.json();",
-                  "    pm.collectionVariables.set(\"access_token\", body.accessToken);",
-                  "    pm.collectionVariables.set(\"refresh_token\", body.refreshToken);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "response": []
-        },
-        {
           "name": "Register",
           "request": {
             "method": "POST",
@@ -138,7 +94,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"name\": \"{{user_name}}\",\n  \"password\": \"{{user_password}}\"\n}"
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"name\": \"{{name}}\",\n  \"password\": \"{{password}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/register",
@@ -150,7 +106,7 @@
           "response": []
         },
         {
-          "name": "Refresh Token",
+          "name": "Login",
           "request": {
             "method": "POST",
             "header": [
@@ -161,25 +117,53 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/auth/refresh",
+              "raw": "{{base_url}}/api/v1/auth/login",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "refresh"]
+              "path": ["api", "v1", "auth", "login"]
             },
-            "description": "Refresh access token using refresh token"
+            "description": "Authenticate user. Returns access token in body, refresh token in HttpOnly cookie."
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Refresh Token successful\", function () {",
+                  "pm.test(\"Login successful\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var body = pm.response.json();",
                   "    pm.collectionVariables.set(\"access_token\", body.accessToken);",
-                  "    pm.collectionVariables.set(\"refresh_token\", body.refreshToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "refresh"]
+            },
+            "description": "Refresh access token. Uses refresh token from HttpOnly cookie. Sends new access token and refreshes cookie."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Refresh successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var body = pm.response.json();",
+                  "    pm.collectionVariables.set(\"access_token\", body.accessToken);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -192,22 +176,13 @@
           "name": "Logout",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
-            },
+            "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/auth/logout",
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "auth", "logout"]
             },
-            "description": "Revoke the specified refresh token. Set revokeAll to true to revoke all user tokens."
+            "description": "Revoke all user refresh tokens and clear refresh token cookie."
           },
           "event": [
             {
