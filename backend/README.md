@@ -82,6 +82,7 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 | POST   | `/api/v1/auth/register`   | Nao  | Cadastrar novo usuario               |
 | POST   | `/api/v1/auth/login`      | Nao  | Autenticar e receber tokens          |
 | POST   | `/api/v1/auth/refresh`    | Nao  | Renovar access token com refresh token|
+| POST   | `/api/v1/auth/logout`     | Nao  | Revogar refresh token (logout)       |
 
 #### Responses
 
@@ -105,6 +106,15 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 ```
 
 O refresh token é rotacionado a cada uso — o anterior é invalidado e um novo é retornado.
+
+**POST `/logout`** — 204 No Content
+```json
+{
+  "refreshToken": "eyJ..."
+}
+```
+
+Enviar `revokeAll: true` no body para revogar todos os refresh tokens do usuário. Após logout, qualquer tentativa de usar o refresh token revogado retorna `401`.
 
 ### Protegidos (requerem JWT)
 

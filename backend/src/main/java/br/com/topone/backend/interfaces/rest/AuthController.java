@@ -1,6 +1,7 @@
 package br.com.topone.backend.interfaces.rest;
 
 import br.com.topone.backend.application.usecase.LoginUseCase;
+import br.com.topone.backend.application.usecase.LogoutUseCase;
 import br.com.topone.backend.application.usecase.RegisterUserUseCase;
 import br.com.topone.backend.application.usecase.RefreshTokenCommand;
 import br.com.topone.backend.application.usecase.RefreshTokenUseCase;
@@ -25,6 +26,7 @@ public class AuthController {
     private final RegisterUserUseCase registerUserUseCase;
     private final LoginUseCase loginUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
+    private final LogoutUseCase logoutUseCase;
     private final UseCaseResponseMapper responseMapper;
     private final LoginResponseMapper loginResponseMapper;
     private final RefreshResponseMapper refreshResponseMapper;
@@ -49,5 +51,12 @@ public class AuthController {
         var command = dtoCommandMapper.toRefreshCommand(request);
         var result = refreshTokenUseCase.execute(command);
         return ResponseEntity.ok(refreshResponseMapper.toResponse(result));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request) {
+        var command = dtoCommandMapper.toLogoutCommand(request);
+        logoutUseCase.execute(command);
+        return ResponseEntity.noContent().build();
     }
 }
