@@ -4,6 +4,7 @@ import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.model.enums.Role;
 import io.jsonwebtoken.Claims;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -16,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,7 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             var user = buildUserFromClaims(claims);
-            var authentication = new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+            var authentication = new UsernamePasswordAuthenticationToken(user, null, buildAuthorities(user));
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
@@ -86,6 +86,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         return user;
+    }
+
+    private List<SimpleGrantedAuthority> buildAuthorities(User user) {
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            return List.of();
+        }
+        return user.getRoles().stream()
+                .map(r -> "ROLE_" + r.name())
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
     }
 
     private String getClientIp(HttpServletRequest request) {

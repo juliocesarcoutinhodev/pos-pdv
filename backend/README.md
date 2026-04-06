@@ -153,7 +153,8 @@ Revoga todos os refresh tokens do usuário e limpa o cookie.
 {
   "id": "uuid",
   "email": "user@test.com",
-  "name": "Test User"
+  "name": "Test User",
+  "roles": ["USER", "ADMIN"]
 }
 ```
 

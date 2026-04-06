@@ -2,6 +2,7 @@ package br.com.topone.backend.infrastructure.security;
 
 import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.model.enums.AuthProvider;
+import br.com.topone.backend.domain.model.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
@@ -9,6 +10,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.EnumSet;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,5 +110,55 @@ class JwtAuthenticationFilterTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void shouldIncludeRolesAsAuthorities() throws Exception {
+        var user = new User();
+        user.setId(UUID.randomUUID());
+        user.setEmail("admin@test.com");
+        user.setName("Admin User");
+        user.setProvider(AuthProvider.LOCAL);
+        user.setRoles(EnumSet.of(Role.USER, Role.ADMIN));
+
+        var token = tokenService.generateAccessToken(user);
+
+        var request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer " + token);
+        var response = new MockHttpServletResponse();
+        var chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(auth).isNotNull();
+        assertThat(auth.getAuthorities()).hasSize(2);
+        assertThat(auth.getAuthorities()).extracting("authority").containsExactlyInAnyOrder("ROLE_USER", "ROLE_ADMIN");
+        var principal = (User) auth.getPrincipal();
+        assertThat(principal.getRoles()).containsExactlyInAnyOrder(Role.USER, Role.ADMIN);
+    }
+
+    @Test
+    void shouldHaveEmptyAuthoritiesWhenUserHasNoRoles() throws Exception {
+        var user = new User();
+        user.setId(UUID.randomUUID());
+        user.setEmail("guest@test.com");
+        user.setName("Guest User");
+        user.setProvider(AuthProvider.LOCAL);
+
+        var token = tokenService.generateAccessToken(user);
+
+        var request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer " + token);
+        var response = new MockHttpServletResponse();
+        var chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(auth).isNotNull();
+        assertThat(auth.getAuthorities()).isEmpty();
     }
 }
