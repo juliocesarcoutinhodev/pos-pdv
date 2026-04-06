@@ -1,4 +1,4 @@
-package br.com.topone.backend.application.usecase;
+package br.com.topone.backend.application.usecase.user;
 
 import br.com.topone.backend.domain.exception.EmailAlreadyExistsException;
 import br.com.topone.backend.domain.exception.UserNotFoundException;
@@ -27,27 +27,26 @@ public class UpdateUserPatchUseCase {
         var user = userRepository.findById(command.id())
                 .orElseThrow(UserNotFoundException::new);
 
-        // Only update email if it was provided and actually changed
         if (command.email() != null && !command.email().equals(user.getEmail())) {
             if (userRepository.existsByEmail(command.email())) {
                 throw new EmailAlreadyExistsException();
             }
-            user.setEmail(command.email());
+            user.changeEmail(command.email());
         }
 
         if (command.name() != null) {
-            user.setName(command.name());
+            user.changeName(command.name());
         }
 
         if (command.password() != null && !command.password().isBlank()) {
-            user.setPasswordHash(passwordEncoder.encode(command.password()));
+            user.changePassword(passwordEncoder.encode(command.password()));
         }
 
         if (command.roleIds() != null) {
-            user.setRoles(userRepository.resolveRolesByIds(command.roleIds()));
+            user.assignRoles(userRepository.resolveRolesByIds(command.roleIds()));
         }
 
-        user.setUpdatedAt(Instant.now());
+        user.touch();
         var saved = userRepository.save(user);
         log.info("User patched | id={}", saved.getId());
 

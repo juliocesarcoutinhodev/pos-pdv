@@ -1,4 +1,4 @@
-package br.com.topone.backend.application.usecase;
+package br.com.topone.backend.application.usecase.user;
 
 import br.com.topone.backend.domain.exception.EmailAlreadyExistsException;
 import br.com.topone.backend.domain.exception.UserNotFoundException;
@@ -10,8 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,27 +25,26 @@ public class UpdateUserUseCase {
         var user = userRepository.findById(command.id())
                 .orElseThrow(UserNotFoundException::new);
 
-        // Check email uniqueness if changed
         if (command.email() != null && !command.email().equals(user.getEmail())) {
             if (userRepository.existsByEmail(command.email())) {
                 throw new EmailAlreadyExistsException();
             }
-            user.setEmail(command.email());
+            user.changeEmail(command.email());
         }
 
         if (command.name() != null) {
-            user.setName(command.name());
+            user.changeName(command.name());
         }
 
         if (command.password() != null && !command.password().isBlank()) {
-            user.setPasswordHash(passwordEncoder.encode(command.password()));
+            user.changePassword(passwordEncoder.encode(command.password()));
         }
 
         if (command.roleIds() != null) {
-            user.setRoles(userRepository.resolveRolesByIds(command.roleIds()));
+            user.assignRoles(userRepository.resolveRolesByIds(command.roleIds()));
         }
 
-        user.setUpdatedAt(Instant.now());
+        user.touch();
         var saved = userRepository.save(user);
         log.info("User updated | id={}", saved.getId());
 

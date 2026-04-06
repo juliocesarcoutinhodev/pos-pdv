@@ -295,7 +295,9 @@ br.com.topone.backend
 │   └── exception/    # Excecoes de dominio
 │
 ├── application/
-│   └── usecase/      # Casos de uso, Commands e Results
+│   └── usecase/
+│       ├── login/    # Casos de uso de autenticação (Login, Logout, RefreshToken)
+│       └── user/     # Casos de uso de usuário (CRUD administrativo)
 │
 ├── infrastructure/
 │   ├── config/       # Configuracoes Spring (Security, CORS, etc)

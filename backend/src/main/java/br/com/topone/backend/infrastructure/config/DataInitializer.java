@@ -18,15 +18,21 @@ import java.util.EnumSet;
 @RequiredArgsConstructor
 public class DataInitializer {
 
+    private static final String ADMIN_EMAIL = "admin@email.com";
+
     @Bean
     public CommandLineRunner initData(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            if (!userRepository.existsByEmail("admin@email.com")) {
-                var user = User.createLocalUser("admin@email.com", "Admin", passwordEncoder.encode("admin123"));
-                user.setRoles(EnumSet.of(Role.USER, Role.ADMIN));
-                userRepository.save(user);
-                log.info("Admin user initialized | email=admin@email.com");
+            var existing = userRepository.findByEmailIncludingDeleted(ADMIN_EMAIL);
+            if (existing.isPresent()) {
+                log.debug("Admin user already exists | email={}", ADMIN_EMAIL);
+                return;
             }
+
+            var user = User.createLocalUser(ADMIN_EMAIL, "Admin", passwordEncoder.encode("admin123"));
+            user.assignRoles(EnumSet.of(Role.USER, Role.ADMIN));
+            userRepository.save(user);
+            log.info("Admin user initialized | email={}", ADMIN_EMAIL);
         };
     }
 }

@@ -1,6 +1,11 @@
 package br.com.topone.backend.interfaces.rest;
 
-import br.com.topone.backend.application.usecase.*;
+import br.com.topone.backend.application.usecase.RegisterUserResult;
+import br.com.topone.backend.application.usecase.RegisterUserUseCase;
+import br.com.topone.backend.application.usecase.UseCaseResponseMapper;
+import br.com.topone.backend.application.usecase.login.LoginUseCase;
+import br.com.topone.backend.application.usecase.login.LogoutUseCase;
+import br.com.topone.backend.application.usecase.login.RefreshTokenUseCase;
 import br.com.topone.backend.infrastructure.mapper.LoginResponseMapper;
 import br.com.topone.backend.infrastructure.mapper.RefreshResponseMapper;
 import br.com.topone.backend.infrastructure.security.RefreshTokenCookieService;

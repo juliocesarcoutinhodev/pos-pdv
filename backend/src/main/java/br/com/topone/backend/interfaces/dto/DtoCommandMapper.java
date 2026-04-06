@@ -1,6 +1,11 @@
 package br.com.topone.backend.interfaces.dto;
 
-import br.com.topone.backend.application.usecase.*;
+import br.com.topone.backend.application.usecase.RegisterUserCommand;
+import br.com.topone.backend.application.usecase.login.LoginCommand;
+import br.com.topone.backend.application.usecase.user.CreateAdminUserCommand;
+import br.com.topone.backend.application.usecase.user.CreateAdminUserResult;
+import br.com.topone.backend.application.usecase.user.UpdateUserCommand;
+import br.com.topone.backend.application.usecase.user.UpdateUserPatchCommand;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

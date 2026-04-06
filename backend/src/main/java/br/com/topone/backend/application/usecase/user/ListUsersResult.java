@@ -1,4 +1,4 @@
-package br.com.topone.backend.application.usecase;
+package br.com.topone.backend.application.usecase.user;
 
 import java.time.Instant;
 import java.util.List;

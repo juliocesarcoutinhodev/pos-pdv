@@ -58,4 +58,24 @@ public class User {
     public boolean isActive() {
         return deletedAt == null;
     }
+
+    public void changeEmail(String newEmail) {
+        this.email = newEmail;
+    }
+
+    public void changeName(String newName) {
+        this.name = newName;
+    }
+
+    public void changePassword(String encodedPasswordHash) {
+        this.passwordHash = encodedPasswordHash;
+    }
+
+    public void assignRoles(Set<Role> roles) {
+        this.roles = roles != null ? roles : EnumSet.noneOf(Role.class);
+    }
+
+    public void touch() {
+        this.updatedAt = Instant.now();
+    }
 }

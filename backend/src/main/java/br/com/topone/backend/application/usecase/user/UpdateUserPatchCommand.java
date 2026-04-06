@@ -1,9 +1,10 @@
-package br.com.topone.backend.application.usecase;
+package br.com.topone.backend.application.usecase.user;
 
 import java.util.Set;
 import java.util.UUID;
 
-public record CreateAdminUserCommand(
+public record UpdateUserPatchCommand(
+        UUID id,
         String email,
         String name,
         String password,

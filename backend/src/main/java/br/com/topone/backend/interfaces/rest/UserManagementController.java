@@ -1,6 +1,6 @@
 package br.com.topone.backend.interfaces.rest;
 
-import br.com.topone.backend.application.usecase.*;
+import br.com.topone.backend.application.usecase.user.*;
 import br.com.topone.backend.interfaces.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

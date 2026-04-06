@@ -1,4 +1,4 @@
-package br.com.topone.backend.application.usecase;
+package br.com.topone.backend.application.usecase.login;
 
 import br.com.topone.backend.domain.exception.InvalidTokenException;
 import br.com.topone.backend.domain.repository.RefreshTokenRepository;

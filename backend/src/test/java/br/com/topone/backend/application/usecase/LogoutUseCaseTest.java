@@ -1,5 +1,7 @@
 package br.com.topone.backend.application.usecase;
 
+import br.com.topone.backend.application.usecase.login.LoginUseCase;
+import br.com.topone.backend.application.usecase.login.LogoutUseCase;
 import br.com.topone.backend.domain.exception.InvalidTokenException;
 import br.com.topone.backend.domain.model.RefreshToken;
 import br.com.topone.backend.domain.model.User;

@@ -1,4 +1,4 @@
-package br.com.topone.backend.application.usecase;
+package br.com.topone.backend.application.usecase.user;
 
 import java.util.Set;
 import java.util.UUID;

@@ -1,10 +1,10 @@
-package br.com.topone.backend.application.usecase;
+package br.com.topone.backend.application.usecase.user;
 
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
-public record GetUserByIdResult(
+public record UpdateUserPatchResult(
         UUID id,
         String email,
         String name,

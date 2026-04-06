@@ -1,4 +1,4 @@
-package br.com.topone.backend.application.usecase;
+package br.com.topone.backend.application.usecase.user;
 
 import br.com.topone.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

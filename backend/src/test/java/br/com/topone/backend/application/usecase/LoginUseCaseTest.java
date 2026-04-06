@@ -1,5 +1,8 @@
 package br.com.topone.backend.application.usecase;
 
+import br.com.topone.backend.application.usecase.login.LoginCommand;
+import br.com.topone.backend.application.usecase.login.LoginResult;
+import br.com.topone.backend.application.usecase.login.LoginUseCase;
 import br.com.topone.backend.domain.exception.InvalidCredentialsException;
 import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.model.enums.AuthProvider;

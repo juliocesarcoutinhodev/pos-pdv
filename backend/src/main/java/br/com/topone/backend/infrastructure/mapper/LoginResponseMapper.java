@@ -1,6 +1,6 @@
 package br.com.topone.backend.infrastructure.mapper;
 
-import br.com.topone.backend.application.usecase.LoginResult;
+import br.com.topone.backend.application.usecase.login.LoginResult;
 import br.com.topone.backend.interfaces.dto.LoginResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
