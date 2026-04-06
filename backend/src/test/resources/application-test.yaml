@@ -20,6 +20,12 @@ spring:
       include-binding-errors: always
       include-stacktrace: never
 
+security:
+  jwt:
+    secret: cG9zcGR2LXNlY3JldC1rZXktZm9yLXRlc3RpbmctcHVycG9zZXMtc2VjdXJl
+    issuer: pospdv
+    access-token-expiration: 3600
+
 logging:
   level:
     root: WARN

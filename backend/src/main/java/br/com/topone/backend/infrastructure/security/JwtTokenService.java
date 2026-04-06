@@ -1,0 +1,70 @@
+package br.com.topone.backend.infrastructure.security;
+
+import br.com.topone.backend.domain.model.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import javax.crypto.SecretKey;
+import java.time.Instant;
+import java.util.Date;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class JwtTokenService {
+
+    private final JwtProperties properties;
+
+    public String generateAccessToken(User user) {
+        var now = Instant.now();
+        var expiry = now.plusSeconds(properties.getAccessTokenExpiration());
+
+        return Jwts.builder()
+                .subject(user.getId().toString())
+                .claim("email", user.getEmail())
+                .claim("name", user.getName())
+                .issuer(properties.getIssuer())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiry))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public Claims validateToken(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .requireIssuer(properties.getIssuer())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (JwtException | IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    public UUID getUserIdFromToken(String token) {
+        var claims = validateToken(token);
+        if (claims == null) {
+            return null;
+        }
+        return UUID.fromString(claims.getSubject());
+    }
+
+    public String getEmailFromToken(String token) {
+        var claims = validateToken(token);
+        if (claims == null) {
+            return null;
+        }
+        return claims.get("email", String.class);
+    }
+
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(properties.getDecodedSecret());
+    }
+}

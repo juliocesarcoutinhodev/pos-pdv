@@ -13,6 +13,10 @@ spring:
       include-binding-errors: always
       include-stacktrace: always
 
+security:
+  jwt:
+    access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:3600}
+
 logging:
   level:
     br.com.topone: DEBUG
