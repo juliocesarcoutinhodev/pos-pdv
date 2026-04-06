@@ -8,7 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -97,6 +99,28 @@ public class GlobalExceptionHandler {
                 HttpStatus.GONE.value(),
                 "Tokens revogados",
                 "Refresh token foi revogado, faça login novamente",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("Invalid parameter | name={} | value={}", ex.getName(), ex.getValue());
+        return ResponseEntity.badRequest().body(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida",
+                "Parâmetro inválido: " + ex.getName(),
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex) {
+        log.warn("Missing parameter | name={}", ex.getParameterName());
+        return ResponseEntity.badRequest().body(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida",
+                "Parâmetro obrigatório ausente: " + ex.getParameterName(),
                 Instant.now().toString()
         ));
     }

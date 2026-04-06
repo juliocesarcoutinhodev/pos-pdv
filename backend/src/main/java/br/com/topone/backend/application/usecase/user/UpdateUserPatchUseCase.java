@@ -28,7 +28,8 @@ public class UpdateUserPatchUseCase {
                 .orElseThrow(UserNotFoundException::new);
 
         if (command.email() != null && !command.email().equals(user.getEmail())) {
-            if (userRepository.existsByEmail(command.email())) {
+            var existing = userRepository.findByEmailExcludingId(command.email(), user.getId());
+            if (existing.isPresent()) {
                 throw new EmailAlreadyExistsException();
             }
             user.changeEmail(command.email());
@@ -44,6 +45,14 @@ public class UpdateUserPatchUseCase {
 
         if (command.roleIds() != null) {
             user.assignRoles(userRepository.resolveRolesByIds(command.roleIds()));
+        }
+
+        if (command.active() != null) {
+            if (command.active()) {
+                user.reactivate();
+            } else {
+                user.deactivate();
+            }
         }
 
         user.touch();

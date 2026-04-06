@@ -385,7 +385,28 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "users", "{{user_id}}"]
             },
-            "description": "Partial update user. Only provided fields are changed."
+            "description": "Partial update user. Only provided fields are changed. Use {\"active\": true} to reactivate or {\"active\": false} to deactivate."
+          },
+          "response": []
+        },
+        {
+          "name": "Reactivate User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}"]
+            },
+            "description": "Reactivate a previously deactivated user. Also supports {\"active\": false} to deactivate."
           },
           "response": []
         },
@@ -401,7 +422,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "users", "{{user_id}}"]
             },
-            "description": "Soft delete — sets deletedAt timestamp."
+            "description": "Deactivate user (soft delete) — sets deletedAt timestamp. User is hidden from active queries. No data is physically deleted from DB."
           },
           "response": []
         }

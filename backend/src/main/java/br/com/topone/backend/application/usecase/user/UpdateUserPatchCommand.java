@@ -8,6 +8,7 @@ public record UpdateUserPatchCommand(
         String email,
         String name,
         String password,
-        Set<UUID> roleIds
+        Set<UUID> roleIds,
+        Boolean active
 ) {
 }

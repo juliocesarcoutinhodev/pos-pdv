@@ -166,8 +166,8 @@ Revoga todos os refresh tokens do usuário e limpa o cookie.
 | GET    | `/api/v1/users/{id}`   | Sim  | Detalhes de um usuario                 |
 | POST   | `/api/v1/users`        | Sim  | Criar novo usuario com roleIds         |
 | PUT    | `/api/v1/users/{id}`   | Sim  | Atualizacao completa (roleIds obrig.)  |
-| PATCH  | `/api/v1/users/{id}`   | Sim  | Atualizacao parcial                    |
-| DELETE | `/api/v1/users/{id}`   | Sim  | Soft delete (desativar usuario)        |
+| PATCH  | `/api/v1/users/{id}`   | Sim  | Atualizacao parcial (inclui ativar/desativar) |
+| DELETE | `/api/v1/users/{id}`   | Sim  | Desativar usuario (soft delete)        |
 
 **POST `/api/v1/users`** — 201 Created
 ```json
@@ -225,7 +225,16 @@ Query params opcionais: `name` (parcial), `email` (parcial), `active` (true/fals
 ```
 
 **DELETE `/api/v1/users/{id}`** — 204 No Content
-Soft delete — define `deletedAt` no usuario. O usuario nao aparece mais em queries ativas.
+Desativar usuario (soft delete) — define `deletedAt`. O usuario nao aparece mais em queries ativas. Nenhum dado e deletado fisicamente do banco.
+
+**PATCH `/api/v1/users/{id}` com `active`** — 200 OK
+Ativar ou desativar usuario:
+```json
+{
+  "active": true
+}
+```
+`"active": true` reativa um usuario desativado, `"active": false` o desativa (equivalente ao DELETE).
 
 ### Administrativo (requer role ADMIN)
 

@@ -47,14 +47,16 @@ public class UserRepositoryAdapter implements UserRepository {
             entity = mapper.toEntity(user);
         }
 
-        entity.setRoles(new HashSet<>(roleEntities));
+        // Clear existing role associations to avoid join table duplicates
+        entity.getRoles().clear();
+        entity.getRoles().addAll(new HashSet<>(roleEntities));
         var saved = jpaRepository.save(entity);
         return mapper.toDomain(saved);
     }
 
     @Override
     public Optional<User> findById(UUID id) {
-        return jpaRepository.findByIdActive(id).map(mapper::toDomain);
+        return jpaRepository.findById(id).map(mapper::toDomain);
     }
 
     @Override
@@ -75,6 +77,16 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public Optional<User> findByEmailIncludingDeleted(String email) {
         return jpaRepository.findByEmailIncludingDeleted(email).map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<User> findActiveByEmailExcludingId(String email, UUID excludeId) {
+        return jpaRepository.findActiveByEmailExcludingId(email, excludeId).map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<User> findByEmailExcludingId(String email, UUID excludeId) {
+        return jpaRepository.findByEmailExcludingId(email, excludeId).map(mapper::toDomain);
     }
 
     @Override

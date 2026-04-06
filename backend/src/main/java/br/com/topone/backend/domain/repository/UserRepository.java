@@ -19,5 +19,17 @@ public interface UserRepository {
 
     PageResult<User> findAll(UserFilter filter, int page, int size);
 
+    /**
+     * Returns another non-soft-deleted user with the same email,
+     * or empty if the email is unique (accounting for the current user).
+     */
+    Optional<User> findActiveByEmailExcludingId(String email, UUID excludeId);
+
+    /**
+     * Returns any other user (including soft-deleted) with the same email,
+     * excluding the given ID. Used to satisfy DB unique constraint.
+     */
+    Optional<User> findByEmailExcludingId(String email, UUID excludeId);
+
     Set<Role> resolveRolesByIds(Set<UUID> roleIds);
 }

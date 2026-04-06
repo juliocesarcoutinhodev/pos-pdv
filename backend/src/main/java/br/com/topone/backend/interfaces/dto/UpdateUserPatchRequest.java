@@ -10,6 +10,7 @@ public record UpdateUserPatchRequest(
         @Email String email,
         @Size(max = 100) String name,
         @Size(min = 6) String password,
-        Set<UUID> roleIds
+        Set<UUID> roleIds,
+        Boolean active
 ) {
 }

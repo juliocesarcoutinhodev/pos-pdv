@@ -20,6 +20,12 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
     @Query("SELECT u FROM UserEntity u WHERE u.id = :id AND u.deletedAt IS NULL")
     java.util.Optional<UserEntity> findByIdActive(@Param("id") UUID id);
 
+    @Query("SELECT u FROM UserEntity u WHERE u.email = :email AND u.deletedAt IS NULL AND u.id != :excludeId")
+    java.util.Optional<UserEntity> findActiveByEmailExcludingId(@Param("email") String email, @Param("excludeId") UUID excludeId);
+
+    @Query("SELECT u FROM UserEntity u WHERE u.email = :email AND u.id != :excludeId")
+    java.util.Optional<UserEntity> findByEmailExcludingId(@Param("email") String email, @Param("excludeId") UUID excludeId);
+
     @Query("SELECT u FROM UserEntity u WHERE u.id = :id")
     java.util.Optional<UserEntity> findByIdIncludingDeleted(@Param("id") UUID id);
 
