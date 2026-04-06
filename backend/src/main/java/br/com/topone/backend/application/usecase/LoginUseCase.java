@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
@@ -24,6 +25,7 @@ public class LoginUseCase {
     private final JwtTokenService jwtTokenService;
     private final TokenHashService tokenHashService;
 
+    @Transactional
     public LoginResult execute(LoginCommand command) {
         var user = userRepository.findByEmail(command.email())
                 .orElseThrow(InvalidCredentialsException::new);
