@@ -96,7 +96,7 @@ O projeto segue Clean Architecture com hexagonal boundaries.
 ```
 br.com.topone.backend
 ├── domain/
-│   ├── model/        # Entidades, Value Objects, Enums
+│   ├── model/        # POJOs puros (ENTIDADES DE DOMÍNIO) — ZERO dependências externas
 │   ├── repository/   # Interfaces de repositorio (Ports)
 │   ├── service/      # Servicos de dominio
 │   └── exception/    # Excecoes de dominio (BusinessException, etc)
@@ -107,7 +107,11 @@ br.com.topone.backend
 │
 ├── infrastructure/
 │   ├── config/       # Configuracoes Spring (beans, security, etc)
-│   ├── persistence/  # Implementacoes JPA de repositorios (Adapters)
+│   ├── persistence/
+│   │   ├── entity/   # JPA entities (@Entity) — isoladas do dominio
+│   │   ├── jpa/      # Spring Data JPA repositories
+│   │   ├── mapper/   # Conversao domain ↔ entity
+│   │   └── adapter/  # Implementam os Ports delegando para JPA
 │   └── external/     # Integracoes externas (email, gateways, etc)
 │
 ├── interfaces/
@@ -117,7 +121,36 @@ br.com.topone.backend
 └── BackendApplication.java
 ```
 
-**Regra de dependencia:** `domain` nã o depende de ninguem. `application` depende de `domain`. `infrastructure` e `interfaces` dependem de `application` e `domain`. Nada do `domain` ou `application` pode importar pacotes de `infrastructure` ou `interfaces`.
+**Regra de dependencia:** `domain` nao depende de ninguem. `application` depende de `domain`. `infrastructure` e `interfaces` dependem de `application` e `domain`. As entidades do `domain/model` são **POJOs puros** — sem `@Entity`, `@Column`, ou qualquer anotação JPA/Spring. A conversão entre domain models e JPA entities acontece via mappers em `infrastructure/persistence/mapper/`.
+
+## Dominio
+
+### User (`tb_users`)
+
+| Campo            | Tipo          | Notas                         |
+| ---------------- | ------------- | ----------------------------- |
+| id               | UUID          | PK, auto-gen                  |
+| email            | VARCHAR(255)  | UNIQUE, NOT NULL              |
+| name             | VARCHAR(100)  | NOT NULL                      |
+| password_hash    | VARCHAR(255)  | Nullable (oauth users)        |
+| provider         | VARCHAR(10)   | `LOCAL` ou `GOOGLE`           |
+| created_at       | TIMESTAMP     | Auto                          |
+| updated_at       | TIMESTAMP     | Auto                          |
+
+### Refresh Token (`tb_refresh_tokens`)
+
+| Campo                    | Tipo          | Notas                               |
+| ------------------------ | ------------- | ----------------------------------- |
+| id                       | UUID          | PK, auto-gen                        |
+| user_id                  | UUID          | FK → tb_users(id), CASCADE DELETE   |
+| token_hash               | VARCHAR(255)  | NOT NULL (nunca token puro)         |
+| expires_at               | TIMESTAMP     | NOT NULL                            |
+| revoked_at               | TIMESTAMP     | Nullable                            |
+| replaced_by_token_hash   | VARCHAR(255)  | Nullable (rotação de token)         |
+| created_at               | TIMESTAMP     | Auto                                |
+| last_used_at             | TIMESTAMP     | Nullable                            |
+| user_agent               | VARCHAR(500)  | Nullable                            |
+| ip_address               | VARCHAR(45)   | Nullable                            |
 
 ## Tecnologias
 

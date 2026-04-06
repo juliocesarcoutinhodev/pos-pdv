@@ -1,34 +1,36 @@
 Objetivo
-Preparar configurações separadas para dev e test.
+Criar a base de domínio e persistência para autenticação com refresh token.
 
 Descrição
-Adicionar application.yml base e arquivos de profile para evitar configurações misturadas.
+Modelar User e a entidade de sessão/refresh token com suporte a rotação e revogação, com migrations Flyway.
 
 Critérios de Aceite
 
-Existem:
+Tabelas criadas via Flyway:
 
-application.yml
+users (email único)
 
-application-local.yml
+tb_refresh_tokens
 
-application-test.yml
+Campos mínimos:
 
-App roda com local e testes rodam com test
+tb_users: id, email, name, password_hash (nullable), provider (LOCAL/GOOGLE), created_at, updated_at
 
-PROFILE=local funciona
+tb_refresh_tokens: id, user_id, token_hash, expires_at, revoked_at, replaced_by_token_id (ou hash), created_at, last_used_at, user_agent/ip (opcional)
+
+Refresh token nunca salvo em texto puro (armazenar hash)
 
 Tarefas
 
-Criar arquivos de config
+Criar modelos no domínio + JPA na infra
 
-Ajustar portas/logs se necessário
+Criar migrations Flyway
 
-Documentar no README
+Validar schema no postgres
 
 DoD
 
-App sobe em dev
+Migrações aplicam no startup sem erro
 
-./mvnw test executa em test
+Restrições/índices essenciais (email unique, FK user_id)
 
