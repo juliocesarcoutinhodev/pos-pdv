@@ -89,6 +89,36 @@ Logs estruturados no padrao: `timestamp [thread] level [pospdv,profile] logger -
 ./mvnw test
 ```
 
+## Estrutura de pacotes
+
+O projeto segue Clean Architecture com hexagonal boundaries.
+
+```
+br.com.topone.backend
+├── domain/
+│   ├── model/        # Entidades, Value Objects, Enums
+│   ├── repository/   # Interfaces de repositorio (Ports)
+│   ├── service/      # Servicos de dominio
+│   └── exception/    # Excecoes de dominio (BusinessException, etc)
+│
+├── application/
+│   ├── usecase/      # Casos de uso (interfaces ou implementacoes)
+│   └── service/      # Servicos de aplicacao
+│
+├── infrastructure/
+│   ├── config/       # Configuracoes Spring (beans, security, etc)
+│   ├── persistence/  # Implementacoes JPA de repositorios (Adapters)
+│   └── external/     # Integracoes externas (email, gateways, etc)
+│
+├── interfaces/
+│   ├── rest/         # Controllers, handlers (REST adapters)
+│   └── dto/          # DTOs de entrada/saida
+│
+└── BackendApplication.java
+```
+
+**Regra de dependencia:** `domain` nã o depende de ninguem. `application` depende de `domain`. `infrastructure` e `interfaces` dependem de `application` e `domain`. Nada do `domain` ou `application` pode importar pacotes de `infrastructure` ou `interfaces`.
+
 ## Tecnologias
 
-Spring Boot 4, Spring Data JPA, Flyway, PostgreSQL, H2 (dev), Actuator + Prometheus, Lombok, Bean Validation, Spring Mail.
+Spring Boot 4, Spring Data JPA, Flyway, PostgreSQL, H2 (dev), Actuator + Prometheus, Lombok, Bean Validation, Spring Mail, MapStruct.
