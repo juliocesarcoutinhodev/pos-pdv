@@ -50,7 +50,7 @@ public class UserRepositoryAdapter implements UserRepository {
         // Clear existing role associations to avoid join table duplicates
         entity.getRoles().clear();
         entity.getRoles().addAll(new HashSet<>(roleEntities));
-        var saved = jpaRepository.save(entity);
+        var saved = jpaRepository.saveAndFlush(entity);
         return mapper.toDomain(saved);
     }
 
