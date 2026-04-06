@@ -58,7 +58,8 @@ public class SecurityConfig {
                             response.setContentType("application/json");
                             response.getWriter().write("{\"error\":\"Não autorizado\",\"message\":\"Token de autenticação ausente ou inválido\"}");
                         })
-                );
+                )
+                .securityContext(sc -> sc.requireExplicitSave(false));
 
         return http.build();
     }

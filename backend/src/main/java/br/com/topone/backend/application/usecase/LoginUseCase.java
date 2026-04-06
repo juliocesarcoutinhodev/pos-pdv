@@ -39,7 +39,7 @@ public class LoginUseCase {
         var tokenHash = tokenHashService.hash(rawRefreshToken);
 
         var expiresAt = Instant.now().plusSeconds(jwtTokenService.getRefreshTokenExpirationSeconds());
-        var refreshToken = new RefreshToken(user, tokenHash, expiresAt);
+        var refreshToken = new RefreshToken(user.getId(), tokenHash, expiresAt);
         refreshTokenRepository.save(refreshToken);
 
         log.info("User logged in successfully | email={} | id={}", user.getEmail(), user.getId());

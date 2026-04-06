@@ -1,6 +1,7 @@
 package br.com.topone.backend.infrastructure.security;
 
 import br.com.topone.backend.domain.model.User;
+import br.com.topone.backend.domain.model.enums.Role;
 import io.jsonwebtoken.Claims;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,12 +13,17 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenService tokenService;
@@ -25,26 +31,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws IOException, ServletException {
-        var authorization = request.getHeader("Authorization");
+        var token = extractToken(request);
 
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        var token = authorization.substring(7);
-        var claims = tokenService.validateToken(token);
+        try {
+            var claims = tokenService.validateToken(token);
+            if (claims == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"status\":401,\"error\":\"Não autorizado\",\"message\":\"Token inválido ou expirado\"}");
+                return;
+            }
 
-        if (claims == null) {
-            filterChain.doFilter(request, response);
+            var user = buildUserFromClaims(claims);
+            var authentication = new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        } catch (Exception e) {
+            log.warn("JWT validation error | ip={} path={}", getClientIp(request), request.getRequestURI(), e);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":401,\"error\":\"Não autorizado\",\"message\":\"Erro ao validar token de acesso\"}");
             return;
         }
-
-        var user = buildUserFromClaims(claims);
-        var authentication = new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        var header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
     }
 
     private User buildUserFromClaims(Claims claims) {
@@ -52,6 +75,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         user.setId(java.util.UUID.fromString(claims.getSubject()));
         user.setEmail(claims.get("email", String.class));
         user.setName(claims.get("name", String.class));
+
+        @SuppressWarnings("unchecked")
+        var roleList = (List<String>) claims.get("roles", List.class);
+        if (roleList != null && !roleList.isEmpty()) {
+            var roles = roleList.stream()
+                    .map(Role::valueOf)
+                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(Role.class)));
+            user.setRoles(roles);
+        }
+
         return user;
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        var forwarded = request.getHeader("X-Forwarded-For");
+        return (forwarded != null && !forwarded.isBlank()) ? forwarded.split(",")[0].trim() : request.getRemoteAddr();
     }
 }

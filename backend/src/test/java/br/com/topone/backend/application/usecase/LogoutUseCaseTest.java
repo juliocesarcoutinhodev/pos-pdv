@@ -51,7 +51,7 @@ class LogoutUseCaseTest {
 
         activeToken = new RefreshToken();
         activeToken.setId(UUID.randomUUID());
-        activeToken.setUser(user);
+        activeToken.setUserId(user.getId());
         activeToken.setTokenHash(hashedToken);
         activeToken.setExpiresAt(Instant.now().plusSeconds(604800));
         activeToken.setCreatedAt(Instant.now());

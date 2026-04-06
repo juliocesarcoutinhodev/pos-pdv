@@ -13,7 +13,7 @@ import java.util.UUID;
 public class RefreshToken {
 
     private UUID id;
-    private User user;
+    private UUID userId;
     private String tokenHash;
     private Instant expiresAt;
     private Instant revokedAt;
@@ -23,8 +23,8 @@ public class RefreshToken {
     private String userAgent;
     private String ipAddress;
 
-    public RefreshToken(User user, String tokenHash, Instant expiresAt) {
-        this.user = user;
+    public RefreshToken(UUID userId, String tokenHash, Instant expiresAt) {
+        this.userId = userId;
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
     }

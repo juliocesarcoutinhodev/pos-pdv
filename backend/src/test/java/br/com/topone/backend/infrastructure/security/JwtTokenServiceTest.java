@@ -5,7 +5,6 @@ import br.com.topone.backend.domain.model.enums.AuthProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,6 +12,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class JwtTokenServiceTest {
 
     private JwtTokenService tokenService;
+
+    private User testUser() {
+        var user = new User();
+        user.setId(UUID.randomUUID());
+        user.setEmail("user@test.com");
+        user.setName("Test User");
+        user.setProvider(AuthProvider.LOCAL);
+        return user;
+    }
+
     private JwtProperties jwtProperties;
 
     @BeforeEach
@@ -28,7 +37,8 @@ class JwtTokenServiceTest {
 
     @Test
     void shouldGenerateValidAccessToken() {
-        var user = new User(UUID.randomUUID(), "user@test.com", "Test User", "hash123", AuthProvider.LOCAL, Instant.now(), Instant.now());
+        var user = User.createLocalUser("user@test.com", "Test User", "hash123");
+        user.setId(UUID.randomUUID());
 
         var token = tokenService.generateAccessToken(user);
 
@@ -38,7 +48,7 @@ class JwtTokenServiceTest {
 
     @Test
     void shouldValidateTokenWithCorrectIssuer() {
-        var user = new User(UUID.randomUUID(), "user@test.com", "Test User", null, AuthProvider.LOCAL, Instant.now(), Instant.now());
+        var user = testUser();
         var token = tokenService.generateAccessToken(user);
 
         var claims = tokenService.validateToken(token);
@@ -58,7 +68,7 @@ class JwtTokenServiceTest {
         wrongProps.setAccessTokenExpiration(3600);
         wrongProps.init();
 
-        var user = new User(UUID.randomUUID(), "user@test.com", "Test User", null, AuthProvider.LOCAL, Instant.now(), Instant.now());
+        var user = testUser();
         var token = new JwtTokenService(wrongProps).generateAccessToken(user);
 
         var claims = tokenService.validateToken(token);
@@ -74,7 +84,7 @@ class JwtTokenServiceTest {
         wrongProps.setAccessTokenExpiration(3600);
         wrongProps.init();
 
-        var user = new User(UUID.randomUUID(), "user@test.com", "Test User", null, AuthProvider.LOCAL, Instant.now(), Instant.now());
+        var user = testUser();
         var token = new JwtTokenService(wrongProps).generateAccessToken(user);
 
         var claims = tokenService.validateToken(token);
@@ -86,7 +96,7 @@ class JwtTokenServiceTest {
     void shouldRejectExpiredToken() {
         jwtProperties.setAccessTokenExpiration(-1);
 
-        var user = new User(UUID.randomUUID(), "user@test.com", "Test User", null, AuthProvider.LOCAL, Instant.now(), Instant.now());
+        var user = testUser();
         var token = tokenService.generateAccessToken(user);
 
         var claims = tokenService.validateToken(token);
@@ -97,7 +107,8 @@ class JwtTokenServiceTest {
     @Test
     void shouldExtractUserIdFromValidToken() {
         var userId = UUID.randomUUID();
-        var user = new User(userId, "user@test.com", "Test User", null, AuthProvider.LOCAL, Instant.now(), Instant.now());
+        var user = testUser();
+        user.setId(userId);
         var token = tokenService.generateAccessToken(user);
 
         var extractedId = tokenService.getUserIdFromToken(token);
@@ -107,7 +118,7 @@ class JwtTokenServiceTest {
 
     @Test
     void shouldExtractEmailFromValidToken() {
-        var user = new User(UUID.randomUUID(), "user@test.com", "Test User", null, AuthProvider.LOCAL, Instant.now(), Instant.now());
+        var user = testUser();
         var token = tokenService.generateAccessToken(user);
 
         var email = tokenService.getEmailFromToken(token);

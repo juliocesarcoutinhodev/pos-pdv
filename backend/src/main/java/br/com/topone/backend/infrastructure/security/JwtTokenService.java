@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,10 +26,15 @@ public class JwtTokenService {
         var now = Instant.now();
         var expiry = now.plusSeconds(properties.getAccessTokenExpiration());
 
+        var roleNames = user.getRoles() != null
+                ? user.getRoles().stream().map(Enum::name).collect(Collectors.toSet())
+                : Set.<String>of();
+
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
                 .claim("name", user.getName())
+                .claim("roles", roleNames)
                 .issuer(properties.getIssuer())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))

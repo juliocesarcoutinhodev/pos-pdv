@@ -29,7 +29,7 @@ public class LogoutUseCase {
             log.info("Token revoked | tokenId={}", storedToken.getId());
         }
 
-        var userId = storedToken.getUser().getId();
+        var userId = storedToken.getUserId();
         refreshTokenRepository.revokeAllByUserId(userId);
         log.info("All tokens revoked for user | userId={}", userId);
     }

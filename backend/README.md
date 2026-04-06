@@ -142,6 +142,21 @@ Lê refresh token do cookie automaticamente, retorna novo access token e atualiz
 **POST `/logout`** — 204 No Content
 Revoga todos os refresh tokens do usuário e limpa o cookie.
 
+### Usuário (requer JWT)
+
+| Metodo | Path         | Auth | Descricao                 |
+| ------ | ------------ | ---- | ------------------------- |
+| GET    | `/api/v1/me` | Sim  | Informacoes do usuario logado |
+
+**GET `/api/v1/me`** — 200 OK
+```json
+{
+  "id": "uuid",
+  "email": "user@test.com",
+  "name": "Test User"
+}
+```
+
 ### Protegidos (requerem JWT)
 
 Qualquer endpoint fora das rotas publicas retorna `401` se o token nao for fornecido ou for invalido.
@@ -210,6 +225,33 @@ br.com.topone.backend
 | provider         | VARCHAR(10)   | `LOCAL` ou `GOOGLE`           |
 | created_at       | TIMESTAMP     | Auto                          |
 | updated_at       | TIMESTAMP     | Auto                          |
+
+### Role (`tb_roles`)
+
+| Campo | Tipo         | Notas          |
+| ----- | ------------ | -------------- |
+| id    | UUID         | PK, auto-gen   |
+| name  | VARCHAR(20)  | UNIQUE, NOT NULL |
+
+### User-Role (`tb_user_roles`)
+
+| Campo   | Tipo | Notas                           |
+| ------- | ---- | ------------------------------- |
+| user_id | UUID | FK → tb_users(id), CASCADE DELETE|
+| role_id | UUID | FK → tb_roles(id), CASCADE DELETE|
+
+### Usuário Admin Padrão
+
+Na inicialização, se não existir, é criado automaticamente um usuário admin:
+
+| Campo    | Valor            |
+| -------- | ---------------- |
+| email    | `admin@email.com`|
+| nome     | `Admin`          |
+| senha    | `admin123`       |
+| roles    | `ADMIN`, `USER`  |
+
+Altere a senha em produção imediatamente após o primeiro login.
 
 ### Refresh Token (`tb_refresh_tokens`)
 

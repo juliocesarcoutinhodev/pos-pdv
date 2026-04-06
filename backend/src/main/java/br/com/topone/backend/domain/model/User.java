@@ -1,9 +1,12 @@
 package br.com.topone.backend.domain.model;
 
 import br.com.topone.backend.domain.model.enums.AuthProvider;
+import br.com.topone.backend.domain.model.enums.Role;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -18,6 +21,8 @@ public class User {
     private String name;
     private String passwordHash;
     private AuthProvider provider;
+    @Builder.Default
+    private Set<Role> roles = EnumSet.noneOf(Role.class);
     private Instant createdAt;
     private Instant updatedAt;
 

@@ -6,6 +6,8 @@ import br.com.topone.backend.domain.exception.RefreshTokenNotFoundException;
 import br.com.topone.backend.domain.exception.RefreshTokenRevokedException;
 import br.com.topone.backend.domain.model.RefreshToken;
 import br.com.topone.backend.domain.repository.RefreshTokenRepository;
+import br.com.topone.backend.domain.model.User;
+import br.com.topone.backend.domain.repository.UserRepository;
 import br.com.topone.backend.infrastructure.security.JwtTokenService;
 import br.com.topone.backend.infrastructure.security.TokenHashService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.time.Instant;
 public class RefreshTokenUseCase {
 
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRepository userRepository;
     private final JwtTokenService jwtTokenService;
     private final TokenHashService tokenHashService;
 
@@ -45,7 +48,9 @@ public class RefreshTokenUseCase {
             throw new RefreshTokenExpiredException();
         }
 
-        var user = storedToken.getUser();
+        var user = userRepository.findById(storedToken.getUserId())
+                .orElseThrow(InvalidTokenException::new);
+
         var expiresIn = jwtTokenService.getRefreshTokenExpirationSeconds();
 
         var rawRefreshToken = jwtTokenService.generateRefreshToken(user);
@@ -55,7 +60,7 @@ public class RefreshTokenUseCase {
         storedToken.replaceBy(newTokenHash);
         refreshTokenRepository.save(storedToken);
 
-        var newRefreshToken = new RefreshToken(user, newTokenHash, Instant.now().plusSeconds(expiresIn));
+        var newRefreshToken = new RefreshToken(user.getId(), newTokenHash, Instant.now().plusSeconds(expiresIn));
         refreshTokenRepository.save(newRefreshToken);
 
         var accessToken = jwtTokenService.generateAccessToken(user);

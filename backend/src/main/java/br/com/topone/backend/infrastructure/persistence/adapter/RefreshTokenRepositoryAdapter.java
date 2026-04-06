@@ -2,8 +2,10 @@ package br.com.topone.backend.infrastructure.persistence.adapter;
 
 import br.com.topone.backend.domain.model.RefreshToken;
 import br.com.topone.backend.domain.repository.RefreshTokenRepository;
+import br.com.topone.backend.infrastructure.persistence.entity.UserEntity;
 import br.com.topone.backend.infrastructure.persistence.jpa.RefreshTokenJpaRepository;
 import br.com.topone.backend.infrastructure.persistence.mapper.RefreshTokenMapper;
+import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -16,15 +18,22 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
 
     private final RefreshTokenJpaRepository jpaRepository;
     private final RefreshTokenMapper mapper;
+    private final EntityManager entityManager;
 
-    public RefreshTokenRepositoryAdapter(RefreshTokenJpaRepository jpaRepository, RefreshTokenMapper mapper) {
+    public RefreshTokenRepositoryAdapter(RefreshTokenJpaRepository jpaRepository,
+                                         RefreshTokenMapper mapper,
+                                         EntityManager entityManager) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
+        this.entityManager = entityManager;
     }
 
     @Override
     public RefreshToken save(RefreshToken refreshToken) {
+        var userRef = entityManager.getReference(UserEntity.class, refreshToken.getUserId());
         var entity = mapper.toEntity(refreshToken);
+        entity.setUser(userRef);
+
         var saved = jpaRepository.save(entity);
         return mapper.toDomain(saved);
     }
