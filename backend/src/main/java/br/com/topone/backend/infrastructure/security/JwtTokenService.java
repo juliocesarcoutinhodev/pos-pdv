@@ -35,6 +35,20 @@ public class JwtTokenService {
                 .compact();
     }
 
+    public String generateRefreshToken(User user) {
+        var now = Instant.now();
+        var expiry = now.plusSeconds(properties.getRefreshTokenExpiration());
+
+        return Jwts.builder()
+                .subject(user.getId().toString())
+                .claim("type", "refresh")
+                .issuer(properties.getIssuer())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiry))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
     public Claims validateToken(String token) {
         try {
             return Jwts.parser()
@@ -66,5 +80,9 @@ public class JwtTokenService {
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(properties.getDecodedSecret());
+    }
+
+    public long getRefreshTokenExpirationSeconds() {
+        return properties.getRefreshTokenExpiration();
     }
 }

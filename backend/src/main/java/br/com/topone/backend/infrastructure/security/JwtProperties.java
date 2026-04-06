@@ -17,6 +17,7 @@ public class JwtProperties {
     private String secret;
     private String issuer = "pospdv";
     private long accessTokenExpiration = 3600;
+    private long refreshTokenExpiration = 604800; // 7 days
 
     private byte[] decodedSecret;
 

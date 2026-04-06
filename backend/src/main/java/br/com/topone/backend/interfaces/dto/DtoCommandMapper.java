@@ -1,5 +1,7 @@
 package br.com.topone.backend.interfaces.dto;
 
+import br.com.topone.backend.application.usecase.LoginCommand;
+import br.com.topone.backend.application.usecase.RefreshTokenCommand;
 import br.com.topone.backend.application.usecase.RegisterUserCommand;
 import org.mapstruct.Mapper;
 
@@ -7,4 +9,8 @@ import org.mapstruct.Mapper;
 public interface DtoCommandMapper {
 
     RegisterUserCommand toCommand(RegisterRequest request);
+
+    LoginCommand toLoginCommand(LoginRequest request);
+
+    RefreshTokenCommand toRefreshCommand(RefreshRequest request);
 }

@@ -1,7 +1,7 @@
 package br.com.topone.backend.infrastructure.config;
 
-import br.com.topone.backend.domain.exception.EmailAlreadyExistsException;
-import br.com.topone.backend.interfaces.dto.ConflictResponse;
+import br.com.topone.backend.domain.exception.*;
+import br.com.topone.backend.interfaces.dto.ErrorResponse;
 import br.com.topone.backend.interfaces.dto.ValidationError;
 import br.com.topone.backend.interfaces.dto.ValidationErrorResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -19,15 +19,25 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ConflictResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
         log.warn("Attempt to register existing email | email={}", ex.getMessage());
-        var body = new ConflictResponse(
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "Conflito",
                 "E-mail já cadastrado",
                 Instant.now().toString()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+        ));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex) {
+        log.warn("Invalid login attempt | message={}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Não autorizado",
+                "E-mail ou senha inválidos",
+                Instant.now().toString()
+        ));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -38,12 +48,44 @@ public class GlobalExceptionHandler {
 
         log.warn("Validation error | details={}", errors);
 
-        var body = new ValidationErrorResponse(
+        return ResponseEntity.badRequest().body(new ValidationErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Requisição inválida",
                 errors,
                 Instant.now().toString()
-        );
-        return ResponseEntity.badRequest().body(body);
+        ));
+    }
+
+    @ExceptionHandler(RefreshTokenNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRefreshTokenNotFound(RefreshTokenNotFoundException ex) {
+        log.warn("Refresh token not found");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Não autorizado",
+                "Refresh token inválido",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(RefreshTokenExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleRefreshTokenExpired(RefreshTokenExpiredException ex) {
+        log.warn("Refresh token expired");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Não autorizado",
+                "Refresh token expirado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(RefreshTokenRevokedException.class)
+    public ResponseEntity<ErrorResponse> handleRefreshTokenRevoked(RefreshTokenRevokedException ex) {
+        log.warn("Refresh token was revoked");
+        return ResponseEntity.status(HttpStatus.GONE).body(new ErrorResponse(
+                HttpStatus.GONE.value(),
+                "Tokens revogados",
+                "Refresh token foi revogado, faça login novamente",
+                Instant.now().toString()
+        ));
     }
 }

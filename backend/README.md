@@ -67,6 +67,7 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 | `JWT_SECRET`                        | *(sem padrao)*                       | Chave JWT em Base64 (min. 256 bits) |
 | `JWT_ISSUER`                        | `pospdv`                             | Issuer do JWT                    |
 | `JWT_ACCESS_TOKEN_EXPIRATION`       | `3600` (local) / `900` (prod)        | TTL do access token em segundos  |
+| `JWT_REFRESH_TOKEN_EXPIRATION`      | `604800` (7 dias)                    | TTL do refresh token em segundos  |
 
 ## Endpoints
 
@@ -76,9 +77,34 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 
 ### Autenticacao
 
-| Metodo | Path                      | Auth | Descricao               |
-| ------ | ------------------------- | ---- | ----------------------- |
-| POST   | `/api/v1/auth/register`   | Nao  | Cadastrar novo usuario  |
+| Metodo | Path                      | Auth | Descricao                            |
+| ------ | ------------------------- | ---- | ------------------------------------ |
+| POST   | `/api/v1/auth/register`   | Nao  | Cadastrar novo usuario               |
+| POST   | `/api/v1/auth/login`      | Nao  | Autenticar e receber tokens          |
+| POST   | `/api/v1/auth/refresh`    | Nao  | Renovar access token com refresh token|
+
+#### Responses
+
+**POST `/login`** — 200 OK
+```json
+{
+  "user": { "id": "...", "email": "user@test.com", "name": "Test User", "provider": "LOCAL" },
+  "accessToken": "eyJ...",
+  "refreshToken": "eyJ...",
+  "expiresIn": 604800
+}
+```
+
+**POST `/refresh`** — 200 OK
+```json
+{
+  "accessToken": "eyJ...",
+  "refreshToken": "eyJ...",
+  "expiresIn": 604800
+}
+```
+
+O refresh token é rotacionado a cada uso — o anterior é invalidado e um novo é retornado.
 
 ### Protegidos (requerem JWT)
 
