@@ -1,8 +1,10 @@
 package br.com.topone.backend.infrastructure.persistence.adapter;
 
 import br.com.topone.backend.domain.model.User;
+import br.com.topone.backend.domain.model.enums.Role;
 import br.com.topone.backend.domain.repository.UserRepository;
 import br.com.topone.backend.infrastructure.persistence.entity.RoleEntity;
+import br.com.topone.backend.infrastructure.persistence.entity.UserEntity;
 import br.com.topone.backend.infrastructure.persistence.jpa.RoleJpaRepository;
 import br.com.topone.backend.infrastructure.persistence.jpa.UserJpaRepository;
 import br.com.topone.backend.infrastructure.persistence.mapper.UserMapper;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -32,7 +35,18 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public User save(User user) {
         var roleEntities = resolveRoles(user.getRoles());
-        var entity = mapper.toEntity(user);
+        UserEntity entity;
+
+        if (user.getId() != null) {
+            // Update existing
+            entity = jpaRepository.findByIdIncludingDeleted(user.getId())
+                    .orElseGet(() -> jpaRepository.save(new UserEntity()));
+            mapper.updateEntity(user, entity);
+        } else {
+            // New user
+            entity = mapper.toEntity(user);
+        }
+
         entity.setRoles(new HashSet<>(roleEntities));
         var saved = jpaRepository.save(entity);
         return mapper.toDomain(saved);
@@ -40,7 +54,7 @@ public class UserRepositoryAdapter implements UserRepository {
 
     @Override
     public Optional<User> findById(UUID id) {
-        return jpaRepository.findById(id).map(mapper::toDomain);
+        return jpaRepository.findByIdActive(id).map(mapper::toDomain);
     }
 
     @Override
@@ -51,6 +65,43 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public boolean existsByEmail(String email) {
         return jpaRepository.existsByEmail(email);
+    }
+
+    @Override
+    public Optional<User> findByIdIncludingDeleted(UUID id) {
+        return jpaRepository.findByIdIncludingDeleted(id).map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<User> findByEmailIncludingDeleted(String email) {
+        return jpaRepository.findByEmailIncludingDeleted(email).map(mapper::toDomain);
+    }
+
+    @Override
+    public br.com.topone.backend.domain.repository.PageResult<User> findAll(
+            br.com.topone.backend.domain.repository.UserFilter filter,
+            int page,
+            int size) {
+        var namePattern = filter.name() != null && !filter.name().isBlank()
+                ? "%" + filter.name().toLowerCase() + "%" : null;
+        var emailPattern = filter.email() != null && !filter.email().isBlank()
+                ? "%" + filter.email().toLowerCase() + "%" : null;
+        var springPage = org.springframework.data.domain.PageRequest.of(page, size);
+        var pageResult = jpaRepository.searchByFilter(namePattern, emailPattern, filter.active(), springPage);
+        var users = pageResult.getContent().stream().map(mapper::toDomain).toList();
+        return new br.com.topone.backend.domain.repository.PageResult<>(
+                users, pageResult.getNumber(), pageResult.getSize(),
+                pageResult.getTotalElements(), pageResult.getTotalPages());
+    }
+
+    @Override
+    public Set<Role> resolveRolesByIds(Set<UUID> roleIds) {
+        if (roleIds == null || roleIds.isEmpty()) return Set.of();
+        var found = new HashSet<Role>();
+        for (var uuid : roleIds) {
+            roleJpaRepository.findById(uuid).ifPresent(e -> found.add(Role.valueOf(e.getName())));
+        }
+        return found;
     }
 
     private List<RoleEntity> resolveRoles(java.util.Set<br.com.topone.backend.domain.model.enums.Role> roles) {

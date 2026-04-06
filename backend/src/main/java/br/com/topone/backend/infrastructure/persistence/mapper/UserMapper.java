@@ -6,6 +6,7 @@ import br.com.topone.backend.infrastructure.persistence.entity.RoleEntity;
 import br.com.topone.backend.infrastructure.persistence.entity.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
 import java.util.List;
@@ -23,6 +24,9 @@ public interface UserMapper {
 
     @Mapping(target = "roles", source = "roles", qualifiedByName = "mapRolesEntityToDomainSet")
     User toDomain(UserEntity entity);
+
+    @Mapping(target = "roles", ignore = true)
+    void updateEntity(User domain, @MappingTarget UserEntity entity);
 
     @Named("mapRolesEntityToDomainSet")
     default Set<Role> mapRolesEntityToDomain(Set<RoleEntity> roles) {

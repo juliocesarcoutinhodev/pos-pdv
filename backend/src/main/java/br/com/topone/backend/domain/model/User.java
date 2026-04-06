@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -25,6 +26,7 @@ public class User {
     private Set<Role> roles = EnumSet.noneOf(Role.class);
     private Instant createdAt;
     private Instant updatedAt;
+    private Instant deletedAt;
 
     public User(String email, String name, AuthProvider provider) {
         this.email = email;
@@ -47,5 +49,13 @@ public class User {
 
     public boolean hasPassword() {
         return passwordHash != null && !passwordHash.isBlank();
+    }
+
+    public void deactivate() {
+        this.deletedAt = Instant.now();
+    }
+
+    public boolean isActive() {
+        return deletedAt == null;
     }
 }

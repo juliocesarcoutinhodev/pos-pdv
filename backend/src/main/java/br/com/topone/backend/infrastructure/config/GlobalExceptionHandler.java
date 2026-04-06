@@ -100,4 +100,15 @@ public class GlobalExceptionHandler {
                 Instant.now().toString()
         ));
     }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+        log.warn("User not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                "Usuário não encontrado",
+                Instant.now().toString()
+        ));
+    }
 }

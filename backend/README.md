@@ -158,6 +158,75 @@ Revoga todos os refresh tokens do usuário e limpa o cookie.
 }
 ```
 
+### CRUD de Usuarios (requer role ADMIN)
+
+| Metodo | Path                   | Auth | Descricao                              |
+| ------ | ---------------------- | ---- | -------------------------------------- |
+| GET    | `/api/v1/users`        | Sim  | Listar usuarios com filtros/paginacao  |
+| GET    | `/api/v1/users/{id}`   | Sim  | Detalhes de um usuario                 |
+| POST   | `/api/v1/users`        | Sim  | Criar novo usuario com roleIds         |
+| PUT    | `/api/v1/users/{id}`   | Sim  | Atualizacao completa (roleIds obrig.)  |
+| PATCH  | `/api/v1/users/{id}`   | Sim  | Atualizacao parcial                    |
+| DELETE | `/api/v1/users/{id}`   | Sim  | Soft delete (desativar usuario)        |
+
+**POST `/api/v1/users`** — 201 Created
+```json
+{
+  "email": "joao@email.com",
+  "name": "Joao Silva",
+  "password": "senha123",
+  "roleIds": ["00000000-0000-0000-0000-000000000001"]
+}
+```
+Response 201:
+```json
+{
+  "id": "uuid",
+  "email": "joao@email.com",
+  "name": "Joao Silva",
+  "provider": "LOCAL",
+  "roles": ["USER"],
+  "createdAt": "2026-04-06T...",
+  "updatedAt": null,
+  "active": true
+}
+```
+
+**PUT `/api/v1/users/{id}`** — 200 OK
+Todos os campos obrigatorios exceto `email` e `password`:
+```json
+{
+  "email": "novo@email.com",
+  "name": "Nome Atualizado",
+  "password": "novaSenha123",
+  "roleIds": ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002"]
+}
+```
+
+**PATCH `/api/v1/users/{id}`** — 200 OK
+Apenas os campos enviados sao aplicados:
+```json
+{
+  "name": "Nome Parcial",
+  "roleIds": ["00000000-0000-0000-0000-000000000002"]
+}
+```
+
+**GET `/api/v1/users?page=0&size=20`** — 200 OK
+Query params opcionais: `name` (parcial), `email` (parcial), `active` (true/false).
+```json
+{
+  "content": [{...}],
+  "page": 0,
+  "size": 20,
+  "totalElements": 42,
+  "totalPages": 3
+}
+```
+
+**DELETE `/api/v1/users/{id}`** — 204 No Content
+Soft delete — define `deletedAt` no usuario. O usuario nao aparece mais em queries ativas.
+
 ### Administrativo (requer role ADMIN)
 
 | Metodo | Path                     | Auth | Descricao                 |
@@ -259,6 +328,7 @@ br.com.topone.backend
 | provider         | VARCHAR(10)   | `LOCAL` ou `GOOGLE`           |
 | created_at       | TIMESTAMP     | Auto                          |
 | updated_at       | TIMESTAMP     | Auto                          |
+| deleted_at       | TIMESTAMP     | Nullable (soft delete)        |
 
 ### Role (`tb_roles`)
 
@@ -266,6 +336,14 @@ br.com.topone.backend
 | ----- | ------------ | -------------- |
 | id    | UUID         | PK, auto-gen   |
 | name  | VARCHAR(20)  | UNIQUE, NOT NULL |
+
+Roles disponiveis: `USER`, `ADMIN`.
+Para atribuir um perfil a um usuario, use o UUID da role:
+
+| UUID                               | Nome  |
+| ---------------------------------- | ----- |
+| `00000000-0000-0000-0000-000000000001` | USER  |
+| `00000000-0000-0000-0000-000000000002` | ADMIN |
 
 ### User-Role (`tb_user_roles`)
 
