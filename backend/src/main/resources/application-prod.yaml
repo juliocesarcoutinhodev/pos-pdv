@@ -26,3 +26,10 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+
+logging:
+  level:
+    root: WARN
+    br.com.topone: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN

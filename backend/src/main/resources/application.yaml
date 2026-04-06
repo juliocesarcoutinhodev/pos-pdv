@@ -29,6 +29,18 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
+logging:
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [pospdv,${spring.profiles.active:default}] %logger{36} - %msg%n'
+  level:
+    br.com.topone: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN
+
+# --- Security for logs ---
+# No sensitive data (passwords, tokens, SSNs) logged at any level.
+# SQL parameters and request bodies are never dumped.
+
 management:
   endpoints:
     web:

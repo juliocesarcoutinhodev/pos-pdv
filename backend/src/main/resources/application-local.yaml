@@ -13,6 +13,13 @@ spring:
       include-binding-errors: always
       include-stacktrace: always
 
+logging:
+  level:
+    br.com.topone: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
 management:
   endpoint:
     health:
