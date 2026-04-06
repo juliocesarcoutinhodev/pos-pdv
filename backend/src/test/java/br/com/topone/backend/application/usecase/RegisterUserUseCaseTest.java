@@ -69,7 +69,7 @@ class RegisterUserUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(command))
                 .isInstanceOf(EmailAlreadyExistsException.class)
-                .hasMessageContaining("user@test.com");
+                .hasMessage("Email already registered");
 
         verify(userRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());

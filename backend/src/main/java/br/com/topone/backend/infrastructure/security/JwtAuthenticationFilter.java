@@ -3,6 +3,7 @@ package br.com.topone.backend.infrastructure.security;
 import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.model.enums.Role;
 import io.jsonwebtoken.Claims;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;

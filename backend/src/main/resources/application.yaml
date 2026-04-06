@@ -30,7 +30,7 @@ server:
 
 logging:
   pattern:
-    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [pospdv,${spring.profiles.active:default}] %logger{36} - %msg%n'
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [pospdv,${spring.profiles.active:default}] [%X{correlationId:-}] %logger{36} - %msg%n'
   level:
     br.com.topone: INFO
     org.springframework.web: WARN
