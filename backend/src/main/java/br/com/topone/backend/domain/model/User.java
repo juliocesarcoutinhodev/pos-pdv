@@ -27,6 +27,15 @@ public class User {
         this.provider = provider;
     }
 
+    public static User createLocalUser(String email, String name, String passwordHash) {
+        var user = new User();
+        user.email = email;
+        user.name = name;
+        user.setPasswordHash(passwordHash);
+        user.provider = AuthProvider.LOCAL;
+        return user;
+    }
+
     public boolean isLocalAuth() {
         return provider == AuthProvider.LOCAL;
     }

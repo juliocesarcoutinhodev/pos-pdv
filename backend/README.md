@@ -7,7 +7,6 @@ API RESTful do sistema POS PDV, construida com **Spring Boot 4.0.5** e **Java 25
 - Java 25+
 - Maven 3.9+ (ou `./mvnw`)
 - PostgreSQL 16+
-- Docker (opcional)
 
 ## Executando localmente
 
@@ -32,14 +31,15 @@ Ou com o JAR:
 java -jar target/backend-*.jar
 ```
 
-A API sobe na porta `8080` (configuravel via `SERVER_PORT`). No profile `local` o contexto root e `/`.
+A API sobe na porta `8080` (configuravel via `SERVER_PORT`). No profile `local` o contexto root e `/`, em `prod` e `/pospdv`.
 
 ## Perfis
 
-| Perfil  | Ativacao                     | Uso                          |
-| ------- | ---------------------------- | ---------------------------- |
-| `local` | padrao (`SPRING_PROFILES_ACTIVE=local`) | Desenvolvimento local |
-| `prod`  | `SPRING_PROFILES_ACTIVE=prod`            | Producao                 |
+| Perfil   | Ativacao                              | Uso                   |
+| -------- | ------------------------------------- | --------------------- |
+| `local`  | padrão (`SPRING_PROFILES_ACTIVE=local`) | Desenvolvimento local |
+| `test`   | automatico nos testes                 | Testes com H2         |
+| `prod`   | `SPRING_PROFILES_ACTIVE=prod`         | Producao              |
 
 ## Variaveis de ambiente
 
@@ -47,33 +47,42 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 
 ### Obrigatorias
 
-| Variavel                          | Descricao                                  | Exemplo                                         |
-| --------------------------------- | ------------------------------------------ | ----------------------------------------------- |
-| `SPRING_DATASOURCE_URL`           | JDBC URL do banco de dados                 | `jdbc:postgresql://localhost:5432/pospdv`       |
-| `SPRING_DATASOURCE_USERNAME`      | Usuario do banco                           | `postgres`                                      |
-| `SPRING_DATASOURCE_PASSWORD`      | Senha do banco                             | `secret`                                        |
-| `SPRING_FLYWAY_URL`               | URL para migracoes Flyway                  | herda de `SPRING_DATASOURCE_URL`                |
-| `SPRING_FLYWAY_USER`              | Usuario para Flyway                        | herda de `SPRING_DATASOURCE_USERNAME`           |
-| `SPRING_FLYWAY_PASSWORD`          | Senha para Flyway                          | herda de `SPRING_DATASOURCE_PASSWORD`           |
+| Variavel                     | Descricao                     | Exemplo                                   |
+| ---------------------------- | ----------------------------- | ----------------------------------------- |
+| `SPRING_DATASOURCE_URL`      | JDBC URL do banco de dados    | `jdbc:postgresql://localhost:5432/pospdv` |
+| `SPRING_DATASOURCE_USERNAME` | Usuario do banco              | `postgres`                                |
+| `SPRING_DATASOURCE_PASSWORD` | Senha do banco                | `secret`                                  |
 
 ### Opcionais
 
-| Variavel                               | Padrao        | Descricao                          |
-| -------------------------------------- | ------------- | ---------------------------------- |
-| `SERVER_PORT`                          | `8080`        | Porta HTTP do servidor             |
-| `SPRING_PROFILES_ACTIVE`               | `local`       | Perfil Spring ativo                |
-| `MANAGEMENT_ENDPOINTS_WEB_EXPOSURE`    | `health,info` | Endpoints Actuator expostos        |
-| `APP_CORS_ALLOWED_ORIGINS`             | `http://localhost:3000` | Origens permitidas no CORS |
+| Variavel                            | Padrao                               | Descricao                        |
+| ----------------------------------- | ------------------------------------ | -------------------------------- |
+| `SERVER_PORT`                       | `8080`                               | Porta HTTP do servidor           |
+| `SPRING_PROFILES_ACTIVE`            | `local`                              | Perfil Spring ativo              |
+| `SPRING_FLYWAY_URL`                 | herda de `SPRING_DATASOURCE_URL`     | URL para migracoes Flyway        |
+| `SPRING_FLYWAY_USER`                | herda de `SPRING_DATASOURCE_USERNAME`| Usuario para Flyway              |
+| `SPRING_FLYWAY_PASSWORD`            | herda de `SPRING_DATASOURCE_PASSWORD`| Senha para Flyway                |
+| `MANAGEMENT_ENDPOINTS_WEB_EXPOSURE` | `health,info`                        | Endpoints Actuator expostos      |
+| `APP_CORS_ALLOWED_ORIGINS`          | `http://localhost:3000,http://localhost:5173` | Origens permitidas no CORS |
+| `JWT_SECRET`                        | *(sem padrao)*                       | Chave JWT em Base64 (min. 256 bits) |
+| `JWT_ISSUER`                        | `pospdv`                             | Issuer do JWT                    |
+| `JWT_ACCESS_TOKEN_EXPIRATION`       | `3600` (local) / `900` (prod)        | TTL do access token em segundos  |
 
 ## Endpoints
 
 ### Actuator
 
-- `/actuator/health` (local) ou `/pospdv/actuator/health` (prod) — liveness/readiness probes
+- `GET /actuator/health` (local) ou `/pospdv/actuator/health` (prod) — liveness/readiness
 
-### API
+### Autenticacao
 
-Context-path em producao: `/pospdv`
+| Metodo | Path                      | Auth | Descricao               |
+| ------ | ------------------------- | ---- | ----------------------- |
+| POST   | `/api/v1/auth/register`   | Nao  | Cadastrar novo usuario  |
+
+### Protegidos (requerem JWT)
+
+Qualquer endpoint fora das rotas publicas retorna `401` se o token nao for fornecido ou for invalido.
 
 ## Logging
 
@@ -84,11 +93,15 @@ Logs estruturados no padrao: `timestamp [thread] level [pospdv,profile] logger -
 | local   | DEBUG           | DEBUG                     | DEBUG (+ bind TRACE)|
 | prod    | INFO            | WARN                      | WARN                |
 
+Rotas publicas: `/api/v1/health`, `/api/v1/auth/**`, `/actuator/health` (GET).
+
 ## Testes
 
 ```bash
 ./mvnw test
 ```
+
+Profile `test` usa H2 in-memory com Flyway desabilitado.
 
 ## Estrutura de pacotes
 
@@ -97,32 +110,30 @@ O projeto segue Clean Architecture com hexagonal boundaries.
 ```
 br.com.topone.backend
 ├── domain/
-│   ├── model/        # POJOs puros (ENTIDADES DE DOMÍNIO) — ZERO dependências externas
+│   ├── model/        # POJOs puros — ZERO dependencias externas
 │   ├── repository/   # Interfaces de repositorio (Ports)
-│   ├── service/      # Servicos de dominio
-│   └── exception/    # Excecoes de dominio (BusinessException, etc)
+│   └── exception/    # Excecoes de dominio
 │
 ├── application/
-│   ├── usecase/      # Casos de uso (interfaces ou implementacoes)
-│   └── service/      # Servicos de aplicacao
+│   └── usecase/      # Casos de uso, Commands e Results
 │
 ├── infrastructure/
-│   ├── config/       # Configuracoes Spring (beans, security, etc)
+│   ├── config/       # Configuracoes Spring (Security, CORS, etc)
 │   ├── persistence/
-│   │   ├── entity/   # JPA entities (@Entity) — isoladas do dominio
+│   │   ├── entity/   # JPA entities — isoladas do dominio
 │   │   ├── jpa/      # Spring Data JPA repositories
-│   │   ├── mapper/   # Conversao domain ↔ entity
+│   │   ├── mapper/   # MapStruct: domain ↔ entity
 │   │   └── adapter/  # Implementam os Ports delegando para JPA
-│   └── external/     # Integracoes externas (email, gateways, etc)
+│   └── security/     # JWT filter, token service
 │
 ├── interfaces/
-│   ├── rest/         # Controllers, handlers (REST adapters)
-│   └── dto/          # DTOs de entrada/saida
+│   ├── rest/         # Controllers (REST adapters)
+│   └── dto/          # DTOs de entrada/saida, response records
 │
 └── BackendApplication.java
 ```
 
-**Regra de dependencia:** `domain` nao depende de ninguem. `application` depende de `domain`. `infrastructure` e `interfaces` dependem de `application` e `domain`. As entidades do `domain/model` são **POJOs puros** — sem `@Entity`, `@Column`, ou qualquer anotação JPA/Spring. A conversão entre domain models e JPA entities acontece via mappers em `infrastructure/persistence/mapper/`.
+**Regra de dependencia:** `domain` nao depende de ninguem. `application` depende de `domain`. `infrastructure` e `interfaces` dependem de `application` e `domain`. As entidades do `domain/model` sao POJOs puros — sem `@Entity`, `@Column`, ou qualquer anotacao JPA/Spring. Conversao entre domain e entity via MapStruct em `infrastructure/persistence/mapper/`.
 
 ## Dominio
 
@@ -155,4 +166,4 @@ br.com.topone.backend
 
 ## Tecnologias
 
-Spring Boot 4, Spring Data JPA, Flyway, PostgreSQL, H2 (dev), Actuator + Prometheus, Lombok, Bean Validation, Spring Mail, MapStruct.
+Spring Boot 4, Spring Security, Spring Data JPA, Flyway, PostgreSQL, H2 (test), Actuator + Prometheus, Lombok, MapStruct, Bean Validation, JJWT (0.12.6), Spring Mail.

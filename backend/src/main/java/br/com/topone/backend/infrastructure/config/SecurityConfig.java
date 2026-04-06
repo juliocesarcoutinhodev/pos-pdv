@@ -56,7 +56,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, ex2) -> {
                             response.setStatus(401);
                             response.setContentType("application/json");
-                            response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Authentication token is missing or invalid\"}");
+                            response.getWriter().write("{\"error\":\"Não autorizado\",\"message\":\"Token de autenticação ausente ou inválido\"}");
                         })
                 );
 
