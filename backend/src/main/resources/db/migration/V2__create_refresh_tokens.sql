@@ -15,4 +15,4 @@ CREATE TABLE tb_refresh_tokens (
 
 CREATE INDEX idx_refresh_token_hash ON tb_refresh_tokens (token_hash);
 CREATE INDEX idx_refresh_token_user  ON tb_refresh_tokens (user_id);
-CREATE INDEX idx_refresh_token_active ON tb_refresh_tokens (user_id, revoked_at, expires_at) WHERE revoked_at IS NULL AND expires_at > NOW();
+CREATE INDEX idx_refresh_token_active ON tb_refresh_tokens (user_id, revoked_at) WHERE revoked_at IS NULL;
