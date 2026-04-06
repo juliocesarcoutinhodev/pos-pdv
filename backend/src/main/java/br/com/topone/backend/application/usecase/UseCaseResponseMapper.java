@@ -7,8 +7,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface UseCaseResponseMapper {
 
-    @Mapping(target = "accessToken", ignore = true)
-    @Mapping(target = "refreshToken", ignore = true)
     @Mapping(target = "user.id", source = "id")
     @Mapping(target = "user.email", source = "email")
     @Mapping(target = "user.name", source = "name")
