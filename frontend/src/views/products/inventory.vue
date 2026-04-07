@@ -6,4 +6,3 @@
         <p>Página em construção.</p>
     </div>
 </template>
-

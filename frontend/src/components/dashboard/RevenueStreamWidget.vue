@@ -2,14 +2,13 @@
 import { useLayout } from '@/layout/composables/layout';
 import { onMounted, ref, watch } from 'vue';
 
-const { layoutConfig, isDarkTheme } = useLayout();
+const { isDarkTheme } = useLayout();
 
 const chartData = ref(null);
 const chartOptions = ref(null);
 
 function setChartData() {
     const documentStyle = getComputedStyle(document.documentElement);
-    const primary = layoutConfig.primary || 'emerald';
 
     return {
         labels: ['Q1', 'Q2', 'Q3', 'Q4'],

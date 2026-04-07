@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
+import { setupRefreshAuth } from './services/api';
 
 import Aura from '@primeuix/themes/aura';
 import PrimeVue from 'primevue/config';
@@ -9,6 +10,8 @@ import ToastService from 'primevue/toastservice';
 
 import '@/assets/tailwind.css';
 import '@/assets/styles.scss';
+
+setupRefreshAuth();
 
 const app = createApp(App);
 
