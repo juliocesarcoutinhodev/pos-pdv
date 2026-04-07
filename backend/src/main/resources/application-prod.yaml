@@ -39,6 +39,6 @@ security:
     access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900}
   refresh-cookie:
     enabled: true
-    domain: ${REFRESH_COOKIE_DOMAIN:.seudominio.com}
+    domain: ${REFRESH_COOKIE_DOMAIN:}
     secure: true
     same-site: None
