@@ -443,6 +443,7 @@ onMounted(async () => {
         </div>
 
         <DataTable
+            class="app-sortable-table app-clickable-rows"
             :value="users"
             dataKey="id"
             lazy
@@ -628,8 +629,4 @@ onMounted(async () => {
     </div>
 </template>
 
-<style scoped>
-:deep(.p-datatable-tbody > tr) {
-    cursor: pointer;
-}
-</style>
+<style scoped></style>
