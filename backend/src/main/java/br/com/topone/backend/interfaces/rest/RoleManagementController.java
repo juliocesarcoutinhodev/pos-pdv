@@ -9,6 +9,7 @@ import br.com.topone.backend.application.usecase.role.ListRolesCommand;
 import br.com.topone.backend.application.usecase.role.ListRolesUseCase;
 import br.com.topone.backend.application.usecase.role.UpdateRolePatchUseCase;
 import br.com.topone.backend.application.usecase.role.UpdateRoleUseCase;
+import br.com.topone.backend.infrastructure.security.AuthorizationPolicies;
 import br.com.topone.backend.interfaces.dto.CreateRoleRequest;
 import br.com.topone.backend.interfaces.dto.DtoCommandMapper;
 import br.com.topone.backend.interfaces.dto.PageResponse;
@@ -37,7 +38,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/roles")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class RoleManagementController {
 
     private final CreateRoleUseCase createRoleUseCase;
@@ -49,6 +49,7 @@ public class RoleManagementController {
     private final DtoCommandMapper dtoCommandMapper;
 
     @GetMapping
+    @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
     public ResponseEntity<PageResponse<RoleListResponse>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -73,6 +74,7 @@ public class RoleManagementController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
     public ResponseEntity<RoleDetailResponse> getById(@PathVariable UUID id) {
         var result = getRoleByIdUseCase.execute(new GetRoleByIdCommand(id));
         return ResponseEntity.ok(new RoleDetailResponse(
@@ -85,6 +87,7 @@ public class RoleManagementController {
     }
 
     @PostMapping
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
     public ResponseEntity<RoleDetailResponse> create(@Valid @RequestBody CreateRoleRequest request) {
         var result = createRoleUseCase.execute(dtoCommandMapper.toCreateRoleCommand(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(new RoleDetailResponse(
@@ -97,6 +100,7 @@ public class RoleManagementController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
     public ResponseEntity<RoleDetailResponse> update(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateRoleRequest request) {
@@ -111,6 +115,7 @@ public class RoleManagementController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
     public ResponseEntity<RoleDetailResponse> patch(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateRolePatchRequest request) {
@@ -125,6 +130,7 @@ public class RoleManagementController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         deleteRoleUseCase.execute(new DeleteRoleCommand(id));
         return ResponseEntity.noContent().build();

@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -115,6 +116,62 @@ class RbacAuthorizationTest {
     void noToken_shouldGet401OnProtectedEndpoint() throws Exception {
         mockMvc.perform(get("/api/v1/me"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void userToken_shouldAccessUsersListEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(get("/api/v1/users")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void userToken_shouldAccessRolesListEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(get("/api/v1/roles")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void userToken_shouldGet403OnCreateUserEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(post("/api/v1/users")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "email": "novo@email.com",
+                                  "name": "Novo Usuário",
+                                  "password": "123456",
+                                  "roleIds": ["00000000-0000-0000-0000-000000000001"]
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void userToken_shouldGet403OnCreateRoleEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(post("/api/v1/roles")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "name": "MANAGER",
+                                  "description": "Gerente"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
     }
 
     private User buildUser(Set<Role> roles) {

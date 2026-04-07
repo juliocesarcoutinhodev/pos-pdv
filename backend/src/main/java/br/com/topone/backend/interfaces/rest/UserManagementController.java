@@ -1,6 +1,7 @@
 package br.com.topone.backend.interfaces.rest;
 
 import br.com.topone.backend.application.usecase.user.*;
+import br.com.topone.backend.infrastructure.security.AuthorizationPolicies;
 import br.com.topone.backend.interfaces.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class UserManagementController {
 
     private final CreateAdminUserUseCase createAdminUserUseCase;
@@ -26,6 +26,7 @@ public class UserManagementController {
     private final DtoCommandMapper dtoCommandMapper;
 
     @GetMapping
+    @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
     public ResponseEntity<PageResponse<UserListResponse>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -50,6 +51,7 @@ public class UserManagementController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
     public ResponseEntity<UserDetailResponse> getById(@PathVariable UUID id) {
         var result = getUserByIdUseCase.execute(new GetUserByIdCommand(id));
         return ResponseEntity.ok(new UserDetailResponse(
@@ -58,6 +60,7 @@ public class UserManagementController {
     }
 
     @PostMapping
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
     public ResponseEntity<UserDetailResponse> create(@Valid @RequestBody CreateUserRequest request) {
         var command = dtoCommandMapper.toCreateUserCommand(request);
         var result = createAdminUserUseCase.execute(command);
@@ -67,6 +70,7 @@ public class UserManagementController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
     public ResponseEntity<UserDetailResponse> update(
             @PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
         var command = dtoCommandMapper.toUpdateUserCommand(request, id);
@@ -77,6 +81,7 @@ public class UserManagementController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
     public ResponseEntity<UserDetailResponse> patch(
             @PathVariable UUID id, @Valid @RequestBody UpdateUserPatchRequest request) {
         var command = dtoCommandMapper.toPatchUserCommand(request, id);
@@ -87,6 +92,7 @@ public class UserManagementController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
     public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
         deactivateUserUseCase.execute(new DeactivateUserCommand(id));
         return ResponseEntity.noContent().build();
