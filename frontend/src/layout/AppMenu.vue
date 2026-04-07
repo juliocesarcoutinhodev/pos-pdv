@@ -34,7 +34,8 @@ onMounted(() => {
             items: [
                 { label: 'Clientes', icon: 'pi pi-fw pi-user', to: '/entities/customers' },
                 { label: 'Fornecedores', icon: 'pi pi-fw pi-users', to: '/entities/suppliers' },
-                { label: 'Usuários', icon: 'pi pi-fw pi-user-plus', to: '/entities/users' }
+                { label: 'Usuários', icon: 'pi pi-fw pi-user-plus', to: '/entities/users' },
+                { label: 'Funções', icon: 'pi pi-fw pi-id-card', to: '/entities/profiles' }
             ]
         },
         {

@@ -59,6 +59,15 @@ export async function getUserById(id) {
 }
 
 /**
+ * Creates a new user as admin.
+ * @param {{ email: string, name: string, password: string, roleIds: string[] }} payload
+ */
+export async function createUser(payload) {
+    const response = await api.post('/api/v1/users', payload);
+    return normalizeUserDetail(response.data);
+}
+
+/**
  * Fully updates a user by id using PUT.
  * @param {string} id
  * @param {{ email: string, name: string, password?: string, roleIds: string[] }} payload

@@ -61,6 +61,11 @@ const router = createRouter({
             children: [{ path: '', component: () => import('@/views/entities/users.vue') }]
         },
         {
+            path: '/entities/profiles',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/entities/profiles.vue') }]
+        },
+        {
             path: '/landing',
             name: 'landing',
             component: () => import('@/views/pages/Landing.vue')

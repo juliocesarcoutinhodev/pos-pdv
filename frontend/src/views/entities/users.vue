@@ -3,36 +3,60 @@ import { onMounted, ref } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { useUsers } from '@/composables/useUsers.js';
+import { listProfiles } from '@/services/profileService.js';
 import { useErrorHandler } from '@/services/errorHandler.js';
 
 const confirm = useConfirm();
 const toast = useToast();
 const { showApiErrorToast } = useErrorHandler();
 
-const { users, loading, currentPage, rowsPerPage, totalRecords, selectedUser, detailLoading, nameFilter, emailFilter, activeFilter, loadUsers, loadUserDetail, clearSelectedUser, saveUserPut, toggleUserStatus, applyFilters, clearFilters, onPage } =
-    useUsers();
+const {
+    users,
+    loading,
+    currentPage,
+    rowsPerPage,
+    totalRecords,
+    selectedUser,
+    detailLoading,
+    nameFilter,
+    emailFilter,
+    activeFilter,
+    loadUsers,
+    loadUserDetail,
+    clearSelectedUser,
+    saveUserCreate,
+    saveUserPut,
+    toggleUserStatus,
+    applyFilters,
+    clearFilters,
+    onPage
+} = useUsers();
 
 const detailsDialogVisible = ref(false);
+const createDialogVisible = ref(false);
+const createLoading = ref(false);
 const editDialogVisible = ref(false);
 const editLoading = ref(false);
+const profilesLoading = ref(false);
+const profileOptions = ref([]);
+const createForm = ref({
+    name: '',
+    email: '',
+    password: '',
+    profileIds: []
+});
 const editForm = ref({
     id: null,
     name: '',
     email: '',
     password: '',
-    roleIds: []
+    profileIds: []
 });
 
 const activeOptions = [
     { label: 'Todos', value: null },
     { label: 'Ativos', value: true },
     { label: 'Inativos', value: false }
-];
-
-// NOTE: these IDs come from the current API collection examples.
-const roleOptions = [
-    { label: 'USER', value: '00000000-0000-0000-0000-000000000001' },
-    { label: 'ADMIN', value: '00000000-0000-0000-0000-000000000002' }
 ];
 
 function formatDate(value) {
@@ -42,8 +66,20 @@ function formatDate(value) {
 
     return new Intl.DateTimeFormat('pt-BR', {
         dateStyle: 'short',
-        timeStyle: 'short'
+        timeStyle: 'medium'
     }).format(new Date(value));
+}
+
+function formatUpdatedDate(updatedAt, createdAt) {
+    if (!updatedAt) {
+        return 'Sem atualização';
+    }
+
+    if (createdAt && new Date(updatedAt).getTime() === new Date(createdAt).getTime()) {
+        return 'Sem atualização';
+    }
+
+    return formatDate(updatedAt);
 }
 
 function tagSeverity(active) {
@@ -54,12 +90,34 @@ function tagLabel(active) {
     return active ? 'Ativo' : 'Inativo';
 }
 
-function normalizeRoleIds(roleIds) {
-    return [...new Set((roleIds || []).map((roleId) => roleId.trim()).filter(Boolean))].sort();
+function normalizeProfileIds(profileIds) {
+    return [...new Set((profileIds || []).map((profileId) => profileId.trim()).filter(Boolean))].sort();
 }
 
 function isValidEmail(value) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+async function loadProfileOptions() {
+    profilesLoading.value = true;
+
+    try {
+        const result = await listProfiles({ page: 0, size: 100 });
+        profileOptions.value = result.content.map((profile) => ({
+            label: profile.name,
+            value: profile.id
+        }));
+    } finally {
+        profilesLoading.value = false;
+    }
+}
+
+async function ensureProfileOptionsLoaded() {
+    if (profileOptions.value.length > 0 || profilesLoading.value) {
+        return;
+    }
+
+    await loadProfileOptions();
 }
 
 async function handleOpenDetails(userId) {
@@ -82,32 +140,117 @@ function closeDetailsDialog() {
     clearSelectedUser();
 }
 
+function closeCreateDialog() {
+    createDialogVisible.value = false;
+    createLoading.value = false;
+    createForm.value = { name: '', email: '', password: '', profileIds: [] };
+}
+
 function closeEditDialog() {
     editDialogVisible.value = false;
     editLoading.value = false;
-    editForm.value = { id: null, name: '', email: '', password: '', roleIds: [] };
+    editForm.value = { id: null, name: '', email: '', password: '', profileIds: [] };
+}
+
+async function handleOpenCreateDialog() {
+    try {
+        await ensureProfileOptionsLoaded();
+        createDialogVisible.value = true;
+    } catch (error) {
+        showApiErrorToast(toast, error);
+    }
 }
 
 async function handleEditUser(user) {
-    editDialogVisible.value = true;
-    editLoading.value = true;
-
     try {
+        await ensureProfileOptionsLoaded();
+        editDialogVisible.value = true;
+        editLoading.value = true;
         const detail = await loadUserDetail(user.id);
-        const roleIds = roleOptions.filter((option) => detail.roles.includes(option.label)).map((option) => option.value);
+        const profileIds = profileOptions.value.filter((option) => detail.roles.includes(option.label)).map((option) => option.value);
 
         editForm.value = {
             id: detail.id,
             name: detail.name,
             email: detail.email,
             password: '',
-            roleIds
+            profileIds
         };
     } catch (error) {
         editDialogVisible.value = false;
         showApiErrorToast(toast, error);
     } finally {
         editLoading.value = false;
+    }
+}
+
+async function handleSaveCreate() {
+    const nextName = createForm.value.name.trim();
+    const nextEmail = createForm.value.email.trim();
+    const nextPassword = createForm.value.password.trim();
+    const nextProfileIds = normalizeProfileIds(createForm.value.profileIds);
+
+    if (!nextName || !nextEmail || !nextPassword) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Campos obrigatórios',
+            detail: 'Informe nome, e-mail e senha para criar o usuário.',
+            life: 3000
+        });
+        return;
+    }
+
+    if (!isValidEmail(nextEmail)) {
+        toast.add({
+            severity: 'warn',
+            summary: 'E-mail inválido',
+            detail: 'Informe um e-mail válido para continuar.',
+            life: 3000
+        });
+        return;
+    }
+
+    if (nextPassword.length < 6) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Senha inválida',
+            detail: 'A senha deve ter pelo menos 6 caracteres.',
+            life: 3000
+        });
+        return;
+    }
+
+    if (nextProfileIds.length === 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Funções obrigatórias',
+            detail: 'Selecione ao menos uma função para criar o usuário.',
+            life: 3500
+        });
+        return;
+    }
+
+    try {
+        createLoading.value = true;
+
+        await saveUserCreate({
+            name: nextName,
+            email: nextEmail,
+            password: nextPassword,
+            roleIds: nextProfileIds
+        });
+
+        toast.add({
+            severity: 'success',
+            summary: 'Usuário criado',
+            detail: 'Novo usuário criado com sucesso.',
+            life: 3000
+        });
+        closeCreateDialog();
+    } catch (error) {
+        showApiErrorToast(toast, error);
+    } finally {
+        createLoading.value = false;
     }
 }
 
@@ -119,7 +262,7 @@ async function handleSaveEdit() {
     const nextName = editForm.value.name.trim();
     const nextEmail = editForm.value.email.trim();
     const nextPassword = editForm.value.password.trim();
-    const nextRoleIds = normalizeRoleIds(editForm.value.roleIds);
+    const nextProfileIds = normalizeProfileIds(editForm.value.profileIds);
 
     if (!nextName || !nextEmail) {
         toast.add({
@@ -151,11 +294,11 @@ async function handleSaveEdit() {
         return;
     }
 
-    if (nextRoleIds.length === 0) {
+    if (nextProfileIds.length === 0) {
         toast.add({
             severity: 'warn',
-            summary: 'Roles obrigatórias',
-            detail: 'Selecione ao menos uma role para atualização do usuário.',
+            summary: 'Funções obrigatórias',
+            detail: 'Selecione ao menos uma função para atualização do usuário.',
             life: 3500
         });
         return;
@@ -167,7 +310,7 @@ async function handleSaveEdit() {
         const putPayload = {
             name: nextName,
             email: nextEmail,
-            roleIds: nextRoleIds
+            roleIds: nextProfileIds
         };
 
         if (nextPassword) {
@@ -249,7 +392,7 @@ async function handleClearFilters() {
 
 onMounted(async () => {
     try {
-        await loadUsers();
+        await Promise.all([loadUsers(), loadProfileOptions()]);
     } catch (error) {
         showApiErrorToast(toast, error);
     }
@@ -263,7 +406,10 @@ onMounted(async () => {
 
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
             <div class="font-semibold text-xl">Usuários</div>
-            <Button icon="pi pi-refresh" label="Atualizar" severity="secondary" outlined @click="loadUsers" :loading="loading" />
+            <div class="flex flex-col sm:flex-row gap-2">
+                <Button icon="pi pi-user-plus" label="Novo usuário" @click="handleOpenCreateDialog" :disabled="profilesLoading" />
+                <Button icon="pi pi-refresh" label="Atualizar" severity="secondary" outlined @click="loadUsers" :loading="loading" />
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
@@ -319,6 +465,12 @@ onMounted(async () => {
                 </template>
             </Column>
 
+            <Column header="Atualizado em">
+                <template #body="slotProps">
+                    {{ formatUpdatedDate(slotProps.data.updatedAt, slotProps.data.createdAt) }}
+                </template>
+            </Column>
+
             <Column header="Ações" :exportable="false" style="width: 8rem">
                 <template #body="slotProps">
                     <div class="flex items-center gap-2">
@@ -335,6 +487,48 @@ onMounted(async () => {
                 </template>
             </Column>
         </DataTable>
+
+        <Dialog v-model:visible="createDialogVisible" modal header="Novo usuário" :style="{ width: '32rem' }" @hide="closeCreateDialog">
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label for="create-name" class="block mb-2 font-medium">Nome</label>
+                    <InputText id="create-name" v-model="createForm.name" class="w-full" :disabled="createLoading" />
+                </div>
+
+                <div>
+                    <label for="create-email" class="block mb-2 font-medium">E-mail</label>
+                    <InputText id="create-email" v-model="createForm.email" class="w-full" :disabled="createLoading" />
+                </div>
+
+                <div>
+                    <label for="create-password" class="block mb-2 font-medium">Senha</label>
+                    <Password id="create-password" v-model="createForm.password" class="w-full" :feedback="false" toggleMask fluid :disabled="createLoading" />
+                    <small class="text-muted-color">A senha inicial deve ter pelo menos 6 caracteres.</small>
+                </div>
+
+                <div>
+                    <label for="create-profile-ids" class="block mb-2 font-medium">Funções</label>
+                    <MultiSelect
+                        id="create-profile-ids"
+                        v-model="createForm.profileIds"
+                        :options="profileOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        display="chip"
+                        filter
+                        placeholder="Selecione as funções"
+                        class="w-full"
+                        :disabled="createLoading || profilesLoading"
+                    />
+                    <small class="text-muted-color">As funções são carregadas dinamicamente do backend.</small>
+                </div>
+            </div>
+
+            <template #footer>
+                <Button label="Cancelar" severity="secondary" outlined @click="closeCreateDialog" :disabled="createLoading" />
+                <Button label="Criar" icon="pi pi-check" @click="handleSaveCreate" :loading="createLoading" />
+            </template>
+        </Dialog>
 
         <Dialog v-model:visible="editDialogVisible" modal header="Editar usuário" :style="{ width: '32rem' }" @hide="closeEditDialog">
             <div class="flex flex-col gap-4">
@@ -355,9 +549,20 @@ onMounted(async () => {
                 </div>
 
                 <div>
-                    <label for="edit-role-ids" class="block mb-2 font-medium">Roles</label>
-                    <MultiSelect id="edit-role-ids" v-model="editForm.roleIds" :options="roleOptions" optionLabel="label" optionValue="value" display="chip" filter placeholder="Selecione as roles" class="w-full" :disabled="editLoading" />
-                    <small class="text-muted-color"> IDs baseados na collection; se seu ambiente tiver IDs de roles diferentes, ajuste no backend/exposição de endpoint de roles. </small>
+                    <label for="edit-profile-ids" class="block mb-2 font-medium">Funções</label>
+                    <MultiSelect
+                        id="edit-profile-ids"
+                        v-model="editForm.profileIds"
+                        :options="profileOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        display="chip"
+                        filter
+                        placeholder="Selecione as funções"
+                        class="w-full"
+                        :disabled="editLoading || profilesLoading"
+                    />
+                    <small class="text-muted-color">As funções são carregadas dinamicamente do backend.</small>
                 </div>
             </div>
 
@@ -395,13 +600,13 @@ onMounted(async () => {
                 </div>
                 <div>
                     <div class="text-sm text-muted-color">Atualizado em</div>
-                    <div class="font-medium">{{ formatDate(selectedUser.updatedAt) }}</div>
+                    <div class="font-medium">{{ formatUpdatedDate(selectedUser.updatedAt, selectedUser.createdAt) }}</div>
                 </div>
                 <div class="md:col-span-2">
-                    <div class="text-sm text-muted-color mb-2">Roles</div>
+                    <div class="text-sm text-muted-color mb-2">Funções</div>
                     <div class="flex flex-wrap gap-2">
                         <Tag v-for="role in selectedUser.roles" :key="role" :value="role" severity="contrast" />
-                        <span v-if="selectedUser.roles.length === 0" class="text-muted-color">Sem roles atribuídas.</span>
+                        <span v-if="selectedUser.roles.length === 0" class="text-muted-color">Sem funções atribuídas.</span>
                     </div>
                 </div>
             </div>

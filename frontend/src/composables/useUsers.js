@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { getUserById, listUsers, updateUserPatch, updateUserPut } from '@/services/userService.js';
+import { createUser, getUserById, listUsers, updateUserPatch, updateUserPut } from '@/services/userService.js';
 
 const users = ref([]);
 const loading = ref(false);
@@ -73,6 +73,13 @@ async function saveUserPatch(userId, payload) {
     return updatedUser;
 }
 
+async function saveUserCreate(payload) {
+    const createdUser = await createUser(payload);
+    await loadUsers({ page: 0, size: rowsPerPage.value });
+    selectedUser.value = createdUser;
+    return createdUser;
+}
+
 async function saveUserPut(userId, payload) {
     const updatedUser = await updateUserPut(userId, payload);
     await loadUsers();
@@ -104,6 +111,7 @@ export function useUsers() {
         loadUsers,
         loadUserDetail,
         clearSelectedUser,
+        saveUserCreate,
         saveUserPatch,
         saveUserPut,
         toggleUserStatus,
