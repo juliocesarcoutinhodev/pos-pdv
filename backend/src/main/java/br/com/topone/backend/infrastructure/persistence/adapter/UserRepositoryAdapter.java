@@ -3,6 +3,7 @@ package br.com.topone.backend.infrastructure.persistence.adapter;
 import br.com.topone.backend.domain.exception.UserNotFoundException;
 import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.model.User;
+import br.com.topone.backend.domain.repository.PageSort;
 import br.com.topone.backend.domain.repository.UserRepository;
 import br.com.topone.backend.infrastructure.persistence.entity.RoleEntity;
 import br.com.topone.backend.infrastructure.persistence.entity.UserEntity;
@@ -91,12 +92,20 @@ public class UserRepositoryAdapter implements UserRepository {
     public br.com.topone.backend.domain.repository.PageResult<User> findAll(
             br.com.topone.backend.domain.repository.UserFilter filter,
             int page,
-            int size) {
+            int size,
+            PageSort sort) {
         var namePattern = filter.name() != null && !filter.name().isBlank()
                 ? "%" + filter.name().toLowerCase() + "%" : null;
         var emailPattern = filter.email() != null && !filter.email().isBlank()
                 ? "%" + filter.email().toLowerCase() + "%" : null;
-        var springPage = org.springframework.data.domain.PageRequest.of(page, size);
+        var sortSpec = sort != null && sort.isSorted()
+                ? org.springframework.data.domain.Sort.by(
+                        sort.direction() == br.com.topone.backend.domain.repository.SortDirection.DESC
+                                ? org.springframework.data.domain.Sort.Direction.DESC
+                                : org.springframework.data.domain.Sort.Direction.ASC,
+                        sort.field())
+                : org.springframework.data.domain.Sort.unsorted();
+        var springPage = org.springframework.data.domain.PageRequest.of(page, size, sortSpec);
         var pageResult = jpaRepository.searchByFilter(namePattern, emailPattern, filter.active(), springPage);
         var users = pageResult.getContent().stream().map(mapper::toDomain).toList();
         return new br.com.topone.backend.domain.repository.PageResult<>(

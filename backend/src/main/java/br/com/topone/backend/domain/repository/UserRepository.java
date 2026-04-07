@@ -15,7 +15,7 @@ public interface UserRepository {
 
     Optional<User> findByEmailIncludingDeleted(String email);
 
-    PageResult<User> findAll(UserFilter filter, int page, int size);
+    PageResult<User> findAll(UserFilter filter, int page, int size, PageSort sort);
 
     /**
      * Returns another non-soft-deleted user with the same email,

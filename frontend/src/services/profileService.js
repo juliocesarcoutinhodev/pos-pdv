@@ -22,13 +22,19 @@ function normalizeProfileDetail(data) {
 
 /**
  * Lists profiles with server-side pagination.
- * @param {{ page?: number, size?: number }} params
+ * @param {{ page?: number, size?: number, sortBy?: string | null, sortDirection?: string | null }} params
  */
 export async function listProfiles(params = {}) {
     const response = await api.get('/api/v1/roles', {
         params: {
             page: params.page ?? 0,
-            size: params.size ?? 100
+            size: params.size ?? 100,
+            ...(params.sortBy?.trim()
+                ? {
+                      sortBy: params.sortBy.trim(),
+                      sortDirection: params.sortDirection === 'desc' ? 'desc' : 'asc'
+                  }
+                : {})
         }
     });
 

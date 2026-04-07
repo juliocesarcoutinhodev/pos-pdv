@@ -16,7 +16,8 @@ public class ListUsersUseCase {
         var pageResult = userRepository.findAll(
                 command.filter(),
                 command.page(),
-                command.size()
+                command.size(),
+                command.sort()
         );
 
         log.debug("List users | page={} | size={} | total={}", command.page(), command.size(), pageResult.totalElements());

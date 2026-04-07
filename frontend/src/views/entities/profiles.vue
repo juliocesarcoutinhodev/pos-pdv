@@ -14,6 +14,8 @@ const loading = ref(false);
 const currentPage = ref(0);
 const rowsPerPage = ref(10);
 const totalRecords = ref(0);
+const sortField = ref(null);
+const sortOrder = ref(null);
 
 const selectedProfile = ref(null);
 const detailLoading = ref(false);
@@ -83,7 +85,12 @@ async function loadProfiles({ page = currentPage.value, size = rowsPerPage.value
     loading.value = true;
 
     try {
-        const result = await listProfiles({ page, size });
+        const result = await listProfiles({
+            page,
+            size,
+            sortBy: sortField.value,
+            sortDirection: sortOrder.value === -1 ? 'desc' : 'asc'
+        });
         profiles.value = result.content;
         currentPage.value = result.page;
         rowsPerPage.value = result.size;
@@ -253,6 +260,16 @@ async function handlePage(event) {
     }
 }
 
+async function handleSort(event) {
+    try {
+        sortField.value = event.sortField || null;
+        sortOrder.value = event.sortOrder || null;
+        await loadProfiles({ page: 0, size: rowsPerPage.value });
+    } catch (error) {
+        showApiErrorToast(toast, error);
+    }
+}
+
 onMounted(async () => {
     try {
         await loadProfiles();
@@ -283,8 +300,11 @@ onMounted(async () => {
             :rows="rowsPerPage"
             :first="currentPage * rowsPerPage"
             :totalRecords="totalRecords"
+            :sortField="sortField"
+            :sortOrder="sortOrder"
             :loading="loading"
             @page="handlePage"
+            @sort="handleSort"
             @row-click="handleRowClick"
             tableStyle="min-width: 52rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
@@ -293,7 +313,7 @@ onMounted(async () => {
         >
             <template #empty> Nenhuma função encontrada. </template>
 
-            <Column field="name" header="Nome" />
+            <Column field="name" header="Nome" sortable />
             <Column field="description" header="Descrição" />
 
             <Column header="Criada em">

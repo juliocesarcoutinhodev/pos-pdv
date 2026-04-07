@@ -16,6 +16,8 @@ const {
     currentPage,
     rowsPerPage,
     totalRecords,
+    sortField,
+    sortOrder,
     selectedUser,
     detailLoading,
     nameFilter,
@@ -29,7 +31,8 @@ const {
     toggleUserStatus,
     applyFilters,
     clearFilters,
-    onPage
+    onPage,
+    onSort
 } = useUsers();
 
 const detailsDialogVisible = ref(false);
@@ -374,6 +377,14 @@ async function handlePage(event) {
     }
 }
 
+async function handleSort(event) {
+    try {
+        await onSort(event);
+    } catch (error) {
+        showApiErrorToast(toast, error);
+    }
+}
+
 async function handleApplyFilters() {
     try {
         await applyFilters();
@@ -439,8 +450,11 @@ onMounted(async () => {
             :rows="rowsPerPage"
             :first="currentPage * rowsPerPage"
             :totalRecords="totalRecords"
+            :sortField="sortField"
+            :sortOrder="sortOrder"
             :loading="loading"
             @page="handlePage"
+            @sort="handleSort"
             @row-click="handleRowClick"
             tableStyle="min-width: 60rem"
             paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
@@ -449,7 +463,7 @@ onMounted(async () => {
         >
             <template #empty> Nenhum usuário encontrado. </template>
 
-            <Column field="name" header="Nome" />
+            <Column field="name" header="Nome" sortable />
             <Column field="email" header="E-mail" />
             <Column field="provider" header="Provider" />
 

@@ -13,7 +13,7 @@ public class ListRolesUseCase {
     private final RoleRepository roleRepository;
 
     public ListRolesResult execute(ListRolesCommand command) {
-        var pageResult = roleRepository.findAll(command.page(), command.size());
+        var pageResult = roleRepository.findAll(command.page(), command.size(), command.sort());
 
         log.debug("List roles | page={} | size={} | total={}", command.page(), command.size(), pageResult.totalElements());
 

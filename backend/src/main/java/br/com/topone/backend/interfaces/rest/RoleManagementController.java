@@ -9,6 +9,7 @@ import br.com.topone.backend.application.usecase.role.ListRolesCommand;
 import br.com.topone.backend.application.usecase.role.ListRolesUseCase;
 import br.com.topone.backend.application.usecase.role.UpdateRolePatchUseCase;
 import br.com.topone.backend.application.usecase.role.UpdateRoleUseCase;
+import br.com.topone.backend.domain.repository.PageSort;
 import br.com.topone.backend.infrastructure.security.AuthorizationPolicies;
 import br.com.topone.backend.interfaces.dto.CreateRoleRequest;
 import br.com.topone.backend.interfaces.dto.DtoCommandMapper;
@@ -34,11 +35,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/roles")
 @RequiredArgsConstructor
 public class RoleManagementController {
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("name");
+
 
     private final CreateRoleUseCase createRoleUseCase;
     private final ListRolesUseCase listRolesUseCase;
@@ -52,8 +56,14 @@ public class RoleManagementController {
     @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
     public ResponseEntity<PageResponse<RoleListResponse>> list(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        var result = listRolesUseCase.execute(new ListRolesCommand(page, size));
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection) {
+        var result = listRolesUseCase.execute(new ListRolesCommand(
+                page,
+                size,
+                PageSort.by(sortBy, sortDirection, ALLOWED_SORT_FIELDS)
+        ));
         var content = result.content().stream()
                 .map(role -> new RoleListResponse(
                         role.id(),

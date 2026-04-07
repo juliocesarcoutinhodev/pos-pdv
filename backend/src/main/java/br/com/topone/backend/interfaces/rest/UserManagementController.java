@@ -2,6 +2,7 @@ package br.com.topone.backend.interfaces.rest;
 
 import br.com.topone.backend.application.usecase.user.*;
 import br.com.topone.backend.infrastructure.security.AuthorizationPolicies;
+import br.com.topone.backend.domain.repository.PageSort;
 import br.com.topone.backend.interfaces.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,11 +12,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserManagementController {
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("name");
+
 
     private final CreateAdminUserUseCase createAdminUserUseCase;
     private final ListUsersUseCase listUsersUseCase;
@@ -32,10 +36,14 @@ public class UserManagementController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String email,
-            @RequestParam(required = false) Boolean active) {
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection) {
         var command = new ListUsersCommand(
                 new br.com.topone.backend.domain.repository.UserFilter(name, email, active),
-                page, size
+                page,
+                size,
+                PageSort.by(sortBy, sortDirection, ALLOWED_SORT_FIELDS)
         );
         var result = listUsersUseCase.execute(command);
 

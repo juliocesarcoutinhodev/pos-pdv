@@ -2,6 +2,7 @@ package br.com.topone.backend.infrastructure.persistence.adapter;
 
 import br.com.topone.backend.domain.exception.RoleNotFoundException;
 import br.com.topone.backend.domain.model.Role;
+import br.com.topone.backend.domain.repository.PageSort;
 import br.com.topone.backend.domain.repository.PageResult;
 import br.com.topone.backend.domain.repository.RoleRepository;
 import br.com.topone.backend.infrastructure.persistence.entity.RoleEntity;
@@ -59,8 +60,15 @@ public class RoleRepositoryAdapter implements RoleRepository {
     }
 
     @Override
-    public PageResult<Role> findAll(int page, int size) {
-        var springPage = org.springframework.data.domain.PageRequest.of(page, size);
+    public PageResult<Role> findAll(int page, int size, PageSort sort) {
+        var sortSpec = sort != null && sort.isSorted()
+                ? org.springframework.data.domain.Sort.by(
+                        sort.direction() == br.com.topone.backend.domain.repository.SortDirection.DESC
+                                ? org.springframework.data.domain.Sort.Direction.DESC
+                                : org.springframework.data.domain.Sort.Direction.ASC,
+                        sort.field())
+                : org.springframework.data.domain.Sort.unsorted();
+        var springPage = org.springframework.data.domain.PageRequest.of(page, size, sortSpec);
         var pageResult = roleJpaRepository.findAll(springPage);
         var roles = pageResult.getContent().stream().map(mapper::toDomain).toList();
         return new PageResult<>(

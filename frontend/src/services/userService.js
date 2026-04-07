@@ -25,7 +25,7 @@ function normalizeUserDetail(data) {
 
 /**
  * Lists users with server-side pagination and optional filters.
- * @param {{ page?: number, size?: number, name?: string, email?: string, active?: boolean | null }} params
+ * @param {{ page?: number, size?: number, name?: string, email?: string, active?: boolean | null, sortBy?: string | null, sortDirection?: string | null }} params
  */
 export async function listUsers(params = {}) {
     const query = {
@@ -43,6 +43,11 @@ export async function listUsers(params = {}) {
 
     if (typeof params.active === 'boolean') {
         query.active = params.active;
+    }
+
+    if (params.sortBy?.trim()) {
+        query.sortBy = params.sortBy.trim();
+        query.sortDirection = params.sortDirection === 'desc' ? 'desc' : 'asc';
     }
 
     const response = await api.get('/api/v1/users', { params: query });

@@ -8,6 +8,8 @@ const rowsPerPage = ref(10);
 const totalRecords = ref(0);
 const selectedUser = ref(null);
 const detailLoading = ref(false);
+const sortField = ref(null);
+const sortOrder = ref(null);
 
 const nameFilter = ref('');
 const emailFilter = ref('');
@@ -22,7 +24,9 @@ async function loadUsers({ page = currentPage.value, size = rowsPerPage.value } 
             size,
             name: nameFilter.value,
             email: emailFilter.value,
-            active: activeFilter.value
+            active: activeFilter.value,
+            sortBy: sortField.value,
+            sortDirection: sortOrder.value === -1 ? 'desc' : 'asc'
         });
 
         users.value = result.content;
@@ -50,6 +54,13 @@ async function clearFilters() {
 
 async function onPage(event) {
     await loadUsers({ page: event.page, size: event.rows });
+}
+
+async function onSort(event) {
+    sortField.value = event.sortField || null;
+    sortOrder.value = event.sortOrder || null;
+    currentPage.value = 0;
+    await loadUsers({ page: 0, size: rowsPerPage.value });
 }
 
 async function loadUserDetail(userId) {
@@ -103,6 +114,8 @@ export function useUsers() {
         currentPage,
         rowsPerPage,
         totalRecords,
+        sortField,
+        sortOrder,
         selectedUser,
         detailLoading,
         nameFilter,
@@ -117,6 +130,7 @@ export function useUsers() {
         toggleUserStatus,
         applyFilters,
         clearFilters,
-        onPage
+        onPage,
+        onSort
     };
 }

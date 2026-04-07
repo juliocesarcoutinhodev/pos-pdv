@@ -12,7 +12,7 @@ public interface RoleRepository {
     Optional<Role> findByName(String name);
     Optional<Role> findByNameExcludingId(String name, UUID excludeId);
     void deleteById(UUID id);
-    PageResult<Role> findAll(int page, int size);
+    PageResult<Role> findAll(int page, int size, PageSort sort);
     Set<Role> resolveByIds(Set<UUID> ids);
     Set<Role> resolveByNames(Set<String> names);
     boolean isAssignedToAnyUser(UUID id);
