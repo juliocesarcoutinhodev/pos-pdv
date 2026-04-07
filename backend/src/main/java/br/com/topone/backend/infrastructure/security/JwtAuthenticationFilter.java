@@ -1,7 +1,6 @@
 package br.com.topone.backend.infrastructure.security;
 
 import br.com.topone.backend.domain.model.User;
-import br.com.topone.backend.domain.model.enums.Role;
 import io.jsonwebtoken.Claims;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,8 +80,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var roleList = (List<String>) claims.get("roles", List.class);
         if (roleList != null && !roleList.isEmpty()) {
             var roles = roleList.stream()
-                    .map(Role::valueOf)
-                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(Role.class)));
+                    .map(name -> br.com.topone.backend.domain.model.Role.builder().name(name).build())
+                    .collect(Collectors.toCollection(HashSet::new));
             user.setRoles(roles);
         }
 
@@ -94,7 +93,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return List.of();
         }
         return user.getRoles().stream()
-                .map(r -> "ROLE_" + r.name())
+                .map(r -> "ROLE_" + r.getName())
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }

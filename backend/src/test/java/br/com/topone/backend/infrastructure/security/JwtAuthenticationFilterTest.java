@@ -1,8 +1,8 @@
 package br.com.topone.backend.infrastructure.security;
 
+import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.model.enums.AuthProvider;
-import br.com.topone.backend.domain.model.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
@@ -10,7 +10,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -119,7 +119,10 @@ class JwtAuthenticationFilterTest {
         user.setEmail("admin@test.com");
         user.setName("Admin User");
         user.setProvider(AuthProvider.LOCAL);
-        user.setRoles(EnumSet.of(Role.USER, Role.ADMIN));
+        user.setRoles(Set.of(
+                Role.create("USER", "Usuário padrão"),
+                Role.create("ADMIN", "Administrador do sistema")
+        ));
 
         var token = tokenService.generateAccessToken(user);
 
@@ -136,7 +139,7 @@ class JwtAuthenticationFilterTest {
         assertThat(auth.getAuthorities()).hasSize(2);
         assertThat(auth.getAuthorities()).extracting("authority").containsExactlyInAnyOrder("ROLE_USER", "ROLE_ADMIN");
         var principal = (User) auth.getPrincipal();
-        assertThat(principal.getRoles()).containsExactlyInAnyOrder(Role.USER, Role.ADMIN);
+        assertThat(principal.getRoles()).extracting(Role::getName).containsExactlyInAnyOrder("USER", "ADMIN");
     }
 
     @Test

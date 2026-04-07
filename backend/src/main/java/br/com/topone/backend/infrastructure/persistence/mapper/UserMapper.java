@@ -1,7 +1,7 @@
 package br.com.topone.backend.infrastructure.persistence.mapper;
 
+import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.model.User;
-import br.com.topone.backend.domain.model.enums.Role;
 import br.com.topone.backend.infrastructure.persistence.entity.RoleEntity;
 import br.com.topone.backend.infrastructure.persistence.entity.UserEntity;
 import org.mapstruct.Mapper;
@@ -32,7 +32,11 @@ public interface UserMapper {
     default Set<Role> mapRolesEntityToDomain(Set<RoleEntity> roles) {
         if (roles == null) return Set.of();
         return roles.stream()
-                .map(r -> Role.valueOf(r.getName()))
+                .map(r -> Role.builder()
+                        .id(r.getId())
+                        .name(r.getName())
+                        .description(r.getDescription())
+                        .build())
                 .collect(Collectors.toSet());
     }
 
@@ -42,11 +46,22 @@ public interface UserMapper {
         return roles.stream()
                 .map(r -> {
                     var entity = new RoleEntity();
-                    entity.setName(r.name());
+                    entity.setId(r.getId());
+                    entity.setName(r.getName());
+                    entity.setDescription(r.getDescription());
                     return entity;
                 })
                 .collect(Collectors.toSet());
     }
 
     List<User> toDomainList(List<UserEntity> entities);
+
+    default Role toRoleDomain(RoleEntity entity) {
+        if (entity == null) return null;
+        return Role.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .build();
+    }
 }

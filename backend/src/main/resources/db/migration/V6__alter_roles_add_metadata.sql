@@ -1,0 +1,12 @@
+ALTER TABLE tb_roles
+    ADD COLUMN IF NOT EXISTS description VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+UPDATE tb_roles
+SET description = CASE name
+    WHEN 'ADMIN' THEN 'Administrador do sistema'
+    WHEN 'USER' THEN 'Usuário padrão'
+    ELSE description
+END
+WHERE description IS NULL;

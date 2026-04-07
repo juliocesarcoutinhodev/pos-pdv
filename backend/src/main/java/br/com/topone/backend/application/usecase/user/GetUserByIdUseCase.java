@@ -1,7 +1,6 @@
 package br.com.topone.backend.application.usecase.user;
 
 import br.com.topone.backend.domain.exception.UserNotFoundException;
-import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,8 @@ public class GetUserByIdUseCase {
                 user.getEmail(),
                 user.getName(),
                 user.getProvider().name(),
-                user.getRoles().stream().map(Enum::name).collect(java.util.stream.Collectors.toSet()),
+                user.getRoles().stream().map(br.com.topone.backend.domain.model.Role::getName)
+                        .collect(java.util.stream.Collectors.toSet()),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
                 user.isActive()

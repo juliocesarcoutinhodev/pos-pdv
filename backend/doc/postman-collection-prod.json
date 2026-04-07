@@ -26,12 +26,37 @@
       "type": "string"
     },
     {
+      "key": "admin_email",
+      "value": "admin@email.com",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "admin123",
+      "type": "string"
+    },
+    {
       "key": "access_token",
       "value": "",
       "type": "string"
     },
     {
       "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "role_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_role_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_role_id",
       "value": "",
       "type": "string"
     }
@@ -106,12 +131,12 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "auth", "register"]
             },
-            "description": "Register a new user account"
+            "description": "Register a new user account."
           },
           "response": []
         },
         {
-          "name": "Login",
+          "name": "Login User",
           "request": {
             "method": "POST",
             "header": [
@@ -129,20 +154,58 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "auth", "login"]
             },
-            "description": "Authenticate user. Returns access token in body, refresh token in HttpOnly cookie."
+            "description": "Authenticate regular user. Stores access token."
           },
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Login successful\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var body = pm.response.json();",
                   "    pm.collectionVariables.set(\"access_token\", body.accessToken);",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Authenticate the default admin user before testing roles and user management."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Admin login successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var body = pm.response.json();",
+                  "    pm.collectionVariables.set(\"access_token\", body.accessToken);",
+                  "});"
+                ]
               }
             }
           ],
@@ -158,20 +221,20 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "auth", "refresh"]
             },
-            "description": "Refresh access token. Uses refresh token from HttpOnly cookie."
+            "description": "Refresh access token using refresh token cookie."
           },
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Refresh successful\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var body = pm.response.json();",
                   "    pm.collectionVariables.set(\"access_token\", body.accessToken);",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -187,18 +250,18 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "auth", "logout"]
             },
-            "description": "Revoke all user refresh tokens and clear refresh token cookie."
+            "description": "Revoke refresh tokens and clear refresh cookie."
           },
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Logout successful\", function () {",
                   "    pm.response.to.have.status(204);",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -225,7 +288,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "me"]
             },
-            "description": "Get current authenticated user info including roles."
+            "description": "Get current authenticated user info including role names."
           },
           "response": []
         }
@@ -250,7 +313,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "admin", "ping"]
             },
-            "description": "Admin-only endpoint. Returns 403 if user does not have ADMIN role."
+            "description": "Admin-only endpoint. Returns 403 without ADMIN role."
           },
           "response": []
         },
@@ -270,7 +333,200 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "admin-only"]
             },
-            "description": "Admin-only endpoint via @PreAuthorize. Returns 403 if user does not have ADMIN role."
+            "description": "Admin-only endpoint via @PreAuthorize."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Role Management (requires ADMIN role)",
+      "item": [
+        {
+          "name": "List Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/roles?page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "roles"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List roles and capture USER/ADMIN ids for the rest of the collection."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"List roles successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var body = pm.response.json();",
+                  "    var roles = body.content || [];",
+                  "    var userRole = roles.find(function (r) { return r.name === 'USER'; });",
+                  "    var adminRole = roles.find(function (r) { return r.name === 'ADMIN'; });",
+                  "    if (userRole) pm.collectionVariables.set('user_role_id', userRole.id);",
+                  "    if (adminRole) pm.collectionVariables.set('admin_role_id', adminRole.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Create Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"MANAGER\",\n  \"description\": \"Gerente da operação\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/roles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "roles"]
+            },
+            "description": "Create a custom role and store its id in {{role_id}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Create role successful\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var body = pm.response.json();",
+                  "    pm.collectionVariables.set(\"role_id\", body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Role By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "roles", "{{role_id}}"]
+            },
+            "description": "Fetch role details by id."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Role (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"MANAGER\",\n  \"description\": \"Gerente com acesso total à operação\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "roles", "{{role_id}}"]
+            },
+            "description": "Full update for role."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Role (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Gerente atualizado via patch\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "roles", "{{role_id}}"]
+            },
+            "description": "Partial update for role."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Role",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "roles", "{{role_id}}"]
+            },
+            "description": "Delete a custom role created in this collection. System roles and roles assigned to users return 409 Conflict."
           },
           "response": []
         }
@@ -295,15 +551,76 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "users"],
               "query": [
-                { "key": "page", "value": "0" },
-                { "key": "size", "value": "20" },
-                { "key": "name", "value": "", "disabled": true },
-                { "key": "email", "value": "", "disabled": true },
-                { "key": "active", "value": "", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "name",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "email",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "active",
+                  "value": "",
+                  "disabled": true
+                }
               ]
             },
-            "description": "List users with optional filters and pagination"
+            "description": "List users with optional filters and pagination."
           },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"name\": \"New User\",\n  \"password\": \"password123\",\n  \"roleIds\": [\"{{user_role_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "description": "Create a user with USER role. Run List Roles first to populate {{user_role_id}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Create user successful\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var body = pm.response.json();",
+                  "    pm.collectionVariables.set(\"user_id\", body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "response": []
         },
         {
@@ -322,28 +639,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "users", "{{user_id}}"]
             },
-            "description": "Get user details by ID"
-          },
-          "response": []
-        },
-        {
-          "name": "Create User",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"name\": \"New User\",\n  \"password\": \"password123\",\n  \"roleIds\": [\"00000000-0000-0000-0000-000000000001\"]\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/users",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users"]
-            },
-            "description": "Create a new user with selected roles"
+            "description": "Get user details by id."
           },
           "response": []
         },
@@ -352,19 +648,26 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"updated@example.com\",\n  \"name\": \"Updated User\",\n  \"password\": \"newpassword123\",\n  \"roleIds\": [\"00000000-0000-0000-0000-000000000001\", \"00000000-0000-0000-0000-000000000002\"]\n}"
+              "raw": "{\n  \"email\": \"updated@example.com\",\n  \"name\": \"Updated User\",\n  \"password\": \"newpassword123\",\n  \"roleIds\": [\"{{user_role_id}}\", \"{{admin_role_id}}\"]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/users/{{user_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "users", "{{user_id}}"]
             },
-            "description": "Full update user. Roles are mandatory."
+            "description": "Full update user. This example promotes the user to USER + ADMIN."
           },
           "response": []
         },
@@ -373,19 +676,26 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Patched User\",\n  \"roleIds\": [\"00000000-0000-0000-0000-000000000002\"]\n}"
+              "raw": "{\n  \"name\": \"Patched User\",\n  \"roleIds\": [\"{{user_role_id}}\"]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/users/{{user_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "users", "{{user_id}}"]
             },
-            "description": "Partial update user. Only provided fields are changed. Use {\"active\": true} to reactivate or {\"active\": false} to deactivate."
+            "description": "Partial update user. This example leaves only USER role."
           },
           "response": []
         },
@@ -394,8 +704,15 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -406,7 +723,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "users", "{{user_id}}"]
             },
-            "description": "Reactivate a previously deactivated user. Also supports {\"active\": false} to deactivate."
+            "description": "Reactivate a previously deactivated user."
           },
           "response": []
         },
@@ -415,14 +732,18 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/users/{{user_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "users", "{{user_id}}"]
             },
-            "description": "Deactivate user (soft delete) — sets deletedAt timestamp. User is hidden from active queries. No data is physically deleted from DB."
+            "description": "Deactivate user (soft delete)."
           },
           "response": []
         }

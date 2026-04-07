@@ -1,7 +1,8 @@
 package br.com.topone.backend.infrastructure.persistence.adapter;
 
+import br.com.topone.backend.domain.exception.UserNotFoundException;
+import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.model.User;
-import br.com.topone.backend.domain.model.enums.Role;
 import br.com.topone.backend.domain.repository.UserRepository;
 import br.com.topone.backend.infrastructure.persistence.entity.RoleEntity;
 import br.com.topone.backend.infrastructure.persistence.entity.UserEntity;
@@ -38,16 +39,13 @@ public class UserRepositoryAdapter implements UserRepository {
         UserEntity entity;
 
         if (user.getId() != null) {
-            // Update existing
             entity = jpaRepository.findByIdIncludingDeleted(user.getId())
-                    .orElseGet(() -> jpaRepository.save(new UserEntity()));
+                    .orElseThrow(UserNotFoundException::new);
             mapper.updateEntity(user, entity);
         } else {
-            // New user
             entity = mapper.toEntity(user);
         }
 
-        // Clear existing role associations to avoid join table duplicates
         entity.getRoles().clear();
         entity.getRoles().addAll(new HashSet<>(roleEntities));
         var saved = jpaRepository.saveAndFlush(entity);
@@ -106,21 +104,11 @@ public class UserRepositoryAdapter implements UserRepository {
                 pageResult.getTotalElements(), pageResult.getTotalPages());
     }
 
-    @Override
-    public Set<Role> resolveRolesByIds(Set<UUID> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) return Set.of();
-        var found = new HashSet<Role>();
-        for (var uuid : roleIds) {
-            roleJpaRepository.findById(uuid).ifPresent(e -> found.add(Role.valueOf(e.getName())));
-        }
-        return found;
-    }
-
-    private List<RoleEntity> resolveRoles(java.util.Set<br.com.topone.backend.domain.model.enums.Role> roles) {
-        var resolved = new ArrayList<RoleEntity>();
+    private List<br.com.topone.backend.infrastructure.persistence.entity.RoleEntity> resolveRoles(Set<Role> roles) {
+        var resolved = new ArrayList<br.com.topone.backend.infrastructure.persistence.entity.RoleEntity>();
         if (roles == null) return resolved;
         for (var role : roles) {
-            roleJpaRepository.findByName(role.name()).ifPresent(resolved::add);
+            roleJpaRepository.findById(role.getId()).ifPresent(resolved::add);
         }
         return resolved;
     }

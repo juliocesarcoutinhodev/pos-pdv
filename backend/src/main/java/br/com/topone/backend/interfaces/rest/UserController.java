@@ -16,7 +16,12 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserSessionResponse> me() {
         var auth = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        var response = new UserSessionResponse(auth.getId(), auth.getEmail(), auth.getName(), auth.getRoles());
+        var response = new UserSessionResponse(
+                auth.getId(),
+                auth.getEmail(),
+                auth.getName(),
+                auth.getRoles().stream().map(br.com.topone.backend.domain.model.Role::getName).collect(java.util.stream.Collectors.toSet())
+        );
         return ResponseEntity.ok(response);
     }
 

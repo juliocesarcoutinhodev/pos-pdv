@@ -1,14 +1,12 @@
 package br.com.topone.backend.domain.model;
 
 import br.com.topone.backend.domain.model.enums.AuthProvider;
-import br.com.topone.backend.domain.model.enums.Role;
 import lombok.*;
 
 import java.time.Instant;
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -23,7 +21,7 @@ public class User {
     private String passwordHash;
     private AuthProvider provider;
     @Builder.Default
-    private Set<Role> roles = EnumSet.noneOf(Role.class);
+    private Set<Role> roles = new HashSet<>();
     private Instant createdAt;
     private Instant updatedAt;
     private Instant deletedAt;
@@ -38,7 +36,7 @@ public class User {
         var user = new User();
         user.email = email;
         user.name = name;
-        user.setPasswordHash(passwordHash);
+        user.passwordHash = passwordHash;
         user.provider = AuthProvider.LOCAL;
         return user;
     }
@@ -76,7 +74,7 @@ public class User {
     }
 
     public void assignRoles(Set<Role> roles) {
-        this.roles = roles != null ? roles : EnumSet.noneOf(Role.class);
+        this.roles = roles != null ? roles : new HashSet<>();
     }
 
     public void touch() {

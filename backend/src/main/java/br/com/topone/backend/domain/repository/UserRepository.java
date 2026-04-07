@@ -1,10 +1,8 @@
 package br.com.topone.backend.domain.repository;
 
 import br.com.topone.backend.domain.model.User;
-import br.com.topone.backend.domain.model.enums.Role;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 public interface UserRepository {
@@ -31,5 +29,4 @@ public interface UserRepository {
      */
     Optional<User> findByEmailExcludingId(String email, UUID excludeId);
 
-    Set<Role> resolveRolesByIds(Set<UUID> roleIds);
 }

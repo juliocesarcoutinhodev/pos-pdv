@@ -2,7 +2,7 @@ package br.com.topone.backend.application.usecase.user;
 
 import br.com.topone.backend.domain.exception.EmailAlreadyExistsException;
 import br.com.topone.backend.domain.exception.UserNotFoundException;
-import br.com.topone.backend.domain.model.User;
+import br.com.topone.backend.domain.repository.RoleRepository;
 import br.com.topone.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,8 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -20,6 +18,7 @@ import java.util.stream.Collectors;
 public class UpdateUserPatchUseCase {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -44,7 +43,7 @@ public class UpdateUserPatchUseCase {
         }
 
         if (command.roleIds() != null) {
-            user.assignRoles(userRepository.resolveRolesByIds(command.roleIds()));
+            user.assignRoles(roleRepository.resolveByIds(command.roleIds()));
         }
 
         if (command.active() != null) {
@@ -64,7 +63,7 @@ public class UpdateUserPatchUseCase {
                 saved.getEmail(),
                 saved.getName(),
                 saved.getProvider().name(),
-                saved.getRoles().stream().map(Enum::name).collect(Collectors.toSet()),
+                saved.getRoles().stream().map(br.com.topone.backend.domain.model.Role::getName).collect(Collectors.toSet()),
                 saved.getCreatedAt(),
                 saved.getUpdatedAt(),
                 saved.isActive()

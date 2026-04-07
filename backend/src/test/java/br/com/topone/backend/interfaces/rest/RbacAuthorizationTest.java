@@ -1,8 +1,8 @@
 package br.com.topone.backend.interfaces.rest;
 
+import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.model.enums.AuthProvider;
-import br.com.topone.backend.domain.model.enums.Role;
 import br.com.topone.backend.infrastructure.security.JwtTokenService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -48,7 +48,7 @@ class RbacAuthorizationTest {
 
     @Test
     void adminToken_shouldAccessAdminEndpoint() throws Exception {
-        var user = buildUser(EnumSet.of(Role.ADMIN));
+        var user = buildUser(Set.of(Role.create("ADMIN", "Administrador do sistema")));
         var token = jwtTokenService.generateAccessToken(user);
 
         mockMvc.perform(get("/api/v1/admin/ping")
@@ -58,7 +58,7 @@ class RbacAuthorizationTest {
 
     @Test
     void userToken_shouldGet403OnAdminEndpoint() throws Exception {
-        var user = buildUser(EnumSet.of(Role.USER));
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
         var token = jwtTokenService.generateAccessToken(user);
 
         mockMvc.perform(get("/api/v1/admin/ping")
@@ -69,7 +69,7 @@ class RbacAuthorizationTest {
 
     @Test
     void adminToken_shouldAccessAdminOnlyEndpoint() throws Exception {
-        var user = buildUser(EnumSet.of(Role.ADMIN));
+        var user = buildUser(Set.of(Role.create("ADMIN", "Administrador do sistema")));
         var token = jwtTokenService.generateAccessToken(user);
 
         mockMvc.perform(get("/api/v1/admin-only")
@@ -79,7 +79,7 @@ class RbacAuthorizationTest {
 
     @Test
     void userToken_shouldGet403OnAdminOnlyEndpoint() throws Exception {
-        var user = buildUser(EnumSet.of(Role.USER));
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
         var token = jwtTokenService.generateAccessToken(user);
 
         mockMvc.perform(get("/api/v1/admin-only")
@@ -89,7 +89,7 @@ class RbacAuthorizationTest {
 
     @Test
     void userToken_shouldAccessRegularEndpoint() throws Exception {
-        var user = buildUser(EnumSet.of(Role.USER));
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
         var token = jwtTokenService.generateAccessToken(user);
 
         mockMvc.perform(get("/api/v1/me")
@@ -100,7 +100,10 @@ class RbacAuthorizationTest {
 
     @Test
     void adminToken_shouldAccessRegularEndpoint() throws Exception {
-        var user = buildUser(EnumSet.of(Role.ADMIN, Role.USER));
+        var user = buildUser(Set.of(
+                Role.create("ADMIN", "Administrador do sistema"),
+                Role.create("USER", "Usuário padrão")
+        ));
         var token = jwtTokenService.generateAccessToken(user);
 
         mockMvc.perform(get("/api/v1/me")
@@ -114,7 +117,7 @@ class RbacAuthorizationTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    private User buildUser(EnumSet<Role> roles) {
+    private User buildUser(Set<Role> roles) {
         var user = new User();
         user.setId(UUID.randomUUID());
         user.setEmail("test@email.com");

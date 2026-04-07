@@ -135,4 +135,48 @@ public class GlobalExceptionHandler {
                 Instant.now().toString()
         ));
     }
+
+    @ExceptionHandler(RoleNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRoleNotFound(RoleNotFoundException ex) {
+        log.warn("Role not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                "Perfil não encontrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(RoleAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleRoleAlreadyExists(RoleAlreadyExistsException ex) {
+        log.warn("Role already exists");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflito",
+                "Perfil já cadastrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(RoleInUseException.class)
+    public ResponseEntity<ErrorResponse> handleRoleInUse(RoleInUseException ex) {
+        log.warn("Role is assigned to users");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflito",
+                "Perfil está vinculado a usuários e não pode ser removido",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(SystemRoleDeletionNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleSystemRoleDeletionNotAllowed(SystemRoleDeletionNotAllowedException ex) {
+        log.warn("System role deletion blocked");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflito",
+                "Perfis do sistema não podem ser removidos",
+                Instant.now().toString()
+        ));
+    }
 }

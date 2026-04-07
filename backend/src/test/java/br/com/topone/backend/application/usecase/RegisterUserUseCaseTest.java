@@ -1,8 +1,10 @@
 package br.com.topone.backend.application.usecase;
 
 import br.com.topone.backend.domain.exception.EmailAlreadyExistsException;
+import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.model.enums.AuthProvider;
+import br.com.topone.backend.domain.repository.RoleRepository;
 import br.com.topone.backend.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,6 +29,9 @@ class RegisterUserUseCaseTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private RoleRepository roleRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -43,6 +49,7 @@ class RegisterUserUseCaseTest {
     @Test
     void shouldRegisterUserSuccessfully() {
         when(userRepository.existsByEmail(command.email())).thenReturn(false);
+        when(roleRepository.resolveByNames(Set.of("USER"))).thenReturn(Set.of(Role.create("USER", "Usuário padrão")));
         when(passwordEncoder.encode(command.password())).thenReturn("hashedPassword");
 
         var savedUser = new User();
@@ -78,6 +85,7 @@ class RegisterUserUseCaseTest {
     @Test
     void shouldEncodePasswordBeforeSaving() {
         when(userRepository.existsByEmail(command.email())).thenReturn(false);
+        when(roleRepository.resolveByNames(Set.of("USER"))).thenReturn(Set.of(Role.create("USER", "Usuário padrão")));
         when(passwordEncoder.encode("password123")).thenReturn("encoded");
 
         var savedUser = new User();
@@ -98,6 +106,7 @@ class RegisterUserUseCaseTest {
     @Test
     void shouldNotExposePasswordInResult() {
         when(userRepository.existsByEmail(command.email())).thenReturn(false);
+        when(roleRepository.resolveByNames(Set.of("USER"))).thenReturn(Set.of(Role.create("USER", "Usuário padrão")));
         when(passwordEncoder.encode(command.password())).thenReturn("hashedPassword");
 
         var savedUser = new User();
@@ -121,6 +130,7 @@ class RegisterUserUseCaseTest {
     @Test
     void shouldCreateUserAsLocalProvider() {
         when(userRepository.existsByEmail(command.email())).thenReturn(false);
+        when(roleRepository.resolveByNames(Set.of("USER"))).thenReturn(Set.of(Role.create("USER", "Usuário padrão")));
         when(passwordEncoder.encode(command.password())).thenReturn("hashedPassword");
 
         var userCaptor = ArgumentCaptor.forClass(User.class);

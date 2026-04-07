@@ -27,7 +27,7 @@ public class JwtTokenService {
         var expiry = now.plusSeconds(properties.getAccessTokenExpiration());
 
         var roleNames = user.getRoles() != null
-                ? user.getRoles().stream().map(Enum::name).collect(Collectors.toSet())
+                ? user.getRoles().stream().map(br.com.topone.backend.domain.model.Role::getName).collect(Collectors.toSet())
                 : Set.<String>of();
 
         return Jwts.builder()

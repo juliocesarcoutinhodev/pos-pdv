@@ -2,6 +2,7 @@ package br.com.topone.backend.application.usecase.user;
 
 import br.com.topone.backend.domain.exception.EmailAlreadyExistsException;
 import br.com.topone.backend.domain.model.User;
+import br.com.topone.backend.domain.repository.RoleRepository;
 import br.com.topone.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateAdminUserUseCase {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -25,7 +27,7 @@ public class CreateAdminUserUseCase {
 
         var hashedPassword = passwordEncoder.encode(command.password());
         var user = User.createLocalUser(command.email(), command.name(), hashedPassword);
-        user.assignRoles(userRepository.resolveRolesByIds(command.roleIds()));
+        user.assignRoles(roleRepository.resolveByIds(command.roleIds()));
         var saved = userRepository.save(user);
         log.info("Admin user created | email={} | id={}", saved.getEmail(), saved.getId());
 
@@ -33,7 +35,8 @@ public class CreateAdminUserUseCase {
                 saved.getId(),
                 saved.getEmail(),
                 saved.getName(),
-                saved.getRoles().stream().map(Enum::name).collect(java.util.stream.Collectors.toSet()),
+                saved.getRoles().stream().map(br.com.topone.backend.domain.model.Role::getName)
+                        .collect(java.util.stream.Collectors.toSet()),
                 saved.getCreatedAt()
         );
     }

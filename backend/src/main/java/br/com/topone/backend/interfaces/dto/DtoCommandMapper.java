@@ -2,12 +2,13 @@ package br.com.topone.backend.interfaces.dto;
 
 import br.com.topone.backend.application.usecase.RegisterUserCommand;
 import br.com.topone.backend.application.usecase.login.LoginCommand;
+import br.com.topone.backend.application.usecase.role.CreateRoleCommand;
+import br.com.topone.backend.application.usecase.role.UpdateRoleCommand;
+import br.com.topone.backend.application.usecase.role.UpdateRolePatchCommand;
 import br.com.topone.backend.application.usecase.user.CreateAdminUserCommand;
-import br.com.topone.backend.application.usecase.user.CreateAdminUserResult;
 import br.com.topone.backend.application.usecase.user.UpdateUserCommand;
 import br.com.topone.backend.application.usecase.user.UpdateUserPatchCommand;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 import java.util.UUID;
 
@@ -23,4 +24,10 @@ public interface DtoCommandMapper {
     UpdateUserCommand toUpdateUserCommand(UpdateUserRequest request, UUID id);
 
     UpdateUserPatchCommand toPatchUserCommand(UpdateUserPatchRequest request, UUID id);
+
+    CreateRoleCommand toCreateRoleCommand(CreateRoleRequest request);
+
+    UpdateRoleCommand toUpdateRoleCommand(UpdateRoleRequest request, UUID id);
+
+    UpdateRolePatchCommand toPatchRoleCommand(UpdateRolePatchRequest request, UUID id);
 }

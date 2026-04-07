@@ -170,12 +170,13 @@ Revoga todos os refresh tokens do usuário e limpa o cookie.
 | DELETE | `/api/v1/users/{id}`   | Sim  | Desativar usuario (soft delete)        |
 
 **POST `/api/v1/users`** — 201 Created
+Use os IDs retornados por `GET /api/v1/roles` no campo `roleIds`.
 ```json
 {
   "email": "joao@email.com",
   "name": "Joao Silva",
   "password": "senha123",
-  "roleIds": ["00000000-0000-0000-0000-000000000001"]
+  "roleIds": ["uuid-da-role-user"]
 }
 ```
 Response 201:
@@ -199,7 +200,7 @@ Todos os campos obrigatorios exceto `email` e `password`:
   "email": "novo@email.com",
   "name": "Nome Atualizado",
   "password": "novaSenha123",
-  "roleIds": ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002"]
+  "roleIds": ["uuid-da-role-user", "uuid-da-role-admin"]
 }
 ```
 
@@ -208,7 +209,7 @@ Apenas os campos enviados sao aplicados:
 ```json
 {
   "name": "Nome Parcial",
-  "roleIds": ["00000000-0000-0000-0000-000000000002"]
+  "roleIds": ["uuid-da-role-admin"]
 }
 ```
 
@@ -235,6 +236,78 @@ Ativar ou desativar usuario:
 }
 ```
 `"active": true` reativa um usuario desativado, `"active": false` o desativa (equivalente ao DELETE).
+
+### CRUD de Roles (requer role ADMIN)
+
+| Metodo | Path                   | Auth | Descricao                          |
+| ------ | ---------------------- | ---- | ---------------------------------- |
+| GET    | `/api/v1/roles`        | Sim  | Listar roles com paginacao         |
+| GET    | `/api/v1/roles/{id}`   | Sim  | Detalhes de uma role               |
+| POST   | `/api/v1/roles`        | Sim  | Criar nova role                    |
+| PUT    | `/api/v1/roles/{id}`   | Sim  | Atualizacao completa da role       |
+| PATCH  | `/api/v1/roles/{id}`   | Sim  | Atualizacao parcial da role        |
+| DELETE | `/api/v1/roles/{id}`   | Sim  | Remover role                       |
+
+**GET `/api/v1/roles?page=0&size=20`** — 200 OK
+```json
+{
+  "content": [
+    {
+      "id": "uuid",
+      "name": "USER",
+      "description": "Usuário padrão",
+      "createdAt": "2026-04-07T...",
+      "updatedAt": "2026-04-07T..."
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 2,
+  "totalPages": 1
+}
+```
+
+**POST `/api/v1/roles`** — 201 Created
+```json
+{
+  "name": "MANAGER",
+  "description": "Gerente da operação"
+}
+```
+
+Response 201:
+```json
+{
+  "id": "uuid",
+  "name": "MANAGER",
+  "description": "Gerente da operação",
+  "createdAt": "2026-04-07T...",
+  "updatedAt": null
+}
+```
+
+**PUT `/api/v1/roles/{id}`** — 200 OK
+```json
+{
+  "name": "MANAGER",
+  "description": "Gerente com acesso total à operação"
+}
+```
+
+**PATCH `/api/v1/roles/{id}`** — 200 OK
+```json
+{
+  "description": "Gerente atualizado via patch"
+}
+```
+
+**DELETE `/api/v1/roles/{id}`** — 204 No Content
+Remove a role informada quando ela nao for sistemica e nao estiver vinculada a usuarios.
+
+Regras de negocio:
+- roles `USER` e `ADMIN` nao podem ser removidas
+- roles vinculadas a usuarios nao podem ser removidas
+- nesses casos a API retorna `409 Conflict`
 
 ### Administrativo (requer role ADMIN)
 
@@ -291,6 +364,7 @@ Rotas publicas: `/api/v1/health`, `/api/v1/auth/**`, `/actuator/health` (GET).
 ```
 
 Profile `test` usa H2 in-memory com Flyway desabilitado.
+As roles padrao `USER` e `ADMIN` sao garantidas pelo bootstrap da aplicacao durante a subida do contexto.
 
 ## Estrutura de pacotes
 
@@ -306,6 +380,7 @@ br.com.topone.backend
 ├── application/
 │   └── usecase/
 │       ├── login/    # Casos de uso de autenticação (Login, Logout, RefreshToken)
+│       ├── role/     # Casos de uso de roles (CRUD administrativo)
 │       └── user/     # Casos de uso de usuário (CRUD administrativo)
 │
 ├── infrastructure/
@@ -343,18 +418,22 @@ br.com.topone.backend
 
 ### Role (`tb_roles`)
 
-| Campo | Tipo         | Notas          |
-| ----- | ------------ | -------------- |
-| id    | UUID         | PK, auto-gen   |
-| name  | VARCHAR(20)  | UNIQUE, NOT NULL |
+| Campo      | Tipo          | Notas                |
+| ---------- | ------------- | -------------------- |
+| id         | UUID          | PK, auto-gen         |
+| name       | VARCHAR(20)   | UNIQUE, NOT NULL     |
+| description| VARCHAR(255)  | Nullable             |
+| created_at | TIMESTAMP     | Auto                 |
+| updated_at | TIMESTAMP     | Auto                 |
 
-Roles disponiveis: `USER`, `ADMIN`.
-Para atribuir um perfil a um usuario, use o UUID da role:
+Roles padrao garantidas no bootstrap:
 
-| UUID                               | Nome  |
-| ---------------------------------- | ----- |
-| `00000000-0000-0000-0000-000000000001` | USER  |
-| `00000000-0000-0000-0000-000000000002` | ADMIN |
+| Nome    | Descricao                     |
+| ------- | ----------------------------- |
+| `USER`  | Usuário padrão                |
+| `ADMIN` | Administrador do sistema      |
+
+Para atribuir um perfil a um usuario, consulte primeiro `GET /api/v1/roles` e use o `id` retornado.
 
 ### User-Role (`tb_user_roles`)
 
@@ -365,7 +444,7 @@ Para atribuir um perfil a um usuario, use o UUID da role:
 
 ### Usuário Admin Padrão
 
-Na inicialização, se não existir, é criado automaticamente um usuário admin:
+Na inicializacao, se nao existir, e criado automaticamente um usuario admin:
 
 | Campo    | Valor            |
 | -------- | ---------------- |
@@ -374,7 +453,8 @@ Na inicialização, se não existir, é criado automaticamente um usuário admin
 | senha    | `admin123`       |
 | roles    | `ADMIN`, `USER`  |
 
-Altere a senha em produção imediatamente após o primeiro login.
+O bootstrap apenas cria esse usuario quando ele nao existe; ele nao reseta a senha de um admin ja existente.
+Altere a senha em producao imediatamente apos o primeiro login.
 
 ### Refresh Token (`tb_refresh_tokens`)
 
