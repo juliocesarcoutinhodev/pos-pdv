@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,6 +39,9 @@ class UpdateCustomerPatchUseCaseTest {
                 "37335118000180",
                 "cliente@email.com",
                 "11999999999",
+                LocalDate.parse("1985-06-15"),
+                "MASCULINO",
+                "RG-1111111",
                 "image-old",
                 Address.create("03195000", "Rua do Oratório", "100", null, "Alto da Mooca", "São Paulo", "SP")
         );
@@ -59,6 +63,9 @@ class UpdateCustomerPatchUseCaseTest {
                         "Campinas",
                         null
                 ),
+                LocalDate.parse("1986-07-20"),
+                "feminino",
+                "RG-2222222",
                 "image-new",
                 false
         );
@@ -76,6 +83,9 @@ class UpdateCustomerPatchUseCaseTest {
         assertThat(result.address().city()).isEqualTo("Campinas");
         assertThat(result.address().complement()).isEqualTo("Sala 2");
         assertThat(result.address().street()).isEqualTo("Rua do Oratório");
+        assertThat(result.birthDate()).isEqualTo(LocalDate.parse("1986-07-20"));
+        assertThat(result.gender()).isEqualTo("FEMININO");
+        assertThat(result.ieOrRg()).isEqualTo("RG-2222222");
         assertThat(result.imageId()).isEqualTo("image-new");
     }
 
@@ -87,6 +97,9 @@ class UpdateCustomerPatchUseCaseTest {
                 "37335118000180",
                 "cliente@email.com",
                 "11999999999",
+                null,
+                null,
+                null,
                 null,
                 Address.create("03195000", "Rua do Oratório", "100", null, "Alto da Mooca", "São Paulo", "SP")
         );
@@ -100,6 +113,9 @@ class UpdateCustomerPatchUseCaseTest {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
                 null
         );
 
@@ -107,6 +123,9 @@ class UpdateCustomerPatchUseCaseTest {
                 "Outro cliente",
                 "11222333000144",
                 "outro@cliente.com",
+                null,
+                null,
+                null,
                 null,
                 null,
                 Address.create("01001000", "Rua B", "20", null, "Centro", "São Paulo", "SP")

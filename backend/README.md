@@ -433,6 +433,9 @@ Permissões:
   "taxId": "12345678901",
   "email": "joao@email.com",
   "phone": "11999999999",
+  "birthDate": "1992-08-15",
+  "gender": "MASCULINO",
+  "ieOrRg": "RG-1234567",
   "imageId": "3d5bfa71-412a-4f73-bdd8-3fb4dfe58f99",
   "address": {
     "zipCode": "03195000",
@@ -643,6 +646,9 @@ Para atribuir um perfil a um usuario, consulte primeiro `GET /api/v1/roles` e us
 | tax_id     | VARCHAR(14)   | UNIQUE, NOT NULL                     |
 | email      | VARCHAR(255)  | Nullable                             |
 | phone      | VARCHAR(30)   | Nullable                             |
+| birth_date | DATE          | Nullable                             |
+| gender     | VARCHAR(40)   | Nullable                             |
+| ie_or_rg   | VARCHAR(30)   | Nullable                             |
 | image_id   | VARCHAR(120)  | Nullable (referencia lógica no MinIO)|
 | address_id | UUID          | FK → tb_addresses(id), UNIQUE        |
 | created_at | TIMESTAMP     | Auto                                 |

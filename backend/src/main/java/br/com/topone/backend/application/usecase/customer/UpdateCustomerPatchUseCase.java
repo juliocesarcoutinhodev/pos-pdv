@@ -43,6 +43,18 @@ public class UpdateCustomerPatchUseCase {
             customer.changePhone(command.phone());
         }
 
+        if (command.birthDate() != null) {
+            customer.changeBirthDate(command.birthDate());
+        }
+
+        if (command.gender() != null) {
+            customer.changeGender(command.gender());
+        }
+
+        if (command.ieOrRg() != null) {
+            customer.changeIeOrRg(command.ieOrRg());
+        }
+
         if (command.imageId() != null) {
             customer.changeImageId(command.imageId());
         }
@@ -98,6 +110,9 @@ public class UpdateCustomerPatchUseCase {
                 customer.getEmail(),
                 customer.getPhone(),
                 toAddressResult(customer.getAddress()),
+                customer.getBirthDate(),
+                customer.getGender(),
+                customer.getIeOrRg(),
                 customer.getImageId(),
                 customer.getCreatedAt(),
                 customer.getUpdatedAt(),

@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,6 +43,9 @@ class CreateCustomerUseCaseTest {
                         " São Paulo ",
                         "sp"
                 ),
+                LocalDate.parse("1990-10-20"),
+                "feminino",
+                "RG-1234567",
                 "image-123"
         );
 
@@ -60,6 +64,9 @@ class CreateCustomerUseCaseTest {
         assertThat(result.email()).isEqualTo("cliente@email.com");
         assertThat(result.address().zipCode()).isEqualTo("03195000");
         assertThat(result.address().state()).isEqualTo("SP");
+        assertThat(result.birthDate()).isEqualTo(LocalDate.parse("1990-10-20"));
+        assertThat(result.gender()).isEqualTo("FEMININO");
+        assertThat(result.ieOrRg()).isEqualTo("RG-1234567");
         assertThat(result.imageId()).isEqualTo("image-123");
     }
 
@@ -71,6 +78,9 @@ class CreateCustomerUseCaseTest {
                 "cliente@email.com",
                 "11999999999",
                 new CustomerAddressCommand("03195000", "Rua A", "10", null, "Centro", "São Paulo", "SP"),
+                null,
+                null,
+                null,
                 null
         );
 

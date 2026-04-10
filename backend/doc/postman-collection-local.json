@@ -1318,7 +1318,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Cliente XPTO\",\n  \"taxId\": \"12345678901\",\n  \"email\": \"contato@cliente.com\",\n  \"phone\": \"11999999999\",\n  \"imageId\": \"{{image_id}}\",\n  \"address\": {\n    \"zipCode\": \"03195000\",\n    \"street\": \"Rua do Oratório\",\n    \"number\": \"100\",\n    \"complement\": \"Casa\",\n    \"district\": \"Alto da Mooca\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\"\n  }\n}"
+              "raw": "{\n  \"name\": \"Cliente XPTO\",\n  \"taxId\": \"12345678901\",\n  \"email\": \"contato@cliente.com\",\n  \"phone\": \"11999999999\",\n  \"birthDate\": \"1992-08-15\",\n  \"gender\": \"MASCULINO\",\n  \"ieOrRg\": \"RG-1234567\",\n  \"imageId\": \"{{image_id}}\",\n  \"address\": {\n    \"zipCode\": \"03195000\",\n    \"street\": \"Rua do Oratório\",\n    \"number\": \"100\",\n    \"complement\": \"Casa\",\n    \"district\": \"Alto da Mooca\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\"\n  }\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/customers",
@@ -1394,7 +1394,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Cliente XPTO Atualizado\",\n  \"taxId\": \"12345678901\",\n  \"email\": \"financeiro@cliente.com\",\n  \"phone\": \"11988887777\",\n  \"imageId\": \"{{image_id}}\",\n  \"address\": {\n    \"zipCode\": \"03195000\",\n    \"street\": \"Rua do Oratório\",\n    \"number\": \"120\",\n    \"complement\": \"Apto 23\",\n    \"district\": \"Alto da Mooca\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\"\n  }\n}"
+              "raw": "{\n  \"name\": \"Cliente XPTO Atualizado\",\n  \"taxId\": \"12345678901\",\n  \"email\": \"financeiro@cliente.com\",\n  \"phone\": \"11988887777\",\n  \"birthDate\": \"1992-08-15\",\n  \"gender\": \"FEMININO\",\n  \"ieOrRg\": \"RG-7654321\",\n  \"imageId\": \"{{image_id}}\",\n  \"address\": {\n    \"zipCode\": \"03195000\",\n    \"street\": \"Rua do Oratório\",\n    \"number\": \"120\",\n    \"complement\": \"Apto 23\",\n    \"district\": \"Alto da Mooca\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\"\n  }\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/customers/{{customer_id}}",
@@ -1429,7 +1429,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone\": \"11977776666\",\n  \"address\": {\n    \"complement\": \"Fundos\",\n    \"city\": \"Campinas\"\n  }\n}"
+              "raw": "{\n  \"phone\": \"11977776666\",\n  \"gender\": \"OUTRO\",\n  \"ieOrRg\": \"RG-9999999\",\n  \"address\": {\n    \"complement\": \"Fundos\",\n    \"city\": \"Campinas\"\n  }\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/customers/{{customer_id}}",

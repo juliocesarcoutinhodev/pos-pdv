@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -22,6 +23,9 @@ public class Customer {
     private String taxId;
     private String email;
     private String phone;
+    private LocalDate birthDate;
+    private String gender;
+    private String ieOrRg;
     private String imageId;
     private Address address;
     private Instant createdAt;
@@ -33,6 +37,9 @@ public class Customer {
             String taxId,
             String email,
             String phone,
+            LocalDate birthDate,
+            String gender,
+            String ieOrRg,
             String imageId,
             Address address
     ) {
@@ -41,6 +48,9 @@ public class Customer {
         customer.taxId = normalizeTaxId(taxId);
         customer.email = normalizeEmail(email);
         customer.phone = normalizePhone(phone);
+        customer.birthDate = birthDate;
+        customer.gender = normalizeGender(gender);
+        customer.ieOrRg = normalizeIeOrRg(ieOrRg);
         customer.imageId = normalizeImageId(imageId);
         customer.address = address;
         return customer;
@@ -60,6 +70,18 @@ public class Customer {
 
     public void changePhone(String phone) {
         this.phone = normalizePhone(phone);
+    }
+
+    public void changeBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public void changeGender(String gender) {
+        this.gender = normalizeGender(gender);
+    }
+
+    public void changeIeOrRg(String ieOrRg) {
+        this.ieOrRg = normalizeIeOrRg(ieOrRg);
     }
 
     public void changeImageId(String imageId) {
@@ -118,6 +140,22 @@ public class Customer {
             return null;
         }
         var normalized = imageId.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static String normalizeGender(String gender) {
+        if (gender == null) {
+            return null;
+        }
+        var normalized = gender.trim().toUpperCase(Locale.ROOT);
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static String normalizeIeOrRg(String ieOrRg) {
+        if (ieOrRg == null) {
+            return null;
+        }
+        var normalized = ieOrRg.trim();
         return normalized.isEmpty() ? null : normalized;
     }
 }

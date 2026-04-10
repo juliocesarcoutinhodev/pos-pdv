@@ -23,6 +23,9 @@ public class CreateCustomerUseCase {
                 command.taxId(),
                 command.email(),
                 command.phone(),
+                command.birthDate(),
+                command.gender(),
+                command.ieOrRg(),
                 command.imageId(),
                 toAddress(command.address())
         );
@@ -41,6 +44,9 @@ public class CreateCustomerUseCase {
                 saved.getEmail(),
                 saved.getPhone(),
                 toAddressResult(saved.getAddress()),
+                saved.getBirthDate(),
+                saved.getGender(),
+                saved.getIeOrRg(),
                 saved.getImageId(),
                 saved.getCreatedAt()
         );

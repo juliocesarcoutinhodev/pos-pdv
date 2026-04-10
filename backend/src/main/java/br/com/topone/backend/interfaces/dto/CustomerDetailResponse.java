@@ -1,6 +1,7 @@
 package br.com.topone.backend.interfaces.dto;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record CustomerDetailResponse(
@@ -10,6 +11,9 @@ public record CustomerDetailResponse(
         String email,
         String phone,
         AddressResponse address,
+        LocalDate birthDate,
+        String gender,
+        String ieOrRg,
         String imageId,
         Instant createdAt,
         Instant updatedAt,

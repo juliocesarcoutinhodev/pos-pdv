@@ -32,6 +32,9 @@ public class UpdateCustomerUseCase {
         customer.changeTaxId(command.taxId());
         customer.changeEmail(command.email());
         customer.changePhone(command.phone());
+        customer.changeBirthDate(command.birthDate());
+        customer.changeGender(command.gender());
+        customer.changeIeOrRg(command.ieOrRg());
         customer.changeImageId(command.imageId());
         customer.changeAddress(toAddress(command.address()));
         customer.touch();
@@ -66,6 +69,9 @@ public class UpdateCustomerUseCase {
                 customer.getEmail(),
                 customer.getPhone(),
                 toAddressResult(customer.getAddress()),
+                customer.getBirthDate(),
+                customer.getGender(),
+                customer.getIeOrRg(),
                 customer.getImageId(),
                 customer.getCreatedAt(),
                 customer.getUpdatedAt(),

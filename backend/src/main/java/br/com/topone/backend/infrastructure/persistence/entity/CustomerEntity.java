@@ -20,6 +20,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -48,6 +49,15 @@ public class CustomerEntity {
 
     @Column(length = 30)
     private String phone;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
+    @Column(length = 40)
+    private String gender;
+
+    @Column(name = "ie_or_rg", length = 30)
+    private String ieOrRg;
 
     @Column(name = "image_id", length = 120)
     private String imageId;
