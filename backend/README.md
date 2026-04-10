@@ -342,6 +342,46 @@ Regras de negocio:
 - roles vinculadas a usuarios nao podem ser removidas
 - nesses casos a API retorna `409 Conflict`
 
+### CRUD de Fornecedores
+
+| Metodo | Path                       | Auth | Descricao                                      |
+| ------ | -------------------------- | ---- | ---------------------------------------------- |
+| GET    | `/api/v1/suppliers`        | Sim  | Listar fornecedores com filtros/paginacao      |
+| GET    | `/api/v1/suppliers/{id}`   | Sim  | Detalhes de um fornecedor                      |
+| POST   | `/api/v1/suppliers`        | Sim  | Criar novo fornecedor                          |
+| PUT    | `/api/v1/suppliers/{id}`   | Sim  | Atualizacao completa                           |
+| PATCH  | `/api/v1/suppliers/{id}`   | Sim  | Atualizacao parcial (inclui ativar/desativar)  |
+| DELETE | `/api/v1/suppliers/{id}`   | Sim  | Desativar fornecedor (soft delete)             |
+
+Permissões:
+- `GET /api/v1/suppliers`, `GET /api/v1/suppliers/{id}` e `POST /api/v1/suppliers` exigem apenas usuário autenticado.
+- `PUT`, `PATCH` e `DELETE` em `/api/v1/suppliers/**` exigem role `ADMIN`.
+
+**POST `/api/v1/suppliers`** — 201 Created
+```json
+{
+  "name": "Fornecedor XPTO LTDA",
+  "taxId": "37335118000180",
+  "email": "contato@fornecedor.com",
+  "phone": "11999999999",
+  "address": {
+    "zipCode": "03195000",
+    "street": "Rua do Oratório",
+    "number": "100",
+    "complement": "Sala 2",
+    "district": "Alto da Mooca",
+    "city": "São Paulo",
+    "state": "SP"
+  }
+}
+```
+
+**GET `/api/v1/suppliers?page=0&size=20`** — 200 OK  
+Query params opcionais: `name` (parcial), `taxId` (parcial), `email` (parcial), `active` (true/false), `sortBy` (`name`, `taxId`, `createdAt`) e `sortDirection` (`asc`/`desc`).
+
+**DELETE `/api/v1/suppliers/{id}`** — 204 No Content  
+Desativar fornecedor (soft delete) — define `deletedAt`. Nenhum dado e deletado fisicamente.
+
 ### Administrativo (requer role ADMIN)
 
 | Metodo | Path                     | Auth | Descricao                 |
@@ -414,6 +454,7 @@ br.com.topone.backend
 │   └── usecase/
 │       ├── login/    # Casos de uso de autenticação (Login, Logout, RefreshToken)
 │       ├── role/     # Casos de uso de roles (CRUD administrativo)
+│       ├── supplier/ # Casos de uso de fornecedores (CRUD administrativo)
 │       └── user/     # Casos de uso de usuário (CRUD administrativo)
 │
 ├── infrastructure/
@@ -474,6 +515,33 @@ Para atribuir um perfil a um usuario, consulte primeiro `GET /api/v1/roles` e us
 | ------- | ---- | ------------------------------- |
 | user_id | UUID | FK → tb_users(id), CASCADE DELETE|
 | role_id | UUID | FK → tb_roles(id), CASCADE DELETE|
+
+### Address (`tb_addresses`)
+
+| Campo      | Tipo          | Notas                     |
+| ---------- | ------------- | ------------------------- |
+| id         | UUID          | PK, auto-gen              |
+| zip_code   | VARCHAR(8)    | NOT NULL                  |
+| street     | VARCHAR(255)  | NOT NULL                  |
+| number     | VARCHAR(20)   | Nullable                  |
+| complement | VARCHAR(120)  | Nullable                  |
+| district   | VARCHAR(120)  | NOT NULL                  |
+| city       | VARCHAR(120)  | NOT NULL                  |
+| state      | VARCHAR(2)    | NOT NULL                  |
+
+### Supplier (`tb_suppliers`)
+
+| Campo      | Tipo          | Notas                                |
+| ---------- | ------------- | ------------------------------------ |
+| id         | UUID          | PK, auto-gen                         |
+| name       | VARCHAR(150)  | NOT NULL                             |
+| tax_id     | VARCHAR(14)   | UNIQUE, NOT NULL                     |
+| email      | VARCHAR(255)  | Nullable                             |
+| phone      | VARCHAR(30)   | Nullable                             |
+| address_id | UUID          | FK → tb_addresses(id), UNIQUE        |
+| created_at | TIMESTAMP     | Auto                                 |
+| updated_at | TIMESTAMP     | Auto                                 |
+| deleted_at | TIMESTAMP     | Nullable (soft delete)               |
 
 ### Usuário Admin Padrão
 

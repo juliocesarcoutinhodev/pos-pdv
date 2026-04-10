@@ -46,6 +46,11 @@
       "type": "string"
     },
     {
+      "key": "supplier_id",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "role_id",
       "value": "",
       "type": "string"
@@ -917,6 +922,293 @@
               ]
             },
             "description": "Deactivate user (soft delete)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Supplier Management (authenticated; ADMIN for edit/deactivate)",
+      "item": [
+        {
+          "name": "List Suppliers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers?page=0&size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Page number"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                },
+                {
+                  "key": "name",
+                  "value": "",
+                  "description": "Filter by name (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "taxId",
+                  "value": "",
+                  "description": "Filter by tax id (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "email",
+                  "value": "",
+                  "description": "Filter by email (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "active",
+                  "value": "",
+                  "description": "Filter by active status: true/false",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "",
+                  "description": "Sort field: name, taxId, createdAt",
+                  "disabled": true
+                },
+                {
+                  "key": "sortDirection",
+                  "value": "",
+                  "description": "Sort direction: asc/desc",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List suppliers with optional filters, pagination and sorting."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Supplier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Fornecedor XPTO LTDA\",\n  \"taxId\": \"37335118000180\",\n  \"email\": \"contato@fornecedor.com\",\n  \"phone\": \"11999999999\",\n  \"address\": {\n    \"zipCode\": \"03195000\",\n    \"street\": \"Rua do Oratório\",\n    \"number\": \"100\",\n    \"complement\": \"Sala 2\",\n    \"district\": \"Alto da Mooca\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers"
+              ]
+            },
+            "description": "Create a supplier and store its id in {{supplier_id}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Create supplier successful\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var body = pm.response.json();",
+                  "    pm.collectionVariables.set(\"supplier_id\", body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Supplier By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers/{{supplier_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers",
+                "{{supplier_id}}"
+              ]
+            },
+            "description": "Get supplier details by id."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Supplier (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Fornecedor XPTO Atualizado\",\n  \"taxId\": \"37335118000180\",\n  \"email\": \"financeiro@fornecedor.com\",\n  \"phone\": \"11988887777\",\n  \"address\": {\n    \"zipCode\": \"03195000\",\n    \"street\": \"Rua do Oratório\",\n    \"number\": \"120\",\n    \"complement\": \"Conjunto 3\",\n    \"district\": \"Alto da Mooca\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers/{{supplier_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers",
+                "{{supplier_id}}"
+              ]
+            },
+            "description": "Full update for supplier."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Supplier (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"11977776666\",\n  \"address\": {\n    \"complement\": \"Sala 4\",\n    \"city\": \"Campinas\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers/{{supplier_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers",
+                "{{supplier_id}}"
+              ]
+            },
+            "description": "Partial update for supplier."
+          },
+          "response": []
+        },
+        {
+          "name": "Reactivate Supplier",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers/{{supplier_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers",
+                "{{supplier_id}}"
+              ]
+            },
+            "description": "Reactivate a previously deactivated supplier."
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate Supplier",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/suppliers/{{supplier_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "suppliers",
+                "{{supplier_id}}"
+              ]
+            },
+            "description": "Deactivate supplier (soft delete)."
           },
           "response": []
         }

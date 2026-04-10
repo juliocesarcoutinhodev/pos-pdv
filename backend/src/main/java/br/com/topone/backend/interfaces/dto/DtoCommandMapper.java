@@ -5,6 +5,11 @@ import br.com.topone.backend.application.usecase.login.LoginCommand;
 import br.com.topone.backend.application.usecase.role.CreateRoleCommand;
 import br.com.topone.backend.application.usecase.role.UpdateRoleCommand;
 import br.com.topone.backend.application.usecase.role.UpdateRolePatchCommand;
+import br.com.topone.backend.application.usecase.supplier.CreateSupplierCommand;
+import br.com.topone.backend.application.usecase.supplier.SupplierAddressCommand;
+import br.com.topone.backend.application.usecase.supplier.SupplierAddressPatchCommand;
+import br.com.topone.backend.application.usecase.supplier.UpdateSupplierCommand;
+import br.com.topone.backend.application.usecase.supplier.UpdateSupplierPatchCommand;
 import br.com.topone.backend.application.usecase.user.CreateAdminUserCommand;
 import br.com.topone.backend.application.usecase.user.UpdateUserCommand;
 import br.com.topone.backend.application.usecase.user.UpdateUserPatchCommand;
@@ -30,4 +35,14 @@ public interface DtoCommandMapper {
     UpdateRoleCommand toUpdateRoleCommand(UpdateRoleRequest request, UUID id);
 
     UpdateRolePatchCommand toPatchRoleCommand(UpdateRolePatchRequest request, UUID id);
+
+    CreateSupplierCommand toCreateSupplierCommand(CreateSupplierRequest request);
+
+    UpdateSupplierCommand toUpdateSupplierCommand(UpdateSupplierRequest request, UUID id);
+
+    UpdateSupplierPatchCommand toPatchSupplierCommand(UpdateSupplierPatchRequest request, UUID id);
+
+    SupplierAddressCommand toSupplierAddressCommand(AddressRequest request);
+
+    SupplierAddressPatchCommand toSupplierAddressPatchCommand(AddressPatchRequest request);
 }

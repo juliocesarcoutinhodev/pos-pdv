@@ -135,6 +135,28 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(SupplierNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleSupplierNotFound(SupplierNotFoundException ex) {
+        log.warn("Supplier not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                "Fornecedor não encontrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(SupplierTaxIdAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleSupplierTaxIdAlreadyExists(SupplierTaxIdAlreadyExistsException ex) {
+        log.warn("Supplier tax id already exists");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflito",
+                "Documento do fornecedor já cadastrado",
+                Instant.now().toString()
+        ));
+    }
+
     @ExceptionHandler(InvalidCnpjException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCnpj(InvalidCnpjException ex) {
         log.warn("Invalid CNPJ informed");

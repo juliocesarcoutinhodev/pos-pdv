@@ -139,6 +139,16 @@ class RbacAuthorizationTest {
     }
 
     @Test
+    void userToken_shouldAccessSuppliersListEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(get("/api/v1/suppliers")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void userToken_shouldGet403OnCreateUserEndpoint() throws Exception {
         var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
         var token = jwtTokenService.generateAccessToken(user);
@@ -172,6 +182,33 @@ class RbacAuthorizationTest {
                                 }
                                 """))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void userToken_shouldCreateSupplierEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(post("/api/v1/suppliers")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "name": "Fornecedor XPTO",
+                                  "taxId": "37335118000180",
+                                  "email": "contato@fornecedor.com",
+                                  "phone": "11999999999",
+                                  "address": {
+                                    "zipCode": "03195000",
+                                    "street": "Rua do Oratório",
+                                    "number": "100",
+                                    "district": "Alto da Mooca",
+                                    "city": "São Paulo",
+                                    "state": "SP"
+                                  }
+                                 }
+                                 """))
+                .andExpect(status().isCreated());
     }
 
     private User buildUser(Set<Role> roles) {
