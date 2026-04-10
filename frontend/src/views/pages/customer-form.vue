@@ -524,7 +524,7 @@ onUnmounted(() => {
                 <div class="flex flex-col md:flex-row gap-4 md:items-start">
                     <div class="w-32 h-32 rounded-lg border border-surface-200 dark:border-surface-700 flex items-center justify-center bg-surface-0 dark:bg-surface-900 overflow-hidden">
                         <ProgressSpinner v-if="imagePreviewLoading || imageUploadLoading" style="width: 1.8rem; height: 1.8rem" strokeWidth="6" />
-                        <img v-else-if="imagePreviewUrl" :src="imagePreviewUrl" alt="Pré-visualização da imagem do cliente" class="w-full h-full object-cover" />
+                        <img v-else-if="imagePreviewUrl" :src="imagePreviewUrl" alt="Pré-visualização da imagem do cliente" class="w-full h-full object-contain" />
                         <div v-else class="text-center text-muted-color text-sm px-2">Sem imagem</div>
                     </div>
 

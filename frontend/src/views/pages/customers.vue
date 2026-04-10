@@ -37,6 +37,7 @@ const {
 } = useCustomers();
 
 const detailsDialogVisible = ref(false);
+const imageViewerVisible = ref(false);
 const detailImageLoading = ref(false);
 const detailImageUrl = ref('');
 
@@ -112,11 +113,19 @@ function tagLabel(active) {
 }
 
 function clearDetailImage() {
+    imageViewerVisible.value = false;
     if (detailImageUrl.value) {
         URL.revokeObjectURL(detailImageUrl.value);
         detailImageUrl.value = '';
     }
     detailImageLoading.value = false;
+}
+
+function openImageViewer() {
+    if (!detailImageUrl.value || detailImageLoading.value) {
+        return;
+    }
+    imageViewerVisible.value = true;
 }
 
 async function loadDetailImage(imageId) {
@@ -147,6 +156,7 @@ function handleEditCustomer(customer) {
 
 async function handleOpenDetails(customerId) {
     detailsDialogVisible.value = true;
+    imageViewerVisible.value = false;
     clearDetailImage();
 
     try {
@@ -387,10 +397,12 @@ onUnmounted(() => {
                         <div v-if="detailImageLoading" class="flex items-center justify-center w-24 h-24 border border-surface-200 dark:border-surface-700 rounded-lg">
                             <ProgressSpinner style="width: 1.5rem; height: 1.5rem" strokeWidth="6" />
                         </div>
-                        <img v-else-if="detailImageUrl" :src="detailImageUrl" alt="Imagem do cliente" class="w-24 h-24 object-cover rounded-lg border border-surface-200 dark:border-surface-700" />
+                        <button v-else-if="detailImageUrl" type="button" class="w-24 h-24 rounded-lg border border-surface-200 dark:border-surface-700 overflow-hidden cursor-zoom-in" @click="openImageViewer">
+                            <img :src="detailImageUrl" alt="Imagem do cliente" class="w-full h-full object-contain bg-surface-50 dark:bg-surface-900" />
+                        </button>
                         <div v-else class="w-24 h-24 rounded-lg border border-dashed border-surface-300 dark:border-surface-600 flex items-center justify-center text-muted-color">Sem imagem</div>
                         <div class="text-sm text-muted-color">
-                            {{ selectedCustomer.imageId ? 'Imagem vinculada ao cadastro.' : 'Nenhuma imagem vinculada.' }}
+                            {{ selectedCustomer.imageId ? 'Imagem vinculada ao cadastro. Clique para ampliar.' : 'Nenhuma imagem vinculada.' }}
                         </div>
                     </div>
                 </div>
@@ -448,6 +460,12 @@ onUnmounted(() => {
                         </div>
                     </div>
                 </div>
+            </div>
+        </Dialog>
+
+        <Dialog v-model:visible="imageViewerVisible" modal header="Imagem do cliente" :style="{ width: '70vw', maxWidth: '56rem' }">
+            <div class="flex items-center justify-center rounded-lg bg-surface-50 dark:bg-surface-900 p-4" style="min-height: 20rem">
+                <img v-if="detailImageUrl" :src="detailImageUrl" alt="Imagem do cliente ampliada" class="w-full" style="max-height: 70vh; object-fit: contain" />
             </div>
         </Dialog>
     </div>
