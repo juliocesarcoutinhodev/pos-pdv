@@ -73,6 +73,13 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 | `SECURITY_REFRESH_COOKIE_DOMAIN`    | vazio (local) / `.seudominio.com` (prod) | Domínio do cookie (para subdomínios) |
 | `CNPJA_API_URL`                     | `https://api.cnpja.com`              | Base URL do provedor CNPJA       |
 | `CNPJA_API_TOKEN`                   | *(sem padrao)*                       | Token da API CNPJA               |
+| `LOOKUP_CACHE_ENABLED`              | `true`                               | Habilita cache local para consultas CNPJ/CEP |
+| `LOOKUP_CACHE_CNPJ_SUCCESS_TTL_MINUTES` | `1440`                           | TTL (min) de respostas CNPJ com sucesso |
+| `LOOKUP_CACHE_CNPJ_NOT_FOUND_TTL_MINUTES` | `60`                           | TTL (min) para CNPJ nao encontrado (404) |
+| `LOOKUP_CACHE_CNPJ_MAXIMUM_SIZE`    | `50000`                              | Limite de itens no cache de CNPJ |
+| `LOOKUP_CACHE_ZIP_SUCCESS_TTL_MINUTES` | `43200`                           | TTL (min) de respostas CEP com sucesso |
+| `LOOKUP_CACHE_ZIP_NOT_FOUND_TTL_MINUTES` | `60`                           | TTL (min) para CEP nao encontrado (404) |
+| `LOOKUP_CACHE_ZIP_MAXIMUM_SIZE`     | `50000`                              | Limite de itens no cache de CEP |
 
 ## Autenticacao com Cookies
 
@@ -175,6 +182,7 @@ Revoga todos os refresh tokens do usuário e limpa o cookie.
 }
 ```
 Erros comuns: `400` (CNPJ inválido), `404` (CNPJ não encontrado), `502` (falha no provedor externo).
+As consultas usam cache local (configurável) para reduzir consumo de créditos do provedor externo.
 
 **GET `/api/v1/zip?code=03195000`** — 200 OK
 ```json
@@ -190,6 +198,7 @@ Erros comuns: `400` (CNPJ inválido), `404` (CNPJ não encontrado), `502` (falha
 }
 ```
 Erros comuns: `400` (CEP inválido), `404` (CEP não encontrado), `502` (falha no provedor externo).
+As consultas usam cache local (configurável) para reduzir consumo de créditos do provedor externo.
 
 ### CRUD de Usuarios (requer role ADMIN)
 
