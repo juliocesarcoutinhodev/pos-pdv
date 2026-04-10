@@ -44,6 +44,9 @@ function normalizeCustomerDetail(data) {
         taxId: data?.taxId ?? '',
         email: data?.email ?? '',
         phone: data?.phone ?? '',
+        birthDate: data?.birthDate ?? null,
+        gender: data?.gender ?? null,
+        ieOrRg: data?.ieOrRg ?? null,
         address: normalizeAddress(data?.address),
         imageId: data?.imageId ?? null,
         createdAt: data?.createdAt ?? null,
@@ -103,7 +106,7 @@ export async function getCustomerById(id) {
 
 /**
  * Creates a new customer.
- * @param {{ name: string, taxId: string, email?: string | null, phone?: string | null, imageId?: string | null, address: { zipCode: string, street: string, number?: string | null, complement?: string | null, district: string, city: string, state: string } }} payload
+ * @param {{ name: string, taxId: string, email?: string | null, phone?: string | null, birthDate?: string | null, gender?: string | null, ieOrRg?: string | null, imageId?: string | null, address: { zipCode: string, street: string, number?: string | null, complement?: string | null, district: string, city: string, state: string } }} payload
  */
 export async function createCustomer(payload) {
     const response = await api.post('/api/v1/customers', payload);
@@ -113,7 +116,7 @@ export async function createCustomer(payload) {
 /**
  * Fully updates a customer by id using PUT.
  * @param {string} id
- * @param {{ name: string, taxId: string, email?: string | null, phone?: string | null, imageId?: string | null, address: { zipCode: string, street: string, number?: string | null, complement?: string | null, district: string, city: string, state: string } }} payload
+ * @param {{ name: string, taxId: string, email?: string | null, phone?: string | null, birthDate?: string | null, gender?: string | null, ieOrRg?: string | null, imageId?: string | null, address: { zipCode: string, street: string, number?: string | null, complement?: string | null, district: string, city: string, state: string } }} payload
  */
 export async function updateCustomerPut(id, payload) {
     const response = await api.put(`/api/v1/customers/${id}`, payload);
@@ -123,7 +126,7 @@ export async function updateCustomerPut(id, payload) {
 /**
  * Partially updates a customer by id using PATCH.
  * @param {string} id
- * @param {{ name?: string, taxId?: string, email?: string | null, phone?: string | null, imageId?: string | null, address?: { zipCode?: string, street?: string, number?: string | null, complement?: string | null, district?: string, city?: string, state?: string }, active?: boolean }} payload
+ * @param {{ name?: string, taxId?: string, email?: string | null, phone?: string | null, birthDate?: string | null, gender?: string | null, ieOrRg?: string | null, imageId?: string | null, address?: { zipCode?: string, street?: string, number?: string | null, complement?: string | null, district?: string, city?: string, state?: string }, active?: boolean }} payload
  */
 export async function updateCustomerPatch(id, payload) {
     const response = await api.patch(`/api/v1/customers/${id}`, payload);

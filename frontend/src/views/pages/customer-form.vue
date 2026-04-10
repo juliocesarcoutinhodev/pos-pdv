@@ -29,6 +29,14 @@ let zipLookupTimer = null;
 const TAX_ID_MAX_DIGITS = 14;
 const PHONE_MAX_DIGITS = 11;
 
+const genderOptions = [
+    { label: 'Masculino', value: 'MASCULINO' },
+    { label: 'Feminino', value: 'FEMININO' },
+    { label: 'Não binário', value: 'NAO_BINARIO' },
+    { label: 'Outro', value: 'OUTRO' },
+    { label: 'Prefiro não informar', value: 'PREFIRO_NAO_INFORMAR' }
+];
+
 const customerId = computed(() => (typeof route.params.id === 'string' ? route.params.id : null));
 const isEditMode = computed(() => Boolean(customerId.value));
 const pageTitle = computed(() => (isEditMode.value ? 'Editar cliente' : 'Novo cliente'));
@@ -44,6 +52,9 @@ function createEmptyForm() {
         taxId: '',
         email: '',
         phone: '',
+        birthDate: '',
+        gender: null,
+        ieOrRg: '',
         imageId: null,
         address: {
             zipCode: '',
@@ -79,6 +90,10 @@ function sanitizeOptionalString(value) {
 }
 
 function normalizeState(value) {
+    return sanitizeString(value).toUpperCase();
+}
+
+function normalizeGender(value) {
     return sanitizeString(value).toUpperCase();
 }
 
@@ -234,6 +249,9 @@ function buildPayload() {
         taxId: normalizeTaxIdInput(form.value.taxId),
         email: sanitizeOptionalString(form.value.email),
         phone: sanitizeOptionalString(normalizePhoneInput(form.value.phone)),
+        birthDate: sanitizeOptionalString(form.value.birthDate),
+        gender: sanitizeOptionalString(normalizeGender(form.value.gender)),
+        ieOrRg: sanitizeOptionalString(form.value.ieOrRg),
         imageId: sanitizeOptionalString(form.value.imageId),
         address: {
             zipCode: onlyDigits(form.value.address.zipCode),
@@ -278,6 +296,19 @@ function validatePayload(payload) {
         return false;
     }
 
+    if (payload.birthDate) {
+        const today = new Date().toISOString().slice(0, 10);
+        if (payload.birthDate > today) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Data de nascimento inválida',
+                detail: 'A data de nascimento não pode ser no futuro.',
+                life: 3000
+            });
+            return false;
+        }
+    }
+
     if (payload.address.zipCode.length !== 8) {
         toast.add({
             severity: 'warn',
@@ -319,6 +350,9 @@ function mapCustomerToForm(customer) {
         taxId: normalizeTaxIdInput(customer?.taxId ?? ''),
         email: customer?.email ?? '',
         phone: normalizePhoneInput(customer?.phone ?? ''),
+        birthDate: customer?.birthDate ?? '',
+        gender: customer?.gender ?? null,
+        ieOrRg: customer?.ieOrRg ?? '',
         imageId: customer?.imageId ?? null,
         address: {
             zipCode: customer?.address?.zipCode ?? '',
@@ -450,7 +484,7 @@ onUnmounted(() => {
             <section class="border border-surface-200 dark:border-surface-700 rounded-xl p-4 md:p-5">
                 <div class="font-semibold text-lg mb-4">1. Dados do cliente</div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label for="customer-tax-id" class="block mb-2 font-medium">CPF/CNPJ *</label>
                         <InputText id="customer-tax-id" :modelValue="form.taxId" placeholder="Somente números" maxlength="18" class="w-full" :disabled="submitting" @update:modelValue="handleTaxIdInput" />
@@ -469,6 +503,21 @@ onUnmounted(() => {
                     <div>
                         <label for="customer-phone" class="block mb-2 font-medium">Telefone</label>
                         <InputText id="customer-phone" :modelValue="form.phone" maxlength="15" class="w-full" :disabled="submitting" @update:modelValue="handleCustomerPhoneInput" />
+                    </div>
+
+                    <div>
+                        <label for="customer-birth-date" class="block mb-2 font-medium">Data de nascimento</label>
+                        <InputText id="customer-birth-date" v-model="form.birthDate" type="date" class="w-full" :disabled="submitting" />
+                    </div>
+
+                    <div>
+                        <label for="customer-gender" class="block mb-2 font-medium">Sexo / Gênero</label>
+                        <Select id="customer-gender" v-model="form.gender" :options="genderOptions" optionLabel="label" optionValue="value" placeholder="Selecione" class="w-full" :disabled="submitting" />
+                    </div>
+
+                    <div>
+                        <label for="customer-ie-or-rg" class="block mb-2 font-medium">IE / RG</label>
+                        <InputText id="customer-ie-or-rg" v-model="form.ieOrRg" maxlength="30" class="w-full" :disabled="submitting" />
                     </div>
                 </div>
             </section>

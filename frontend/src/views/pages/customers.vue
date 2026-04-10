@@ -47,6 +47,14 @@ const activeOptions = [
     { label: 'Inativos', value: false }
 ];
 
+const genderLabels = {
+    MASCULINO: 'Masculino',
+    FEMININO: 'Feminino',
+    NAO_BINARIO: 'Não binário',
+    OUTRO: 'Outro',
+    PREFIRO_NAO_INFORMAR: 'Prefiro não informar'
+};
+
 function formatDate(value) {
     if (!value) {
         return '-';
@@ -56,6 +64,16 @@ function formatDate(value) {
         dateStyle: 'short',
         timeStyle: 'medium'
     }).format(new Date(value));
+}
+
+function formatBirthDate(value) {
+    if (!value) {
+        return '-';
+    }
+
+    return new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'short'
+    }).format(new Date(`${value}T00:00:00`));
 }
 
 function formatUpdatedDate(updatedAt, createdAt) {
@@ -102,6 +120,13 @@ function formatPhone(value) {
     }
 
     return value;
+}
+
+function formatGender(value) {
+    if (!value) {
+        return '-';
+    }
+    return genderLabels[value] || value;
 }
 
 function tagSeverity(active) {
@@ -422,6 +447,18 @@ onUnmounted(() => {
                 <div>
                     <div class="text-sm text-muted-color">Telefone</div>
                     <div class="font-medium">{{ formatPhone(selectedCustomer.phone) }}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-muted-color">Data de nascimento</div>
+                    <div class="font-medium">{{ formatBirthDate(selectedCustomer.birthDate) }}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-muted-color">Sexo / Gênero</div>
+                    <div class="font-medium">{{ formatGender(selectedCustomer.gender) }}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-muted-color">IE / RG</div>
+                    <div class="font-medium">{{ selectedCustomer.ieOrRg || '-' }}</div>
                 </div>
                 <div>
                     <div class="text-sm text-muted-color">Status</div>
