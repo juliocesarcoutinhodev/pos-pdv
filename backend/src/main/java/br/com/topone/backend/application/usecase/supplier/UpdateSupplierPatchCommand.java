@@ -9,6 +9,7 @@ public record UpdateSupplierPatchCommand(
         String email,
         String phone,
         SupplierAddressPatchCommand address,
+        java.util.List<SupplierContactCommand> contacts,
         Boolean active
 ) {
 }

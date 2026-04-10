@@ -2,10 +2,13 @@ package br.com.topone.backend.application.usecase.supplier;
 
 import br.com.topone.backend.domain.exception.SupplierNotFoundException;
 import br.com.topone.backend.domain.model.Address;
+import br.com.topone.backend.domain.model.Contact;
 import br.com.topone.backend.domain.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -25,6 +28,7 @@ public class GetSupplierByIdUseCase {
                 supplier.getEmail(),
                 supplier.getPhone(),
                 toAddressResult(supplier.getAddress()),
+                toContactResults(supplier.getContacts()),
                 supplier.getCreatedAt(),
                 supplier.getUpdatedAt(),
                 supplier.isActive()
@@ -46,5 +50,19 @@ public class GetSupplierByIdUseCase {
                 address.getCity(),
                 address.getState()
         );
+    }
+
+    private List<SupplierContactResult> toContactResults(List<Contact> contacts) {
+        if (contacts == null) {
+            return List.of();
+        }
+        return contacts.stream()
+                .map(contact -> new SupplierContactResult(
+                        contact.getId(),
+                        contact.getName(),
+                        contact.getEmail(),
+                        contact.getPhone()
+                ))
+                .toList();
     }
 }

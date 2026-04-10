@@ -18,7 +18,9 @@ import org.springframework.web.context.WebApplicationContext;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -209,6 +211,32 @@ class RbacAuthorizationTest {
                                  }
                                  """))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void userToken_shouldGet403OnPatchSupplierEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(patch("/api/v1/suppliers/" + UUID.randomUUID())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "phone": "11999990000"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void userToken_shouldGet403OnDeactivateSupplierEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(delete("/api/v1/suppliers/" + UUID.randomUUID())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
     }
 
     private User buildUser(Set<Role> roles) {

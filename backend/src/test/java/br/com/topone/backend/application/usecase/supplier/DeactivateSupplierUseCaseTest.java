@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,7 +49,8 @@ class DeactivateSupplierUseCaseTest {
                 "37335118000180",
                 "contato@fornecedor.com",
                 "11999999999",
-                Address.create("03195000", "Rua do Oratório", "100", null, "Alto da Mooca", "São Paulo", "SP")
+                Address.create("03195000", "Rua do Oratório", "100", null, "Alto da Mooca", "São Paulo", "SP"),
+                List.of()
         );
         supplier.setId(supplierId);
 

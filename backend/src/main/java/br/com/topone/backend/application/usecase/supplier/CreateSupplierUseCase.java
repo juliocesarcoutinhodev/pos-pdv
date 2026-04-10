@@ -2,12 +2,16 @@ package br.com.topone.backend.application.usecase.supplier;
 
 import br.com.topone.backend.domain.exception.SupplierTaxIdAlreadyExistsException;
 import br.com.topone.backend.domain.model.Address;
+import br.com.topone.backend.domain.model.Contact;
 import br.com.topone.backend.domain.model.Supplier;
 import br.com.topone.backend.domain.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -23,7 +27,8 @@ public class CreateSupplierUseCase {
                 command.taxId(),
                 command.email(),
                 command.phone(),
-                toAddress(command.address())
+                toAddress(command.address()),
+                toContacts(command.contacts())
         );
 
         if (supplierRepository.existsByTaxId(supplier.getTaxId())) {
@@ -40,6 +45,7 @@ public class CreateSupplierUseCase {
                 saved.getEmail(),
                 saved.getPhone(),
                 toAddressResult(saved.getAddress()),
+                toContactResults(saved.getContacts()),
                 saved.getCreatedAt()
         );
     }
@@ -75,5 +81,36 @@ public class CreateSupplierUseCase {
                 address.getCity(),
                 address.getState()
         );
+    }
+
+    private List<Contact> toContacts(List<SupplierContactCommand> contacts) {
+        if (contacts == null) {
+            return List.of();
+        }
+        return contacts.stream()
+                .filter(Objects::nonNull)
+                .map(this::toContact)
+                .toList();
+    }
+
+    private Contact toContact(SupplierContactCommand contact) {
+        if (contact == null) {
+            return null;
+        }
+        return Contact.create(contact.name(), contact.email(), contact.phone());
+    }
+
+    private List<SupplierContactResult> toContactResults(List<Contact> contacts) {
+        if (contacts == null) {
+            return List.of();
+        }
+        return contacts.stream()
+                .map(contact -> new SupplierContactResult(
+                        contact.getId(),
+                        contact.getName(),
+                        contact.getEmail(),
+                        contact.getPhone()
+                ))
+                .toList();
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,8 +36,22 @@ public class SupplierRepositoryAdapter implements SupplierRepository {
             entity = supplierJpaRepository.findById(supplier.getId())
                     .orElseThrow(SupplierNotFoundException::new);
             mapper.updateEntity(supplier, entity);
+            entity.setAddress(mapper.toEntity(supplier.getAddress()));
+            if (entity.getContacts() == null) {
+                entity.setContacts(new ArrayList<>());
+            } else {
+                entity.getContacts().clear();
+            }
+
+            var contactEntities = mapper.toContactEntityList(supplier.getContacts());
+            if (contactEntities != null) {
+                entity.getContacts().addAll(contactEntities);
+            }
         } else {
             entity = mapper.toEntity(supplier);
+            if (entity.getContacts() == null) {
+                entity.setContacts(new ArrayList<>());
+            }
         }
 
         var saved = supplierJpaRepository.saveAndFlush(entity);

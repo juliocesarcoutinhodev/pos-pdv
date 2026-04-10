@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -82,6 +83,7 @@ public class SupplierManagementController {
                 result.email(),
                 result.phone(),
                 toAddressResponse(result.address()),
+                toContactResponses(result.contacts()),
                 result.createdAt(),
                 result.updatedAt(),
                 result.active()
@@ -100,6 +102,7 @@ public class SupplierManagementController {
                 result.email(),
                 result.phone(),
                 toAddressResponse(result.address()),
+                toContactResponses(result.contacts()),
                 result.createdAt(),
                 null,
                 true
@@ -141,6 +144,7 @@ public class SupplierManagementController {
                 result.email(),
                 result.phone(),
                 toAddressResponse(result.address()),
+                toContactResponses(result.contacts()),
                 result.createdAt(),
                 result.updatedAt(),
                 result.active()
@@ -162,5 +166,20 @@ public class SupplierManagementController {
                 address.city(),
                 address.state()
         );
+    }
+
+    private List<ContactResponse> toContactResponses(List<SupplierContactResult> contacts) {
+        if (contacts == null) {
+            return List.of();
+        }
+
+        return contacts.stream()
+                .map(contact -> new ContactResponse(
+                        contact.id(),
+                        contact.name(),
+                        contact.email(),
+                        contact.phone()
+                ))
+                .toList();
     }
 }

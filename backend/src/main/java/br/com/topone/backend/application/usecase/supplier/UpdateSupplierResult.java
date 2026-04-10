@@ -10,6 +10,7 @@ public record UpdateSupplierResult(
         String email,
         String phone,
         SupplierAddressResult address,
+        java.util.List<SupplierContactResult> contacts,
         Instant createdAt,
         Instant updatedAt,
         boolean active

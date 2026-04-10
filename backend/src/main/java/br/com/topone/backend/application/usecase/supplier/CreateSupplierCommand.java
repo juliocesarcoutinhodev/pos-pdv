@@ -5,6 +5,7 @@ public record CreateSupplierCommand(
         String taxId,
         String email,
         String phone,
-        SupplierAddressCommand address
+        SupplierAddressCommand address,
+        java.util.List<SupplierContactCommand> contacts
 ) {
 }

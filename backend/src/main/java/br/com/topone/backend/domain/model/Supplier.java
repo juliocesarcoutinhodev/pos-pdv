@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -23,6 +25,8 @@ public class Supplier {
     private String email;
     private String phone;
     private Address address;
+    @Builder.Default
+    private List<Contact> contacts = new ArrayList<>();
     private Instant createdAt;
     private Instant updatedAt;
     private Instant deletedAt;
@@ -32,7 +36,8 @@ public class Supplier {
             String taxId,
             String email,
             String phone,
-            Address address
+            Address address,
+            List<Contact> contacts
     ) {
         var supplier = new Supplier();
         supplier.name = normalizeName(name);
@@ -40,6 +45,7 @@ public class Supplier {
         supplier.email = normalizeEmail(email);
         supplier.phone = normalizePhone(phone);
         supplier.address = address;
+        supplier.contacts = normalizeContacts(contacts);
         return supplier;
     }
 
@@ -61,6 +67,10 @@ public class Supplier {
 
     public void changeAddress(Address address) {
         this.address = address;
+    }
+
+    public void assignContacts(List<Contact> contacts) {
+        this.contacts = normalizeContacts(contacts);
     }
 
     public void deactivate() {
@@ -104,5 +114,12 @@ public class Supplier {
         }
         var normalized = phone.trim();
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static List<Contact> normalizeContacts(List<Contact> contacts) {
+        if (contacts == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(contacts);
     }
 }

@@ -1021,7 +1021,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Fornecedor XPTO LTDA\",\n  \"taxId\": \"37335118000180\",\n  \"email\": \"contato@fornecedor.com\",\n  \"phone\": \"11999999999\",\n  \"address\": {\n    \"zipCode\": \"03195000\",\n    \"street\": \"Rua do Oratório\",\n    \"number\": \"100\",\n    \"complement\": \"Sala 2\",\n    \"district\": \"Alto da Mooca\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\"\n  }\n}"
+              "raw": "{\n  \"name\": \"Fornecedor XPTO LTDA\",\n  \"taxId\": \"37335118000180\",\n  \"email\": \"contato@fornecedor.com\",\n  \"phone\": \"11999999999\",\n  \"address\": {\n    \"zipCode\": \"03195000\",\n    \"street\": \"Rua do Oratório\",\n    \"number\": \"100\",\n    \"complement\": \"Sala 2\",\n    \"district\": \"Alto da Mooca\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\"\n  },\n  \"contacts\": [\n    {\n      \"name\": \"Maria Silva\",\n      \"email\": \"maria@fornecedor.com\",\n      \"phone\": \"11999990000\"\n    },\n    {\n      \"name\": \"João Souza\",\n      \"email\": \"joao@fornecedor.com\",\n      \"phone\": \"11999990001\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/suppliers",
@@ -1097,7 +1097,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Fornecedor XPTO Atualizado\",\n  \"taxId\": \"37335118000180\",\n  \"email\": \"financeiro@fornecedor.com\",\n  \"phone\": \"11988887777\",\n  \"address\": {\n    \"zipCode\": \"03195000\",\n    \"street\": \"Rua do Oratório\",\n    \"number\": \"120\",\n    \"complement\": \"Conjunto 3\",\n    \"district\": \"Alto da Mooca\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\"\n  }\n}"
+              "raw": "{\n  \"name\": \"Fornecedor XPTO Atualizado\",\n  \"taxId\": \"37335118000180\",\n  \"email\": \"financeiro@fornecedor.com\",\n  \"phone\": \"11988887777\",\n  \"address\": {\n    \"zipCode\": \"03195000\",\n    \"street\": \"Rua do Oratório\",\n    \"number\": \"120\",\n    \"complement\": \"Conjunto 3\",\n    \"district\": \"Alto da Mooca\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\"\n  },\n  \"contacts\": [\n    {\n      \"name\": \"Ana Martins\",\n      \"email\": \"ana@fornecedor.com\",\n      \"phone\": \"11977776655\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/suppliers/{{supplier_id}}",
@@ -1132,7 +1132,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone\": \"11977776666\",\n  \"address\": {\n    \"complement\": \"Sala 4\",\n    \"city\": \"Campinas\"\n  }\n}"
+              "raw": "{\n  \"phone\": \"11977776666\",\n  \"address\": {\n    \"complement\": \"Sala 4\",\n    \"city\": \"Campinas\"\n  },\n  \"contacts\": [\n    {\n      \"name\": \"Carlos Lima\",\n      \"email\": \"carlos@fornecedor.com\",\n      \"phone\": \"11966665544\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/suppliers/{{supplier_id}}",

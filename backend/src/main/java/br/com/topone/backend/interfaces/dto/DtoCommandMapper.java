@@ -8,6 +8,7 @@ import br.com.topone.backend.application.usecase.role.UpdateRolePatchCommand;
 import br.com.topone.backend.application.usecase.supplier.CreateSupplierCommand;
 import br.com.topone.backend.application.usecase.supplier.SupplierAddressCommand;
 import br.com.topone.backend.application.usecase.supplier.SupplierAddressPatchCommand;
+import br.com.topone.backend.application.usecase.supplier.SupplierContactCommand;
 import br.com.topone.backend.application.usecase.supplier.UpdateSupplierCommand;
 import br.com.topone.backend.application.usecase.supplier.UpdateSupplierPatchCommand;
 import br.com.topone.backend.application.usecase.user.CreateAdminUserCommand;
@@ -45,4 +46,6 @@ public interface DtoCommandMapper {
     SupplierAddressCommand toSupplierAddressCommand(AddressRequest request);
 
     SupplierAddressPatchCommand toSupplierAddressPatchCommand(AddressPatchRequest request);
+
+    SupplierContactCommand toSupplierContactCommand(ContactRequest request);
 }

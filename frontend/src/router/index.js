@@ -56,6 +56,16 @@ const router = createRouter({
             children: [{ path: '', component: () => import('@/views/entities/suppliers.vue') }]
         },
         {
+            path: '/entities/suppliers/new',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/entities/supplier-form.vue') }]
+        },
+        {
+            path: '/entities/suppliers/:id/edit',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/entities/supplier-form.vue') }]
+        },
+        {
             path: '/entities/users',
             component: AppLayout,
             children: [{ path: '', component: () => import('@/views/entities/users.vue') }]

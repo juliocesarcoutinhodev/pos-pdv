@@ -4,12 +4,15 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 public record UpdateSupplierPatchRequest(
         @Size(max = 150) String name,
         @Size(max = 18) String taxId,
         @Email @Size(max = 255) String email,
         @Size(max = 30) String phone,
         @Valid AddressPatchRequest address,
+        @Valid List<ContactRequest> contacts,
         Boolean active
 ) {
 }

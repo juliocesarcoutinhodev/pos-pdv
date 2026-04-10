@@ -372,9 +372,22 @@ Permissões:
     "district": "Alto da Mooca",
     "city": "São Paulo",
     "state": "SP"
-  }
+  },
+  "contacts": [
+    {
+      "name": "Maria Silva",
+      "email": "maria@fornecedor.com",
+      "phone": "11999990000"
+    },
+    {
+      "name": "João Souza",
+      "email": "joao@fornecedor.com",
+      "phone": "11999990001"
+    }
+  ]
 }
 ```
+`contacts` aceita de `0..N` itens e pode ser enviado vazio.
 
 **GET `/api/v1/suppliers?page=0&size=20`** — 200 OK  
 Query params opcionais: `name` (parcial), `taxId` (parcial), `email` (parcial), `active` (true/false), `sortBy` (`name`, `taxId`, `createdAt`) e `sortDirection` (`asc`/`desc`).
@@ -542,6 +555,22 @@ Para atribuir um perfil a um usuario, consulte primeiro `GET /api/v1/roles` e us
 | created_at | TIMESTAMP     | Auto                                 |
 | updated_at | TIMESTAMP     | Auto                                 |
 | deleted_at | TIMESTAMP     | Nullable (soft delete)               |
+
+### Contact (`tb_contacts`)
+
+| Campo   | Tipo          | Notas                |
+| ------- | ------------- | -------------------- |
+| id      | UUID          | PK, auto-gen         |
+| name    | VARCHAR(120)  | NOT NULL             |
+| email   | VARCHAR(255)  | Nullable             |
+| phone   | VARCHAR(30)   | Nullable             |
+
+### Supplier-Contact (`tb_supplier_contacts`)
+
+| Campo      | Tipo | Notas                                             |
+| ---------- | ---- | ------------------------------------------------- |
+| supplier_id| UUID | FK → tb_suppliers(id), CASCADE DELETE             |
+| contact_id | UUID | FK → tb_contacts(id), CASCADE DELETE, UNIQUE      |
 
 ### Usuário Admin Padrão
 

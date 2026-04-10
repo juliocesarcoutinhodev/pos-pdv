@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +42,10 @@ class CreateSupplierUseCaseTest {
                         " Alto da Mooca ",
                         " São Paulo ",
                         "sp"
+                ),
+                List.of(
+                        new SupplierContactCommand("Maria Silva", "maria@fornecedor.com", "11999990000"),
+                        new SupplierContactCommand("João Souza", "joao@fornecedor.com", "11999990001")
                 )
         );
 
@@ -60,6 +65,9 @@ class CreateSupplierUseCaseTest {
         assertThat(result.address().zipCode()).isEqualTo("03195000");
         assertThat(result.address().state()).isEqualTo("SP");
         assertThat(result.address().street()).isEqualTo("Rua do Oratório");
+        assertThat(result.contacts()).hasSize(2);
+        assertThat(result.contacts().get(0).name()).isEqualTo("Maria Silva");
+        assertThat(result.contacts().get(0).email()).isEqualTo("maria@fornecedor.com");
     }
 
     @Test
@@ -69,7 +77,8 @@ class CreateSupplierUseCaseTest {
                 "37335118000180",
                 "contato@fornecedor.com",
                 "11999999999",
-                new SupplierAddressCommand("03195000", "Rua A", "10", null, "Centro", "São Paulo", "SP")
+                new SupplierAddressCommand("03195000", "Rua A", "10", null, "Centro", "São Paulo", "SP"),
+                List.of()
         );
 
         when(supplierRepository.existsByTaxId("37335118000180")).thenReturn(true);

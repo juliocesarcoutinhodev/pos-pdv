@@ -10,6 +10,7 @@ public record CreateSupplierResult(
         String email,
         String phone,
         SupplierAddressResult address,
+        java.util.List<SupplierContactResult> contacts,
         Instant createdAt
 ) {
 }
