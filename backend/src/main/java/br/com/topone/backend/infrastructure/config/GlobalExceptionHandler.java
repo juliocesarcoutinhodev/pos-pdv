@@ -15,7 +15,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.Instant;
-import java.util.List;
 
 @Slf4j
 @RestControllerAdvice
@@ -132,6 +131,39 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND.value(),
                 "Não encontrado",
                 "Usuário não encontrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(InvalidCnpjException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCnpj(InvalidCnpjException ex) {
+        log.warn("Invalid CNPJ informed");
+        return ResponseEntity.badRequest().body(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida",
+                "CNPJ inválido. Informe 14 dígitos.",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(CnpjNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCnpjNotFound(CnpjNotFoundException ex) {
+        log.warn("CNPJ not found in external provider");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                "CNPJ não encontrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(CnpjaIntegrationException.class)
+    public ResponseEntity<ErrorResponse> handleCnpjaIntegration(CnpjaIntegrationException ex) {
+        log.error("CNPJA integration failure | message={}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponse(
+                HttpStatus.BAD_GATEWAY.value(),
+                "Falha de integração",
+                "Não foi possível consultar o CNPJ no provedor externo",
                 Instant.now().toString()
         ));
     }

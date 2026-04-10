@@ -45,6 +45,11 @@ security:
   refresh-cookie:
     max-age: ${JWT_REFRESH_TOKEN_EXPIRATION:604800}
 
+integration:
+  cnpja:
+    url: ${CNPJA_API_URL:https://api.cnpja.com}
+    token: ${CNPJA_API_TOKEN}
+
 app:
   rate-limit:
     enabled: true

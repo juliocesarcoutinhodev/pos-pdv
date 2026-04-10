@@ -71,6 +71,8 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 | `SECURITY_REFRESH_COOKIE_SECURE`    | `false` (local) / `true` (prod)      | Flag Secure no cookie            |
 | `SECURITY_REFRESH_COOKIE_SAME_SITE` | `Lax` (local) / `None` (prod)        | Atributo SameSite do cookie      |
 | `SECURITY_REFRESH_COOKIE_DOMAIN`    | vazio (local) / `.seudominio.com` (prod) | Domínio do cookie (para subdomínios) |
+| `CNPJA_API_URL`                     | `https://api.cnpja.com`              | Base URL do provedor CNPJA       |
+| `CNPJA_API_TOKEN`                   | *(sem padrao)*                       | Token da API CNPJA               |
 
 ## Autenticacao com Cookies
 
@@ -147,6 +149,7 @@ Revoga todos os refresh tokens do usuário e limpa o cookie.
 | Metodo | Path         | Auth | Descricao                 |
 | ------ | ------------ | ---- | ------------------------- |
 | GET    | `/api/v1/me` | Sim  | Informacoes do usuario logado |
+| GET    | `/api/v1/cnpj?taxId=37335118000180` | Sim | Consulta dados cadastrais por CNPJ |
 
 **GET `/api/v1/me`** — 200 OK
 ```json
@@ -157,6 +160,20 @@ Revoga todos os refresh tokens do usuário e limpa o cookie.
   "roles": ["USER", "ADMIN"]
 }
 ```
+
+**GET `/api/v1/cnpj?taxId=37335118000180`** — 200 OK
+```json
+{
+  "updated": "2026-04-09T12:32:05Z",
+  "taxId": "37335118000180",
+  "name": "CNPJA TECNOLOGIA LTDA",
+  "alias": "Cnpja",
+  "founded": "2020-06-05",
+  "equity": 1000,
+  "head": true
+}
+```
+Erros comuns: `400` (CNPJ inválido), `404` (CNPJ não encontrado), `502` (falha no provedor externo).
 
 ### CRUD de Usuarios (requer role ADMIN)
 

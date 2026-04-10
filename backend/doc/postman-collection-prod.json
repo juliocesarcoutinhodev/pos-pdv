@@ -59,6 +59,11 @@
       "key": "admin_role_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "tax_id",
+      "value": "37335118000180",
+      "type": "string"
     }
   ],
   "item": [
@@ -72,8 +77,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/actuator/health",
-              "host": ["{{base_url}}"],
-              "path": ["actuator", "health"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
             },
             "description": "Spring Boot Actuator health endpoint"
           },
@@ -86,8 +96,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/actuator/health/liveness",
-              "host": ["{{base_url}}"],
-              "path": ["actuator", "health", "liveness"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health",
+                "liveness"
+              ]
             },
             "description": "Liveness probe"
           },
@@ -100,8 +116,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/actuator/health/readiness",
-              "host": ["{{base_url}}"],
-              "path": ["actuator", "health", "readiness"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health",
+                "readiness"
+              ]
             },
             "description": "Readiness probe"
           },
@@ -128,8 +150,15 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
             },
             "description": "Register a new user account."
           },
@@ -151,8 +180,15 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "Authenticate regular user. Stores access token."
           },
@@ -189,8 +225,15 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "Authenticate the default admin user before testing roles and user management."
           },
@@ -218,8 +261,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/auth/refresh",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "refresh"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Refresh access token using refresh token cookie."
           },
@@ -247,8 +297,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "logout"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
             },
             "description": "Revoke refresh tokens and clear refresh cookie."
           },
@@ -285,8 +342,14 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/me",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "me"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me"
+              ]
             },
             "description": "Get current authenticated user info including role names."
           },
@@ -310,8 +373,15 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/ping",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "ping"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "ping"
+              ]
             },
             "description": "Admin-only endpoint. Returns 403 without ADMIN role."
           },
@@ -330,8 +400,14 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin-only",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin-only"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin-only"
+              ]
             },
             "description": "Admin-only endpoint via @PreAuthorize."
           },
@@ -355,8 +431,14 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/roles?page=0&size=20",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "roles"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -412,8 +494,14 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/roles",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles"
+              ]
             },
             "description": "Create a custom role and store its id in {{role_id}}."
           },
@@ -447,8 +535,15 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Fetch role details by id."
           },
@@ -475,8 +570,15 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Full update for role."
           },
@@ -503,8 +605,15 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Partial update for role."
           },
@@ -523,8 +632,15 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Delete a custom role created in this collection. System roles and roles assigned to users return 409 Conflict."
           },
@@ -548,8 +664,14 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/users?page=0&size=20",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -601,8 +723,14 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/users",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
             },
             "description": "Create a user with USER role. Run List Roles first to populate {{user_role_id}}."
           },
@@ -636,8 +764,15 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{user_id}}"
+              ]
             },
             "description": "Get user details by id."
           },
@@ -664,8 +799,15 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{user_id}}"
+              ]
             },
             "description": "Full update user. This example promotes the user to USER + ADMIN."
           },
@@ -692,8 +834,15 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{user_id}}"
+              ]
             },
             "description": "Partial update user. This example leaves only USER role."
           },
@@ -720,8 +869,15 @@
             },
             "url": {
               "raw": "{{base_url}}/api/v1/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{user_id}}"
+              ]
             },
             "description": "Reactivate a previously deactivated user."
           },
@@ -740,10 +896,54 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{user_id}}"
+              ]
             },
             "description": "Deactivate user (soft delete)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CNPJ",
+      "item": [
+        {
+          "name": "Lookup CNPJ",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/cnpj?taxId={{tax_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cnpj"
+              ],
+              "query": [
+                {
+                  "key": "taxId",
+                  "value": "{{tax_id}}"
+                }
+              ]
+            },
+            "description": "Lookup company data by CNPJ using the external CNPJA provider."
           },
           "response": []
         }
