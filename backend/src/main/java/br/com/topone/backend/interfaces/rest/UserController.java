@@ -1,5 +1,6 @@
 package br.com.topone.backend.interfaces.rest;
 
+import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.interfaces.dto.UserSessionResponse;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class UserController {
                 auth.getId(),
                 auth.getEmail(),
                 auth.getName(),
-                auth.getRoles().stream().map(br.com.topone.backend.domain.model.Role::getName).collect(java.util.stream.Collectors.toSet())
+                auth.getRoles().stream().map(Role::getName).collect(java.util.stream.Collectors.toSet())
         );
         return ResponseEntity.ok(response);
     }

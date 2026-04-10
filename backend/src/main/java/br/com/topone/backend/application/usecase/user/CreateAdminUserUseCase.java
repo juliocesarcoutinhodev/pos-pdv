@@ -1,6 +1,7 @@
 package br.com.topone.backend.application.usecase.user;
 
 import br.com.topone.backend.domain.exception.EmailAlreadyExistsException;
+import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.repository.RoleRepository;
 import br.com.topone.backend.domain.repository.UserRepository;
@@ -35,7 +36,7 @@ public class CreateAdminUserUseCase {
                 saved.getId(),
                 saved.getEmail(),
                 saved.getName(),
-                saved.getRoles().stream().map(br.com.topone.backend.domain.model.Role::getName)
+                saved.getRoles().stream().map(Role::getName)
                         .collect(java.util.stream.Collectors.toSet()),
                 saved.getCreatedAt()
         );

@@ -1,6 +1,7 @@
 package br.com.topone.backend.interfaces.rest;
 
 import br.com.topone.backend.application.usecase.user.*;
+import br.com.topone.backend.domain.repository.UserFilter;
 import br.com.topone.backend.infrastructure.security.AuthorizationPolicies;
 import br.com.topone.backend.domain.repository.PageSort;
 import br.com.topone.backend.interfaces.dto.*;
@@ -40,7 +41,7 @@ public class UserManagementController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDirection) {
         var command = new ListUsersCommand(
-                new br.com.topone.backend.domain.repository.UserFilter(name, email, active),
+                new UserFilter(name, email, active),
                 page,
                 size,
                 PageSort.by(sortBy, sortDirection, ALLOWED_SORT_FIELDS)

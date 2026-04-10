@@ -2,6 +2,7 @@ package br.com.topone.backend.application.usecase.user;
 
 import br.com.topone.backend.domain.exception.EmailAlreadyExistsException;
 import br.com.topone.backend.domain.exception.UserNotFoundException;
+import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.repository.RoleRepository;
 import br.com.topone.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +64,7 @@ public class UpdateUserPatchUseCase {
                 saved.getEmail(),
                 saved.getName(),
                 saved.getProvider().name(),
-                saved.getRoles().stream().map(br.com.topone.backend.domain.model.Role::getName).collect(Collectors.toSet()),
+                saved.getRoles().stream().map(Role::getName).collect(Collectors.toSet()),
                 saved.getCreatedAt(),
                 saved.getUpdatedAt(),
                 saved.isActive()

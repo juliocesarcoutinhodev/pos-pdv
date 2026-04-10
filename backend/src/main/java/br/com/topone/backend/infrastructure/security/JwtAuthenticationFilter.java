@@ -1,5 +1,6 @@
 package br.com.topone.backend.infrastructure.security;
 
+import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.model.User;
 import io.jsonwebtoken.Claims;
 import org.springframework.core.annotation.Order;
@@ -80,7 +81,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var roleList = (List<String>) claims.get("roles", List.class);
         if (roleList != null && !roleList.isEmpty()) {
             var roles = roleList.stream()
-                    .map(name -> br.com.topone.backend.domain.model.Role.builder().name(name).build())
+                    .map(name -> Role.builder().name(name).build())
                     .collect(Collectors.toCollection(HashSet::new));
             user.setRoles(roles);
         }

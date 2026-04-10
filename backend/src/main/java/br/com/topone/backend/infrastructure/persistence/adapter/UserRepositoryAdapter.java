@@ -3,13 +3,14 @@ package br.com.topone.backend.infrastructure.persistence.adapter;
 import br.com.topone.backend.domain.exception.UserNotFoundException;
 import br.com.topone.backend.domain.model.Role;
 import br.com.topone.backend.domain.model.User;
-import br.com.topone.backend.domain.repository.PageSort;
-import br.com.topone.backend.domain.repository.UserRepository;
+import br.com.topone.backend.domain.repository.*;
 import br.com.topone.backend.infrastructure.persistence.entity.RoleEntity;
 import br.com.topone.backend.infrastructure.persistence.entity.UserEntity;
 import br.com.topone.backend.infrastructure.persistence.jpa.RoleJpaRepository;
 import br.com.topone.backend.infrastructure.persistence.jpa.UserJpaRepository;
 import br.com.topone.backend.infrastructure.persistence.mapper.UserMapper;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -89,8 +90,8 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
-    public br.com.topone.backend.domain.repository.PageResult<User> findAll(
-            br.com.topone.backend.domain.repository.UserFilter filter,
+    public PageResult<User> findAll(
+            UserFilter filter,
             int page,
             int size,
             PageSort sort) {
@@ -99,22 +100,22 @@ public class UserRepositoryAdapter implements UserRepository {
         var emailPattern = filter.email() != null && !filter.email().isBlank()
                 ? "%" + filter.email().toLowerCase() + "%" : null;
         var sortSpec = sort != null && sort.isSorted()
-                ? org.springframework.data.domain.Sort.by(
-                        sort.direction() == br.com.topone.backend.domain.repository.SortDirection.DESC
-                                ? org.springframework.data.domain.Sort.Direction.DESC
-                                : org.springframework.data.domain.Sort.Direction.ASC,
+                ? Sort.by(
+                        sort.direction() == SortDirection.DESC
+                                ? Sort.Direction.DESC
+                                : Sort.Direction.ASC,
                         sort.field())
-                : org.springframework.data.domain.Sort.unsorted();
-        var springPage = org.springframework.data.domain.PageRequest.of(page, size, sortSpec);
+                : Sort.unsorted();
+        var springPage = PageRequest.of(page, size, sortSpec);
         var pageResult = jpaRepository.searchByFilter(namePattern, emailPattern, filter.active(), springPage);
         var users = pageResult.getContent().stream().map(mapper::toDomain).toList();
-        return new br.com.topone.backend.domain.repository.PageResult<>(
+        return new PageResult<>(
                 users, pageResult.getNumber(), pageResult.getSize(),
                 pageResult.getTotalElements(), pageResult.getTotalPages());
     }
 
-    private List<br.com.topone.backend.infrastructure.persistence.entity.RoleEntity> resolveRoles(Set<Role> roles) {
-        var resolved = new ArrayList<br.com.topone.backend.infrastructure.persistence.entity.RoleEntity>();
+    private List<RoleEntity> resolveRoles(Set<Role> roles) {
+        var resolved = new ArrayList<RoleEntity>();
         if (roles == null) return resolved;
         for (var role : roles) {
             roleJpaRepository.findById(role.getId()).ifPresent(resolved::add);

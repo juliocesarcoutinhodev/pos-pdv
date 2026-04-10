@@ -535,7 +535,6 @@ onMounted(async () => {
                         class="w-full"
                         :disabled="createLoading || profilesLoading"
                     />
-                    <small class="text-muted-color">As funções são carregadas dinamicamente do backend.</small>
                 </div>
             </div>
 
@@ -577,7 +576,6 @@ onMounted(async () => {
                         class="w-full"
                         :disabled="editLoading || profilesLoading"
                     />
-                    <small class="text-muted-color">As funções são carregadas dinamicamente do backend.</small>
                 </div>
             </div>
 
