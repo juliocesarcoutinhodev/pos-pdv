@@ -22,6 +22,9 @@ const lastZipLookupCode = ref('');
 let cnpjLookupTimer = null;
 let zipLookupTimer = null;
 
+const CNPJ_MAX_DIGITS = 14;
+const PHONE_MAX_DIGITS = 11;
+
 const supplierId = computed(() => (typeof route.params.id === 'string' ? route.params.id : null));
 const isEditMode = computed(() => Boolean(supplierId.value));
 const pageTitle = computed(() => (isEditMode.value ? 'Editar fornecedor' : 'Novo fornecedor'));
@@ -62,6 +65,14 @@ function onlyDigits(value) {
     return (value || '').replace(/\D/g, '');
 }
 
+function normalizeTaxIdInput(value) {
+    return onlyDigits(value).slice(0, CNPJ_MAX_DIGITS);
+}
+
+function normalizePhoneInput(value) {
+    return onlyDigits(value).slice(0, PHONE_MAX_DIGITS);
+}
+
 function sanitizeString(value) {
     return (value || '').trim();
 }
@@ -87,6 +98,22 @@ function normalizeState(value) {
     return sanitizeString(value).toUpperCase();
 }
 
+function handleTaxIdInput(value) {
+    form.value.taxId = normalizeTaxIdInput(value);
+}
+
+function handleSupplierPhoneInput(value) {
+    form.value.phone = normalizePhoneInput(value);
+}
+
+function handleContactPhoneInput(index, value) {
+    if (!form.value.contacts[index]) {
+        return;
+    }
+
+    form.value.contacts[index].phone = normalizePhoneInput(value);
+}
+
 function addContact() {
     form.value.contacts.push(createEmptyContact());
 }
@@ -97,7 +124,7 @@ function removeContact(index) {
 
 function applyCnpjLookup(data) {
     if (data.taxId) {
-        form.value.taxId = data.taxId;
+        form.value.taxId = normalizeTaxIdInput(data.taxId);
     }
 
     const supplierName = sanitizeString(data.alias || data.name);
@@ -112,7 +139,7 @@ function applyCnpjLookup(data) {
 
     const firstPhone = composePhone(data.phones?.[0]);
     if (firstPhone) {
-        form.value.phone = firstPhone;
+        form.value.phone = normalizePhoneInput(firstPhone);
     }
 
     const cnpjAddress = data.address;
@@ -147,7 +174,7 @@ function applyZipLookup(data) {
 
 async function lookupCnpjAndApply({ force = false, silentErrors = false, showSuccess = false } = {}) {
     const taxId = onlyDigits(form.value.taxId);
-    if (taxId.length !== 14 || cnpjLookupLoading.value) {
+    if (taxId.length !== CNPJ_MAX_DIGITS || cnpjLookupLoading.value) {
         return;
     }
 
@@ -212,7 +239,7 @@ async function lookupZipAndApply({ force = false, silentErrors = false, showSucc
 }
 
 function handleManualCnpjLookup() {
-    if (onlyDigits(form.value.taxId).length !== 14) {
+    if (onlyDigits(form.value.taxId).length !== CNPJ_MAX_DIGITS) {
         toast.add({
             severity: 'warn',
             summary: 'CNPJ inválido',
@@ -244,15 +271,15 @@ function buildPayload() {
         .map((contact) => ({
             name: sanitizeString(contact.name),
             email: sanitizeOptionalString(contact.email),
-            phone: sanitizeOptionalString(contact.phone)
+            phone: sanitizeOptionalString(normalizePhoneInput(contact.phone))
         }))
         .filter((contact) => contact.name || contact.email || contact.phone);
 
     return {
         name: sanitizeString(form.value.name),
-        taxId: onlyDigits(form.value.taxId),
+        taxId: normalizeTaxIdInput(form.value.taxId),
         email: sanitizeOptionalString(form.value.email),
-        phone: sanitizeOptionalString(form.value.phone),
+        phone: sanitizeOptionalString(normalizePhoneInput(form.value.phone)),
         address: {
             zipCode: onlyDigits(form.value.address.zipCode),
             street: sanitizeString(form.value.address.street),
@@ -267,7 +294,7 @@ function buildPayload() {
 }
 
 function validatePayload(payload) {
-    if (payload.taxId.length !== 14) {
+    if (payload.taxId.length !== CNPJ_MAX_DIGITS) {
         toast.add({
             severity: 'warn',
             summary: 'CNPJ inválido',
@@ -359,9 +386,9 @@ function mapSupplierToForm(supplier) {
         id: supplier?.id ?? null,
         active: Boolean(supplier?.active),
         name: supplier?.name ?? '',
-        taxId: supplier?.taxId ?? '',
+        taxId: normalizeTaxIdInput(supplier?.taxId ?? ''),
         email: supplier?.email ?? '',
-        phone: supplier?.phone ?? '',
+        phone: normalizePhoneInput(supplier?.phone ?? ''),
         address: {
             zipCode: supplier?.address?.zipCode ?? '',
             street: supplier?.address?.street ?? '',
@@ -375,7 +402,7 @@ function mapSupplierToForm(supplier) {
             ? supplier.contacts.map((contact) => ({
                   name: contact?.name ?? '',
                   email: contact?.email ?? '',
-                  phone: contact?.phone ?? ''
+                  phone: normalizePhoneInput(contact?.phone ?? '')
               }))
             : []
     };
@@ -395,7 +422,7 @@ async function loadSupplierForEdit() {
         lastZipLookupCode.value = onlyDigits(form.value.address.zipCode);
     } catch (error) {
         showApiErrorToast(toast, error);
-        await router.push('/entities/suppliers');
+        await router.push('/pages/suppliers');
     } finally {
         suppressAutoLookup.value = false;
         loadingInitial.value = false;
@@ -428,7 +455,7 @@ async function handleSubmit() {
             });
         }
 
-        await router.push('/entities/suppliers');
+        await router.push('/pages/suppliers');
     } catch (error) {
         showApiErrorToast(toast, error);
     } finally {
@@ -437,7 +464,7 @@ async function handleSubmit() {
 }
 
 function goBack() {
-    void router.push('/entities/suppliers');
+    void router.push('/pages/suppliers');
 }
 
 watch(
@@ -452,7 +479,7 @@ watch(
             clearTimeout(cnpjLookupTimer);
         }
 
-        if (taxId.length !== 14 || taxId === lastCnpjLookupTaxId.value) {
+        if (taxId.length !== CNPJ_MAX_DIGITS || taxId === lastCnpjLookupTaxId.value) {
             return;
         }
 
@@ -527,7 +554,7 @@ onUnmounted(() => {
                     <div class="md:col-span-2">
                         <label for="supplier-tax-id" class="block mb-2 font-medium">CNPJ *</label>
                         <div class="flex flex-col sm:flex-row gap-2">
-                            <InputText id="supplier-tax-id" v-model="form.taxId" placeholder="00.000.000/0000-00" class="w-full" :disabled="submitting" />
+                            <InputText id="supplier-tax-id" :modelValue="form.taxId" placeholder="00.000.000/0000-00" maxlength="18" class="w-full" :disabled="submitting" @update:modelValue="handleTaxIdInput" />
                             <Button icon="pi pi-search" label="Consultar CNPJ" severity="secondary" outlined @click="handleManualCnpjLookup" :loading="cnpjLookupLoading" :disabled="submitting" />
                         </div>
                         <small class="text-muted-color">Ao informar 14 dígitos, a consulta é feita automaticamente.</small>
@@ -545,7 +572,7 @@ onUnmounted(() => {
 
                     <div>
                         <label for="supplier-phone" class="block mb-2 font-medium">Telefone</label>
-                        <InputText id="supplier-phone" v-model="form.phone" class="w-full" :disabled="submitting" />
+                        <InputText id="supplier-phone" :modelValue="form.phone" maxlength="15" class="w-full" :disabled="submitting" @update:modelValue="handleSupplierPhoneInput" />
                     </div>
                 </div>
             </section>
@@ -621,7 +648,7 @@ onUnmounted(() => {
                             </div>
                             <div>
                                 <label :for="`contact-phone-${index}`" class="block mb-2 font-medium">Telefone</label>
-                                <InputText :id="`contact-phone-${index}`" v-model="contact.phone" class="w-full" :disabled="submitting" />
+                                <InputText :id="`contact-phone-${index}`" :modelValue="contact.phone" maxlength="15" class="w-full" :disabled="submitting" @update:modelValue="(value) => handleContactPhoneInput(index, value)" />
                             </div>
                         </div>
                     </div>

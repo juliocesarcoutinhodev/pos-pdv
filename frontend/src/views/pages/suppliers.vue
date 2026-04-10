@@ -105,11 +105,11 @@ function tagLabel(active) {
 }
 
 function handleOpenCreatePage() {
-    router.push('/entities/suppliers/new');
+    router.push('/pages/suppliers/new');
 }
 
 function handleEditSupplier(supplier) {
-    router.push(`/entities/suppliers/${supplier.id}/edit`);
+    router.push(`/pages/suppliers/${supplier.id}/edit`);
 }
 
 async function handleOpenDetails(supplierId) {

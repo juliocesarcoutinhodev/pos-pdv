@@ -32,10 +32,10 @@ onMounted(() => {
             label: 'Cadastros',
             icon: 'pi pi-fw pi-users',
             items: [
-                { label: 'Clientes', icon: 'pi pi-fw pi-user', to: '/entities/customers' },
-                { label: 'Fornecedores', icon: 'pi pi-fw pi-users', to: '/entities/suppliers' },
-                { label: 'Usuários', icon: 'pi pi-fw pi-user-plus', to: '/entities/users' },
-                { label: 'Funções', icon: 'pi pi-fw pi-id-card', to: '/entities/profiles' }
+                { label: 'Clientes', icon: 'pi pi-fw pi-user', to: '/pages/customers' },
+                { label: 'Fornecedores', icon: 'pi pi-fw pi-users', to: '/pages/suppliers' },
+                { label: 'Usuários', icon: 'pi pi-fw pi-user-plus', to: '/pages/users' },
+                { label: 'Funções', icon: 'pi pi-fw pi-id-card', to: '/pages/profiles' }
             ]
         },
         {

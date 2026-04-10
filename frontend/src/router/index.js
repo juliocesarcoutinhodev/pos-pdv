@@ -46,34 +46,58 @@ const router = createRouter({
             children: [{ path: '', component: () => import('@/views/reports/closing.vue') }]
         },
         {
-            path: '/entities/customers',
+            path: '/pages/customers',
             component: AppLayout,
-            children: [{ path: '', component: () => import('@/views/entities/customers.vue') }]
+            children: [{ path: '', component: () => import('@/views/pages/customers.vue') }]
+        },
+        {
+            path: '/pages/suppliers',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/pages/suppliers.vue') }]
+        },
+        {
+            path: '/pages/suppliers/new',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/pages/supplier-form.vue') }]
+        },
+        {
+            path: '/pages/suppliers/:id/edit',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/pages/supplier-form.vue') }]
+        },
+        {
+            path: '/pages/users',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/pages/users.vue') }]
+        },
+        {
+            path: '/pages/profiles',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/pages/profiles.vue') }]
+        },
+        {
+            path: '/entities/customers',
+            redirect: '/pages/customers'
         },
         {
             path: '/entities/suppliers',
-            component: AppLayout,
-            children: [{ path: '', component: () => import('@/views/entities/suppliers.vue') }]
+            redirect: '/pages/suppliers'
         },
         {
             path: '/entities/suppliers/new',
-            component: AppLayout,
-            children: [{ path: '', component: () => import('@/views/entities/supplier-form.vue') }]
+            redirect: '/pages/suppliers/new'
         },
         {
             path: '/entities/suppliers/:id/edit',
-            component: AppLayout,
-            children: [{ path: '', component: () => import('@/views/entities/supplier-form.vue') }]
+            redirect: (to) => `/pages/suppliers/${to.params.id}/edit`
         },
         {
             path: '/entities/users',
-            component: AppLayout,
-            children: [{ path: '', component: () => import('@/views/entities/users.vue') }]
+            redirect: '/pages/users'
         },
         {
             path: '/entities/profiles',
-            component: AppLayout,
-            children: [{ path: '', component: () => import('@/views/entities/profiles.vue') }]
+            redirect: '/pages/profiles'
         },
         {
             path: '/landing',
