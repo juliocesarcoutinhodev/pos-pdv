@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'https://vps7348.integrator.host/pospdv',
+    // baseURL: import.meta.env.VITE_API_URL || 'https://vps7348.integrator.host/pospdv',
+    baseURL: 'http://localhost:8080',
     withCredentials: true
 });
 

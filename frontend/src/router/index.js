@@ -51,6 +51,16 @@ const router = createRouter({
             children: [{ path: '', component: () => import('@/views/pages/customers.vue') }]
         },
         {
+            path: '/pages/customers/new',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/pages/customer-form.vue') }]
+        },
+        {
+            path: '/pages/customers/:id/edit',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/pages/customer-form.vue') }]
+        },
+        {
             path: '/pages/suppliers',
             component: AppLayout,
             children: [{ path: '', component: () => import('@/views/pages/suppliers.vue') }]
@@ -78,6 +88,14 @@ const router = createRouter({
         {
             path: '/entities/customers',
             redirect: '/pages/customers'
+        },
+        {
+            path: '/entities/customers/new',
+            redirect: '/pages/customers/new'
+        },
+        {
+            path: '/entities/customers/:id/edit',
+            redirect: (to) => `/pages/customers/${to.params.id}/edit`
         },
         {
             path: '/entities/suppliers',

@@ -151,6 +151,16 @@ class RbacAuthorizationTest {
     }
 
     @Test
+    void userToken_shouldAccessCustomersListEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(get("/api/v1/customers")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void userToken_shouldGet403OnCreateUserEndpoint() throws Exception {
         var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
         var token = jwtTokenService.generateAccessToken(user);
@@ -235,6 +245,59 @@ class RbacAuthorizationTest {
         var token = jwtTokenService.generateAccessToken(user);
 
         mockMvc.perform(delete("/api/v1/suppliers/" + UUID.randomUUID())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void userToken_shouldCreateCustomerEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(post("/api/v1/customers")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "name": "Cliente XPTO",
+                                  "taxId": "12345678901",
+                                  "email": "contato@cliente.com",
+                                  "phone": "11999999999",
+                                  "address": {
+                                    "zipCode": "03195000",
+                                    "street": "Rua do Oratório",
+                                    "number": "100",
+                                    "district": "Alto da Mooca",
+                                    "city": "São Paulo",
+                                    "state": "SP"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void userToken_shouldGet403OnPatchCustomerEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(patch("/api/v1/customers/" + UUID.randomUUID())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "phone": "11999990000"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void userToken_shouldGet403OnDeactivateCustomerEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(delete("/api/v1/customers/" + UUID.randomUUID())
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
     }

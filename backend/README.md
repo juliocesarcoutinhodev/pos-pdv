@@ -80,6 +80,13 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 | `LOOKUP_CACHE_ZIP_SUCCESS_TTL_MINUTES` | `43200`                           | TTL (min) de respostas CEP com sucesso |
 | `LOOKUP_CACHE_ZIP_NOT_FOUND_TTL_MINUTES` | `60`                           | TTL (min) para CEP nao encontrado (404) |
 | `LOOKUP_CACHE_ZIP_MAXIMUM_SIZE`     | `50000`                              | Limite de itens no cache de CEP |
+| `MINIO_ENDPOINT`                    | `http://localhost:9000`              | Endpoint S3-compatible do MinIO |
+| `MINIO_ACCESS_KEY`                  | `minioadmin`                         | Access key do MinIO |
+| `MINIO_SECRET_KEY`                  | *(sem padrao)*                       | Secret key do MinIO |
+| `MINIO_BUCKET`                      | `images`                             | Bucket para imagens do sistema |
+| `MINIO_AUTO_CREATE_BUCKET`          | `true`                               | Cria bucket automaticamente se nao existir |
+| `SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE` | `10MB`                          | Limite maximo por arquivo no upload |
+| `SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE` | `10MB`                       | Limite maximo total da requisicao multipart |
 
 ## Autenticacao com Cookies
 
@@ -404,6 +411,65 @@ Query params opcionais: `name` (parcial), `taxId` (parcial), `email` (parcial), 
 **DELETE `/api/v1/suppliers/{id}`** — 204 No Content  
 Desativar fornecedor (soft delete) — define `deletedAt`. Nenhum dado e deletado fisicamente.
 
+### CRUD de Clientes
+
+| Metodo | Path                       | Auth | Descricao                                      |
+| ------ | -------------------------- | ---- | ---------------------------------------------- |
+| GET    | `/api/v1/customers`        | Sim  | Listar clientes com filtros/paginacao          |
+| GET    | `/api/v1/customers/{id}`   | Sim  | Detalhes de um cliente                         |
+| POST   | `/api/v1/customers`        | Sim  | Criar novo cliente                             |
+| PUT    | `/api/v1/customers/{id}`   | Sim  | Atualizacao completa                           |
+| PATCH  | `/api/v1/customers/{id}`   | Sim  | Atualizacao parcial (inclui ativar/desativar) |
+| DELETE | `/api/v1/customers/{id}`   | Sim  | Desativar cliente (soft delete)                |
+
+Permissões:
+- `GET /api/v1/customers`, `GET /api/v1/customers/{id}` e `POST /api/v1/customers` exigem apenas usuário autenticado.
+- `PUT`, `PATCH` e `DELETE` em `/api/v1/customers/**` exigem role `ADMIN`.
+
+**POST `/api/v1/customers`** — 201 Created
+```json
+{
+  "name": "João da Silva",
+  "taxId": "12345678901",
+  "email": "joao@email.com",
+  "phone": "11999999999",
+  "imageId": "3d5bfa71-412a-4f73-bdd8-3fb4dfe58f99",
+  "address": {
+    "zipCode": "03195000",
+    "street": "Rua do Oratório",
+    "number": "100",
+    "complement": "Casa",
+    "district": "Alto da Mooca",
+    "city": "São Paulo",
+    "state": "SP"
+  }
+}
+```
+
+**GET `/api/v1/customers?page=0&size=20`** — 200 OK  
+Query params opcionais: `name` (parcial), `taxId` (parcial), `email` (parcial), `active` (true/false), `sortBy` (`name`, `taxId`, `createdAt`) e `sortDirection` (`asc`/`desc`).
+
+### Imagens (MinIO)
+
+| Metodo | Path                            | Auth | Descricao                                          |
+| ------ | ------------------------------- | ---- | -------------------------------------------------- |
+| POST   | `/api/v1/images/upload`         | Sim  | Upload de imagem (`multipart/form-data`, campo `file`) |
+| GET    | `/api/v1/images/{imageId}`      | Sim  | Download/visualizacao da imagem                    |
+| GET    | `/api/v1/images/{imageId}/metadata` | Sim | Metadados da imagem armazenada                     |
+
+**POST `/api/v1/images/upload`** — 201 Created
+```json
+{
+  "imageId": "3d5bfa71-412a-4f73-bdd8-3fb4dfe58f99",
+  "fileName": "cliente.png",
+  "contentType": "image/png",
+  "size": 24532,
+  "uploadedAt": "2026-04-10T18:40:00Z",
+  "downloadUrl": "http://localhost:8080/api/v1/images/3d5bfa71-412a-4f73-bdd8-3fb4dfe58f99",
+  "metadataUrl": "http://localhost:8080/api/v1/images/3d5bfa71-412a-4f73-bdd8-3fb4dfe58f99/metadata"
+}
+```
+
 ### Administrativo (requer role ADMIN)
 
 | Metodo | Path                     | Auth | Descricao                 |
@@ -476,11 +542,14 @@ br.com.topone.backend
 │   └── usecase/
 │       ├── login/    # Casos de uso de autenticação (Login, Logout, RefreshToken)
 │       ├── role/     # Casos de uso de roles (CRUD administrativo)
+│       ├── customer/ # Casos de uso de clientes (CRUD + imagem)
+│       ├── image/    # Casos de uso de upload/download de imagens
 │       ├── supplier/ # Casos de uso de fornecedores (CRUD administrativo)
 │       └── user/     # Casos de uso de usuário (CRUD administrativo)
 │
 ├── infrastructure/
 │   ├── config/       # Configuracoes Spring (Security, CORS, etc)
+│   ├── external/     # Adapters de integração externa (CNPJA, MinIO)
 │   ├── persistence/
 │   │   ├── entity/   # JPA entities — isoladas do dominio
 │   │   ├── jpa/      # Spring Data JPA repositories
@@ -565,6 +634,21 @@ Para atribuir um perfil a um usuario, consulte primeiro `GET /api/v1/roles` e us
 | updated_at | TIMESTAMP     | Auto                                 |
 | deleted_at | TIMESTAMP     | Nullable (soft delete)               |
 
+### Customer (`tb_customers`)
+
+| Campo      | Tipo          | Notas                                |
+| ---------- | ------------- | ------------------------------------ |
+| id         | UUID          | PK, auto-gen                         |
+| name       | VARCHAR(150)  | NOT NULL                             |
+| tax_id     | VARCHAR(14)   | UNIQUE, NOT NULL                     |
+| email      | VARCHAR(255)  | Nullable                             |
+| phone      | VARCHAR(30)   | Nullable                             |
+| image_id   | VARCHAR(120)  | Nullable (referencia lógica no MinIO)|
+| address_id | UUID          | FK → tb_addresses(id), UNIQUE        |
+| created_at | TIMESTAMP     | Auto                                 |
+| updated_at | TIMESTAMP     | Auto                                 |
+| deleted_at | TIMESTAMP     | Nullable (soft delete)               |
+
 ### Contact (`tb_contacts`)
 
 | Campo   | Tipo          | Notas                |
@@ -612,4 +696,4 @@ Altere a senha em producao imediatamente apos o primeiro login.
 
 ## Tecnologias
 
-Spring Boot 4, Spring Security, Spring Data JPA, Flyway, PostgreSQL, H2 (test), Actuator + Prometheus, Lombok, MapStruct, Bean Validation, JJWT (0.12.6), Spring Mail.
+Spring Boot 4, Spring Security, Spring Data JPA, Flyway, PostgreSQL, H2 (test), Actuator + Prometheus, Lombok, MapStruct, Bean Validation, JJWT (0.12.6), Spring Mail, MinIO Java SDK.

@@ -157,6 +157,61 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(CustomerNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCustomerNotFound(CustomerNotFoundException ex) {
+        log.warn("Customer not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                "Cliente não encontrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(CustomerTaxIdAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleCustomerTaxIdAlreadyExists(CustomerTaxIdAlreadyExistsException ex) {
+        log.warn("Customer tax id already exists");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflito",
+                "Documento do cliente já cadastrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(InvalidImageException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidImage(InvalidImageException ex) {
+        log.warn("Invalid image upload");
+        return ResponseEntity.badRequest().body(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida",
+                ex.getMessage(),
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(ImageNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleImageNotFound(ImageNotFoundException ex) {
+        log.warn("Image not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                "Imagem não encontrada",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(ImageStorageIntegrationException.class)
+    public ResponseEntity<ErrorResponse> handleImageStorageIntegration(ImageStorageIntegrationException ex) {
+        log.error("Image storage integration failure | message={}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponse(
+                HttpStatus.BAD_GATEWAY.value(),
+                "Falha de integração",
+                "Não foi possível processar a imagem no storage",
+                Instant.now().toString()
+        ));
+    }
+
     @ExceptionHandler(InvalidCnpjException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCnpj(InvalidCnpjException ex) {
         log.warn("Invalid CNPJ informed");
