@@ -150,6 +150,7 @@ Revoga todos os refresh tokens do usuário e limpa o cookie.
 | ------ | ------------ | ---- | ------------------------- |
 | GET    | `/api/v1/me` | Sim  | Informacoes do usuario logado |
 | GET    | `/api/v1/cnpj?taxId=37335118000180` | Sim | Consulta dados cadastrais por CNPJ |
+| GET    | `/api/v1/zip?code=03195000` | Sim | Consulta endereco por CEP |
 
 **GET `/api/v1/me`** — 200 OK
 ```json
@@ -174,6 +175,21 @@ Revoga todos os refresh tokens do usuário e limpa o cookie.
 }
 ```
 Erros comuns: `400` (CNPJ inválido), `404` (CNPJ não encontrado), `502` (falha no provedor externo).
+
+**GET `/api/v1/zip?code=03195000`** — 200 OK
+```json
+{
+  "updated": "2026-03-25T03:00:00Z",
+  "code": "03195000",
+  "municipality": 3550308,
+  "street": "Rua do Oratório",
+  "number": null,
+  "district": "Alto da Mooca",
+  "city": "São Paulo",
+  "state": "SP"
+}
+```
+Erros comuns: `400` (CEP inválido), `404` (CEP não encontrado), `502` (falha no provedor externo).
 
 ### CRUD de Usuarios (requer role ADMIN)
 

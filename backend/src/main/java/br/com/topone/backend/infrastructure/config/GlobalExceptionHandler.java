@@ -168,6 +168,39 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(InvalidZipCodeException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidZipCode(InvalidZipCodeException ex) {
+        log.warn("Invalid ZIP code informed");
+        return ResponseEntity.badRequest().body(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida",
+                "CEP inválido. Informe 8 dígitos.",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(ZipCodeNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleZipCodeNotFound(ZipCodeNotFoundException ex) {
+        log.warn("ZIP code not found in external provider");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                "CEP não encontrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(ZipIntegrationException.class)
+    public ResponseEntity<ErrorResponse> handleZipIntegration(ZipIntegrationException ex) {
+        log.error("CNPJA ZIP integration failure | message={}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponse(
+                HttpStatus.BAD_GATEWAY.value(),
+                "Falha de integração",
+                "Não foi possível consultar o CEP no provedor externo",
+                Instant.now().toString()
+        ));
+    }
+
     @ExceptionHandler(RoleNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleRoleNotFound(RoleNotFoundException ex) {
         log.warn("Role not found");

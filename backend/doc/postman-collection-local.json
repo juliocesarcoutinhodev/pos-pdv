@@ -64,6 +64,11 @@
       "key": "tax_id",
       "value": "37335118000180",
       "type": "string"
+    },
+    {
+      "key": "zip_code",
+      "value": "03195000",
+      "type": "string"
     }
   ],
   "item": [
@@ -949,6 +954,38 @@
               ]
             },
             "description": "Lookup company data by CNPJ using the external CNPJA provider."
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup ZIP",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/zip?code={{zip_code}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "zip"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "{{zip_code}}"
+                }
+              ]
+            },
+            "description": "Lookup address data by ZIP code using the external CNPJA provider."
           },
           "response": []
         }
