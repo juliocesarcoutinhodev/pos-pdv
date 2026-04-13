@@ -105,8 +105,10 @@ ORDER BY c.name
 		</element>
 		<element kind="textField" uuid="2d63104c-ca7c-48b2-ae2a-6b8c8474ba56" x="0" y="18" width="555" height="16" style="Value">
 			<expression><![CDATA[
-"Nascimento de " + ($P{BIRTH_DATE_FROM} == null ? "sem inicio" : new java.text.SimpleDateFormat("dd/MM/yyyy").format($P{BIRTH_DATE_FROM}))
-+ " ate " + ($P{BIRTH_DATE_TO} == null ? "sem fim" : new java.text.SimpleDateFormat("dd/MM/yyyy").format($P{BIRTH_DATE_TO}))
+($P{BIRTH_DATE_FROM} == null && $P{BIRTH_DATE_TO} == null)
+? ""
+: ("Nascimento de " + ($P{BIRTH_DATE_FROM} == null ? "sem inicio" : new java.text.SimpleDateFormat("dd/MM/yyyy").format($P{BIRTH_DATE_FROM}))
++ " ate " + ($P{BIRTH_DATE_TO} == null ? "sem fim" : new java.text.SimpleDateFormat("dd/MM/yyyy").format($P{BIRTH_DATE_TO})))
             ]]></expression>
 		</element>
 	</pageHeader>
@@ -245,7 +247,7 @@ ORDER BY c.name
 		<element kind="textField" uuid="dadcdac0-cf1e-4b14-abd3-da45fcf51fbe" x="10" y="8" width="170" height="14" style="SummaryLabel">
 			<expression><![CDATA["Total de clientes:"]]></expression>
 		</element>
-		<element kind="textField" uuid="0eddfb98-7adc-489b-a892-cd5aff313c0a" x="180" y="8" width="80" height="14" style="SummaryLabel">
+		<element kind="textField" uuid="0eddfb98-7adc-489b-a892-cd5aff313c0a" x="466" y="8" width="80" height="14" hTextAlign="Right" style="SummaryLabel">
 			<expression><![CDATA[$V{TOTAL_CUSTOMERS}]]></expression>
 		</element>
 	</summary>
