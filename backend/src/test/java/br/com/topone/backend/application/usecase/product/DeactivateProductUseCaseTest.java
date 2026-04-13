@@ -50,6 +50,7 @@ class DeactivateProductUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 "UN",
                 null,
                 new BigDecimal("10.00"),

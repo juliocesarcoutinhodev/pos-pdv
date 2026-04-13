@@ -4,6 +4,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record UpdateProductPatchRequest(
         @Size(max = 60) String sku,
@@ -12,6 +13,7 @@ public record UpdateProductPatchRequest(
         @Size(max = 1000) String description,
         @Size(max = 120) String brand,
         @Size(max = 100) String category,
+        UUID supplierId,
         @Size(max = 10) String unit,
         @PositiveOrZero BigDecimal costPrice,
         @PositiveOrZero BigDecimal salePrice,

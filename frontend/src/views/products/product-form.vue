@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { createProduct, getNextProductSku, getProductById, updateProductPut } from '@/services/productService.js';
 import { downloadImageBlob, uploadImage } from '@/services/imageService.js';
+import { getSupplierById, listSuppliers } from '@/services/supplierService.js';
 import { useErrorHandler } from '@/services/errorHandler.js';
 
 const route = useRoute();
@@ -15,6 +16,12 @@ const loadingInitial = ref(false);
 const submitting = ref(false);
 const imageUploadLoading = ref(false);
 const imagePreviewLoading = ref(false);
+const supplierLookupLoading = ref(false);
+const supplierSuggestions = ref([]);
+const selectedSupplier = ref(null);
+
+const SUPPLIER_LOOKUP_DEBOUNCE_MS = 250;
+let supplierLookupTimer = null;
 
 const imageInputRef = ref(null);
 const imagePreviewUrl = ref('');
@@ -36,6 +43,7 @@ function createEmptyForm() {
         description: '',
         brand: '',
         category: '',
+        supplierId: null,
         unit: 'UN',
         costPrice: '',
         salePrice: '',
@@ -87,6 +95,87 @@ function normalizeTaxCode(value, maxLength) {
 
 function normalizeDigitsInput(value, maxLength) {
     return onlyDigits(value).slice(0, maxLength);
+}
+
+function formatTaxId(value) {
+    if (!value) {
+        return '-';
+    }
+
+    const digits = value.replace(/\D/g, '');
+    if (digits.length !== 14) {
+        return value;
+    }
+
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
+function toSupplierOption(supplier) {
+    if (!supplier?.id) {
+        return null;
+    }
+
+    return {
+        id: supplier.id,
+        name: supplier.name ?? '',
+        taxId: supplier.taxId ?? ''
+    };
+}
+
+function clearSupplierLookupTimer() {
+    if (supplierLookupTimer) {
+        clearTimeout(supplierLookupTimer);
+        supplierLookupTimer = null;
+    }
+}
+
+function handleSupplierSelection(value) {
+    const selectedOption = value && typeof value === 'object' && value.id ? value : null;
+    selectedSupplier.value = selectedOption;
+    form.value.supplierId = selectedOption?.id ?? null;
+}
+
+async function handleSupplierLookup(event) {
+    const query = sanitizeString(event?.query);
+    clearSupplierLookupTimer();
+
+    if (!query) {
+        supplierSuggestions.value = [];
+        return;
+    }
+
+    supplierLookupTimer = setTimeout(async () => {
+        supplierLookupLoading.value = true;
+        try {
+            const response = await listSuppliers({
+                page: 0,
+                size: 10,
+                name: query,
+                sortBy: 'name',
+                sortDirection: 'asc'
+            });
+            supplierSuggestions.value = response.content.map(toSupplierOption).filter((option) => option?.id);
+        } catch {
+            supplierSuggestions.value = [];
+        } finally {
+            supplierLookupLoading.value = false;
+        }
+    }, SUPPLIER_LOOKUP_DEBOUNCE_MS);
+}
+
+async function loadSelectedSupplier(supplierId) {
+    if (!supplierId) {
+        selectedSupplier.value = null;
+        return;
+    }
+
+    try {
+        const supplier = await getSupplierById(supplierId);
+        selectedSupplier.value = toSupplierOption(supplier);
+    } catch {
+        selectedSupplier.value = null;
+        form.value.supplierId = null;
+    }
 }
 
 function parseDecimalInput(value) {
@@ -225,6 +314,7 @@ function buildPayload() {
         description: sanitizeOptionalString(form.value.description),
         brand: sanitizeOptionalString(form.value.brand),
         category: sanitizeOptionalString(form.value.category),
+        supplierId: form.value.supplierId,
         unit: normalizeUnitInput(form.value.unit),
         costPrice: parseDecimalInput(form.value.costPrice),
         salePrice: parseDecimalInput(form.value.salePrice),
@@ -392,6 +482,7 @@ function mapProductToForm(product) {
         description: product?.description ?? '',
         brand: product?.brand ?? '',
         category: product?.category ?? '',
+        supplierId: product?.supplierId ?? null,
         unit: product?.unit ?? 'UN',
         costPrice: decimalToInput(product?.costPrice),
         salePrice: decimalToInput(product?.salePrice),
@@ -422,6 +513,7 @@ async function loadProductForEdit() {
         const product = await getProductById(productId.value);
         form.value = mapProductToForm(product);
         await loadImagePreview(form.value.imageId);
+        await loadSelectedSupplier(form.value.supplierId);
     } catch (error) {
         showApiErrorToast(toast, error);
         await router.push('/products/list');
@@ -487,11 +579,14 @@ onMounted(async () => {
         return;
     }
 
+    selectedSupplier.value = null;
+    supplierSuggestions.value = [];
     await loadAutoSkuForCreate();
 });
 
 onUnmounted(() => {
     clearImagePreview();
+    clearSupplierLookupTimer();
 });
 </script>
 
@@ -549,6 +644,30 @@ onUnmounted(() => {
                     <div>
                         <label for="product-category" class="block mb-2 font-medium">Categoria</label>
                         <InputText id="product-category" v-model="form.category" class="w-full" :disabled="submitting" />
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="product-supplier" class="block mb-2 font-medium">Fornecedor</label>
+                        <AutoComplete
+                            id="product-supplier"
+                            :modelValue="selectedSupplier"
+                            :suggestions="supplierSuggestions"
+                            optionLabel="name"
+                            dropdown
+                            forceSelection
+                            class="w-full"
+                            :disabled="submitting"
+                            :loading="supplierLookupLoading"
+                            @complete="handleSupplierLookup"
+                            @update:modelValue="handleSupplierSelection"
+                        >
+                            <template #option="slotProps">
+                                <div class="flex flex-col">
+                                    <span class="font-medium">{{ slotProps.option.name }}</span>
+                                    <small class="text-muted-color">CNPJ: {{ formatTaxId(slotProps.option.taxId) }}</small>
+                                </div>
+                            </template>
+                        </AutoComplete>
                     </div>
 
                     <div class="md:col-span-3">

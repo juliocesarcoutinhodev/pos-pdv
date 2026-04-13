@@ -2,12 +2,16 @@ package br.com.topone.backend.application.usecase.product;
 
 import br.com.topone.backend.domain.exception.ProductBarcodeAlreadyExistsException;
 import br.com.topone.backend.domain.exception.ProductSkuAlreadyExistsException;
+import br.com.topone.backend.domain.exception.SupplierNotFoundException;
 import br.com.topone.backend.domain.model.Product;
 import br.com.topone.backend.domain.repository.ProductRepository;
+import br.com.topone.backend.domain.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -15,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateProductUseCase {
 
     private final ProductRepository productRepository;
+    private final SupplierRepository supplierRepository;
 
     @Transactional
     public CreateProductResult execute(CreateProductCommand command) {
@@ -25,6 +30,7 @@ public class CreateProductUseCase {
                 command.description(),
                 command.brand(),
                 command.category(),
+                command.supplierId(),
                 command.unit(),
                 command.costPrice(),
                 command.salePrice(),
@@ -43,6 +49,8 @@ public class CreateProductUseCase {
                 command.cofinsRate(),
                 command.imageId()
         );
+
+        validateSupplier(product.getSupplierId());
 
         if (productRepository.existsBySku(product.getSku())) {
             throw new ProductSkuAlreadyExistsException(product.getSku());
@@ -63,6 +71,7 @@ public class CreateProductUseCase {
                 saved.getDescription(),
                 saved.getBrand(),
                 saved.getCategory(),
+                saved.getSupplierId(),
                 saved.getUnit(),
                 saved.getCostPrice(),
                 saved.getSalePrice(),
@@ -82,5 +91,14 @@ public class CreateProductUseCase {
                 saved.getImageId(),
                 saved.getCreatedAt()
         );
+    }
+
+    private void validateSupplier(UUID supplierId) {
+        if (supplierId == null) {
+            return;
+        }
+
+        supplierRepository.findById(supplierId)
+                .orElseThrow(SupplierNotFoundException::new);
     }
 }

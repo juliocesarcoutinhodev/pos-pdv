@@ -2,8 +2,10 @@ package br.com.topone.backend.application.usecase.product;
 
 import br.com.topone.backend.domain.exception.ProductBarcodeAlreadyExistsException;
 import br.com.topone.backend.domain.exception.ProductSkuAlreadyExistsException;
+import br.com.topone.backend.domain.exception.SupplierNotFoundException;
 import br.com.topone.backend.domain.model.Product;
 import br.com.topone.backend.domain.repository.ProductRepository;
+import br.com.topone.backend.domain.repository.SupplierRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,11 +14,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,6 +29,9 @@ class CreateProductUseCaseTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private SupplierRepository supplierRepository;
 
     @InjectMocks
     private CreateProductUseCase useCase;
@@ -37,6 +45,7 @@ class CreateProductUseCaseTest {
                 " Descricao do produto ",
                 " Marca A ",
                 " Categoria B ",
+                null,
                 " un ",
                 new BigDecimal("10.5"),
                 new BigDecimal("25"),
@@ -97,6 +106,7 @@ class CreateProductUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 "UN",
                 null,
                 new BigDecimal("10.00"),
@@ -131,6 +141,7 @@ class CreateProductUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 "UN",
                 null,
                 new BigDecimal("10.00"),
@@ -155,5 +166,43 @@ class CreateProductUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(command))
                 .isInstanceOf(ProductBarcodeAlreadyExistsException.class);
+    }
+
+    @Test
+    void shouldThrowWhenSupplierDoesNotExist() {
+        var supplierId = UUID.randomUUID();
+        var command = new CreateProductCommand(
+                "SKU-001",
+                null,
+                "Produto XPTO",
+                null,
+                null,
+                null,
+                supplierId,
+                "UN",
+                null,
+                new BigDecimal("10.00"),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        when(supplierRepository.findById(supplierId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> useCase.execute(command))
+                .isInstanceOf(SupplierNotFoundException.class);
+
+        verify(productRepository, never()).save(any());
     }
 }

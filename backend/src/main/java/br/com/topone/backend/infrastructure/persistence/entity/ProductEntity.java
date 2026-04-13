@@ -54,6 +54,9 @@ public class ProductEntity {
     @Column(length = 100)
     private String category;
 
+    @Column(name = "supplier_id")
+    private UUID supplierId;
+
     @Column(nullable = false, length = 10)
     private String unit;
 

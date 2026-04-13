@@ -3,12 +3,16 @@ package br.com.topone.backend.application.usecase.product;
 import br.com.topone.backend.domain.exception.ProductBarcodeAlreadyExistsException;
 import br.com.topone.backend.domain.exception.ProductNotFoundException;
 import br.com.topone.backend.domain.exception.ProductSkuAlreadyExistsException;
+import br.com.topone.backend.domain.exception.SupplierNotFoundException;
 import br.com.topone.backend.domain.model.Product;
 import br.com.topone.backend.domain.repository.ProductRepository;
+import br.com.topone.backend.domain.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -16,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdateProductUseCase {
 
     private final ProductRepository productRepository;
+    private final SupplierRepository supplierRepository;
 
     @Transactional
     public UpdateProductResult execute(UpdateProductCommand command) {
@@ -28,6 +33,7 @@ public class UpdateProductUseCase {
         product.changeDescription(command.description());
         product.changeBrand(command.brand());
         product.changeCategory(command.category());
+        product.changeSupplierId(command.supplierId());
         product.changeUnit(command.unit());
         product.changeCostPrice(command.costPrice());
         product.changeSalePrice(command.salePrice());
@@ -45,6 +51,7 @@ public class UpdateProductUseCase {
         product.changeCofinsSituation(command.cofinsSituation());
         product.changeCofinsRate(command.cofinsRate());
         product.changeImageId(command.imageId());
+        validateSupplier(product.getSupplierId());
 
         productRepository.findBySkuExcludingId(product.getSku(), product.getId())
                 .ifPresent(existing -> {
@@ -74,6 +81,7 @@ public class UpdateProductUseCase {
                 product.getDescription(),
                 product.getBrand(),
                 product.getCategory(),
+                product.getSupplierId(),
                 product.getUnit(),
                 product.getCostPrice(),
                 product.getSalePrice(),
@@ -95,5 +103,14 @@ public class UpdateProductUseCase {
                 product.getUpdatedAt(),
                 product.isActive()
         );
+    }
+
+    private void validateSupplier(UUID supplierId) {
+        if (supplierId == null) {
+            return;
+        }
+
+        supplierRepository.findById(supplierId)
+                .orElseThrow(SupplierNotFoundException::new);
     }
 }

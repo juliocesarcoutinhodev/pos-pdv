@@ -1,8 +1,10 @@
 package br.com.topone.backend.application.usecase.product;
 
 import br.com.topone.backend.domain.exception.ProductBarcodeAlreadyExistsException;
+import br.com.topone.backend.domain.exception.SupplierNotFoundException;
 import br.com.topone.backend.domain.model.Product;
 import br.com.topone.backend.domain.repository.ProductRepository;
+import br.com.topone.backend.domain.repository.SupplierRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +29,9 @@ class UpdateProductPatchUseCaseTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private SupplierRepository supplierRepository;
+
     @InjectMocks
     private UpdateProductPatchUseCase useCase;
 
@@ -40,6 +45,7 @@ class UpdateProductPatchUseCaseTest {
                 "Descricao antiga",
                 "Marca antiga",
                 "Categoria antiga",
+                null,
                 "UN",
                 new BigDecimal("10.00"),
                 new BigDecimal("15.00"),
@@ -69,6 +75,7 @@ class UpdateProductPatchUseCaseTest {
                 null,
                 null,
                 " Categoria Nova ",
+                null,
                 null,
                 null,
                 new BigDecimal("17.9"),
@@ -119,6 +126,7 @@ class UpdateProductPatchUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 "UN",
                 null,
                 new BigDecimal("10.00"),
@@ -164,6 +172,7 @@ class UpdateProductPatchUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -171,6 +180,7 @@ class UpdateProductPatchUseCaseTest {
                 "SKU-002",
                 "7891234567890",
                 "Outro produto",
+                null,
                 null,
                 null,
                 null,
@@ -201,6 +211,76 @@ class UpdateProductPatchUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(command))
                 .isInstanceOf(ProductBarcodeAlreadyExistsException.class);
+
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenSupplierDoesNotExist() {
+        var productId = UUID.randomUUID();
+        var supplierId = UUID.randomUUID();
+        var product = Product.create(
+                "SKU-001",
+                null,
+                "Produto XPTO",
+                null,
+                null,
+                null,
+                null,
+                "UN",
+                null,
+                new BigDecimal("10.00"),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+        product.setId(productId);
+
+        var command = new UpdateProductPatchCommand(
+                productId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                supplierId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(supplierRepository.findById(supplierId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> useCase.execute(command))
+                .isInstanceOf(SupplierNotFoundException.class);
 
         verify(productRepository, never()).save(any());
     }

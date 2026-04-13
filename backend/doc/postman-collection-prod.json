@@ -1650,7 +1650,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sku\": \"{{product_sku}}\",\n  \"barcode\": \"7891234567890\",\n  \"name\": \"Arroz Tipo 1 5kg\",\n  \"description\": \"Pacote com 5kg\",\n  \"brand\": \"Marca XPTO\",\n  \"category\": \"Mercearia\",\n  \"unit\": \"UN\",\n  \"costPrice\": 18.9,\n  \"salePrice\": 24.9,\n  \"promotionalPrice\": 22.9,\n  \"stockQuantity\": 50,\n  \"minimumStock\": 10,\n  \"ncm\": \"10063021\",\n  \"cest\": \"1704700\",\n  \"cfop\": \"5102\",\n  \"taxOrigin\": \"0\",\n  \"taxSituation\": \"60\",\n  \"icmsRate\": 18,\n  \"pisSituation\": \"01\",\n  \"pisRate\": 1.65,\n  \"cofinsSituation\": \"01\",\n  \"cofinsRate\": 7.6,\n  \"imageId\": \"{{image_id}}\"\n}"
+              "raw": "{\n  \"sku\": \"{{product_sku}}\",\n  \"barcode\": \"7891234567890\",\n  \"name\": \"Arroz Tipo 1 5kg\",\n  \"description\": \"Pacote com 5kg\",\n  \"brand\": \"Marca XPTO\",\n  \"category\": \"Mercearia\",\n  \"supplierId\": \"{{supplier_id}}\",\n  \"unit\": \"UN\",\n  \"costPrice\": 18.9,\n  \"salePrice\": 24.9,\n  \"promotionalPrice\": 22.9,\n  \"stockQuantity\": 50,\n  \"minimumStock\": 10,\n  \"ncm\": \"10063021\",\n  \"cest\": \"1704700\",\n  \"cfop\": \"5102\",\n  \"taxOrigin\": \"0\",\n  \"taxSituation\": \"60\",\n  \"icmsRate\": 18,\n  \"pisSituation\": \"01\",\n  \"pisRate\": 1.65,\n  \"cofinsSituation\": \"01\",\n  \"cofinsRate\": 7.6,\n  \"imageId\": \"{{image_id}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/products",
@@ -1726,7 +1726,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sku\": \"{{product_sku}}\",\n  \"barcode\": \"7891234567890\",\n  \"name\": \"Arroz Tipo 1 5kg Premium\",\n  \"description\": \"Pacote com 5kg - safra nova\",\n  \"brand\": \"Marca XPTO\",\n  \"category\": \"Mercearia\",\n  \"unit\": \"UN\",\n  \"costPrice\": 19.5,\n  \"salePrice\": 26.9,\n  \"promotionalPrice\": 24.9,\n  \"stockQuantity\": 45,\n  \"minimumStock\": 8,\n  \"ncm\": \"10063021\",\n  \"cest\": \"1704700\",\n  \"cfop\": \"5102\",\n  \"taxOrigin\": \"0\",\n  \"taxSituation\": \"60\",\n  \"icmsRate\": 18,\n  \"pisSituation\": \"01\",\n  \"pisRate\": 1.65,\n  \"cofinsSituation\": \"01\",\n  \"cofinsRate\": 7.6,\n  \"imageId\": \"{{image_id}}\"\n}"
+              "raw": "{\n  \"sku\": \"{{product_sku}}\",\n  \"barcode\": \"7891234567890\",\n  \"name\": \"Arroz Tipo 1 5kg Premium\",\n  \"description\": \"Pacote com 5kg - safra nova\",\n  \"brand\": \"Marca XPTO\",\n  \"category\": \"Mercearia\",\n  \"supplierId\": \"{{supplier_id}}\",\n  \"unit\": \"UN\",\n  \"costPrice\": 19.5,\n  \"salePrice\": 26.9,\n  \"promotionalPrice\": 24.9,\n  \"stockQuantity\": 45,\n  \"minimumStock\": 8,\n  \"ncm\": \"10063021\",\n  \"cest\": \"1704700\",\n  \"cfop\": \"5102\",\n  \"taxOrigin\": \"0\",\n  \"taxSituation\": \"60\",\n  \"icmsRate\": 18,\n  \"pisSituation\": \"01\",\n  \"pisRate\": 1.65,\n  \"cofinsSituation\": \"01\",\n  \"cofinsRate\": 7.6,\n  \"imageId\": \"{{image_id}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/products/{{product_id}}",

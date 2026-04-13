@@ -25,6 +25,7 @@ public class GetProductByIdUseCase {
                 product.getDescription(),
                 product.getBrand(),
                 product.getCategory(),
+                product.getSupplierId(),
                 product.getUnit(),
                 product.getCostPrice(),
                 product.getSalePrice(),

@@ -11,6 +11,7 @@ public record UpdateProductCommand(
         String description,
         String brand,
         String category,
+        UUID supplierId,
         String unit,
         BigDecimal costPrice,
         BigDecimal salePrice,

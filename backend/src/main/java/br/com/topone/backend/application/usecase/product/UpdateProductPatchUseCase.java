@@ -3,12 +3,16 @@ package br.com.topone.backend.application.usecase.product;
 import br.com.topone.backend.domain.exception.ProductBarcodeAlreadyExistsException;
 import br.com.topone.backend.domain.exception.ProductNotFoundException;
 import br.com.topone.backend.domain.exception.ProductSkuAlreadyExistsException;
+import br.com.topone.backend.domain.exception.SupplierNotFoundException;
 import br.com.topone.backend.domain.model.Product;
 import br.com.topone.backend.domain.repository.ProductRepository;
+import br.com.topone.backend.domain.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -16,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdateProductPatchUseCase {
 
     private final ProductRepository productRepository;
+    private final SupplierRepository supplierRepository;
 
     @Transactional
     public UpdateProductResult execute(UpdateProductPatchCommand command) {
@@ -39,6 +44,10 @@ public class UpdateProductPatchUseCase {
         }
         if (command.category() != null) {
             product.changeCategory(command.category());
+        }
+        if (command.supplierId() != null) {
+            product.changeSupplierId(command.supplierId());
+            validateSupplier(product.getSupplierId());
         }
         if (command.unit() != null) {
             product.changeUnit(command.unit());
@@ -127,6 +136,7 @@ public class UpdateProductPatchUseCase {
                 product.getDescription(),
                 product.getBrand(),
                 product.getCategory(),
+                product.getSupplierId(),
                 product.getUnit(),
                 product.getCostPrice(),
                 product.getSalePrice(),
@@ -148,5 +158,14 @@ public class UpdateProductPatchUseCase {
                 product.getUpdatedAt(),
                 product.isActive()
         );
+    }
+
+    private void validateSupplier(UUID supplierId) {
+        if (supplierId == null) {
+            return;
+        }
+
+        supplierRepository.findById(supplierId)
+                .orElseThrow(SupplierNotFoundException::new);
     }
 }

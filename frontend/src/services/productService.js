@@ -26,6 +26,7 @@ function normalizeProductListItem(data) {
         barcode: data?.barcode ?? '',
         name: data?.name ?? '',
         category: data?.category ?? '',
+        supplierId: data?.supplierId ?? null,
         brand: data?.brand ?? '',
         unit: data?.unit ?? '',
         salePrice: toNumberOrNull(data?.salePrice),
@@ -46,6 +47,7 @@ function normalizeProductDetail(data) {
         description: data?.description ?? '',
         brand: data?.brand ?? '',
         category: data?.category ?? '',
+        supplierId: data?.supplierId ?? null,
         unit: data?.unit ?? '',
         costPrice: toNumberOrNull(data?.costPrice),
         salePrice: toNumberOrNull(data?.salePrice),
@@ -133,7 +135,7 @@ export async function getNextProductSku() {
 
 /**
  * Creates a new product.
- * @param {{ sku: string, barcode?: string | null, name: string, description?: string | null, brand?: string | null, category?: string | null, unit: string, costPrice?: number | null, salePrice: number, promotionalPrice?: number | null, stockQuantity?: number | null, minimumStock?: number | null, ncm?: string | null, cest?: string | null, cfop?: string | null, taxOrigin?: string | null, taxSituation?: string | null, icmsRate?: number | null, pisSituation?: string | null, pisRate?: number | null, cofinsSituation?: string | null, cofinsRate?: number | null, imageId?: string | null }} payload
+ * @param {{ sku: string, barcode?: string | null, name: string, description?: string | null, brand?: string | null, category?: string | null, supplierId?: string | null, unit: string, costPrice?: number | null, salePrice: number, promotionalPrice?: number | null, stockQuantity?: number | null, minimumStock?: number | null, ncm?: string | null, cest?: string | null, cfop?: string | null, taxOrigin?: string | null, taxSituation?: string | null, icmsRate?: number | null, pisSituation?: string | null, pisRate?: number | null, cofinsSituation?: string | null, cofinsRate?: number | null, imageId?: string | null }} payload
  */
 export async function createProduct(payload) {
     const response = await api.post('/api/v1/products', payload);
@@ -143,7 +145,7 @@ export async function createProduct(payload) {
 /**
  * Fully updates a product by id using PUT.
  * @param {string} id
- * @param {{ sku: string, barcode?: string | null, name: string, description?: string | null, brand?: string | null, category?: string | null, unit: string, costPrice?: number | null, salePrice: number, promotionalPrice?: number | null, stockQuantity?: number | null, minimumStock?: number | null, ncm?: string | null, cest?: string | null, cfop?: string | null, taxOrigin?: string | null, taxSituation?: string | null, icmsRate?: number | null, pisSituation?: string | null, pisRate?: number | null, cofinsSituation?: string | null, cofinsRate?: number | null, imageId?: string | null }} payload
+ * @param {{ sku: string, barcode?: string | null, name: string, description?: string | null, brand?: string | null, category?: string | null, supplierId?: string | null, unit: string, costPrice?: number | null, salePrice: number, promotionalPrice?: number | null, stockQuantity?: number | null, minimumStock?: number | null, ncm?: string | null, cest?: string | null, cfop?: string | null, taxOrigin?: string | null, taxSituation?: string | null, icmsRate?: number | null, pisSituation?: string | null, pisRate?: number | null, cofinsSituation?: string | null, cofinsRate?: number | null, imageId?: string | null }} payload
  */
 export async function updateProductPut(id, payload) {
     const response = await api.put(`/api/v1/products/${id}`, payload);
@@ -153,7 +155,7 @@ export async function updateProductPut(id, payload) {
 /**
  * Partially updates a product by id using PATCH.
  * @param {string} id
- * @param {{ sku?: string, barcode?: string | null, name?: string, description?: string | null, brand?: string | null, category?: string | null, unit?: string, costPrice?: number | null, salePrice?: number | null, promotionalPrice?: number | null, stockQuantity?: number | null, minimumStock?: number | null, ncm?: string | null, cest?: string | null, cfop?: string | null, taxOrigin?: string | null, taxSituation?: string | null, icmsRate?: number | null, pisSituation?: string | null, pisRate?: number | null, cofinsSituation?: string | null, cofinsRate?: number | null, imageId?: string | null, active?: boolean }} payload
+ * @param {{ sku?: string, barcode?: string | null, name?: string, description?: string | null, brand?: string | null, category?: string | null, supplierId?: string | null, unit?: string, costPrice?: number | null, salePrice?: number | null, promotionalPrice?: number | null, stockQuantity?: number | null, minimumStock?: number | null, ncm?: string | null, cest?: string | null, cfop?: string | null, taxOrigin?: string | null, taxSituation?: string | null, icmsRate?: number | null, pisSituation?: string | null, pisRate?: number | null, cofinsSituation?: string | null, cofinsRate?: number | null, imageId?: string | null, active?: boolean }} payload
  */
 export async function updateProductPatch(id, payload) {
     const response = await api.patch(`/api/v1/products/${id}`, payload);

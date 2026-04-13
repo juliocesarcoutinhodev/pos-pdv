@@ -471,6 +471,8 @@ Permissões:
 **GET `/api/v1/products/next-sku`** — 200 OK  
 Retorna uma sugestão de SKU em formato numérico aleatório de 6 dígitos (ex.: `144236`) para facilitar o cadastro.
 
+No cadastro/atualização de produto, o campo `supplierId` é opcional e permite vincular o produto a um fornecedor existente.
+
 **POST `/api/v1/products`** — 201 Created
 ```json
 {
@@ -480,6 +482,7 @@ Retorna uma sugestão de SKU em formato numérico aleatório de 6 dígitos (ex.:
   "description": "Pacote com 5kg",
   "brand": "Marca XPTO",
   "category": "Mercearia",
+  "supplierId": "6ecaf8e3-4fec-45af-a6f9-e2fc342f3f72",
   "unit": "UN",
   "costPrice": 18.9,
   "salePrice": 24.9,

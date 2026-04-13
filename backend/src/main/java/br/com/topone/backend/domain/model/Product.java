@@ -29,6 +29,7 @@ public class Product {
     private String description;
     private String brand;
     private String category;
+    private UUID supplierId;
     private String unit;
     private BigDecimal costPrice;
     private BigDecimal salePrice;
@@ -57,6 +58,7 @@ public class Product {
             String description,
             String brand,
             String category,
+            UUID supplierId,
             String unit,
             BigDecimal costPrice,
             BigDecimal salePrice,
@@ -82,6 +84,7 @@ public class Product {
         product.description = normalizeOptionalText(description);
         product.brand = normalizeOptionalText(brand);
         product.category = normalizeOptionalText(category);
+        product.supplierId = normalizeSupplierId(supplierId);
         product.unit = normalizeUnit(unit);
         product.costPrice = normalizeAmount(costPrice, true);
         product.salePrice = normalizeAmount(salePrice, false);
@@ -124,6 +127,10 @@ public class Product {
 
     public void changeCategory(String category) {
         this.category = normalizeOptionalText(category);
+    }
+
+    public void changeSupplierId(UUID supplierId) {
+        this.supplierId = normalizeSupplierId(supplierId);
     }
 
     public void changeUnit(String unit) {
@@ -228,6 +235,10 @@ public class Product {
 
     private static String normalizeName(String name) {
         return name == null ? null : name.trim();
+    }
+
+    private static UUID normalizeSupplierId(UUID supplierId) {
+        return supplierId;
     }
 
     private static String normalizeOptionalText(String value) {

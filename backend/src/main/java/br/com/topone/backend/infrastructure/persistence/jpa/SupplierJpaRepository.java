@@ -23,7 +23,19 @@ public interface SupplierJpaRepository extends JpaRepository<SupplierEntity, UUI
 
     @Query("""
             SELECT s FROM SupplierEntity s
-            WHERE (:name IS NULL OR LOWER(s.name) LIKE :name)
+            WHERE (:name IS NULL
+                   OR LOWER(s.name) LIKE :name
+                   OR LOWER(
+                        REPLACE(
+                            REPLACE(
+                                REPLACE(
+                                    REPLACE(
+                                        REPLACE(s.name, '.', ''),
+                                    '-', ''),
+                                '_', ''),
+                            ' ', ''),
+                        '/', '')
+                   ) LIKE :normalizedName)
               AND (:taxId IS NULL OR s.taxId LIKE :taxId)
               AND (:email IS NULL OR LOWER(s.email) LIKE :email)
               AND (:active IS NULL
@@ -31,6 +43,7 @@ public interface SupplierJpaRepository extends JpaRepository<SupplierEntity, UUI
                    OR (:active = false AND s.deletedAt IS NOT NULL))
             """)
     Page<SupplierEntity> searchByFilter(@Param("name") String name,
+                                        @Param("normalizedName") String normalizedName,
                                         @Param("taxId") String taxId,
                                         @Param("email") String email,
                                         @Param("active") Boolean active,

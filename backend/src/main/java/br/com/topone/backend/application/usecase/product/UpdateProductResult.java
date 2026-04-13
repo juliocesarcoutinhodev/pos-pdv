@@ -12,6 +12,7 @@ public record UpdateProductResult(
         String description,
         String brand,
         String category,
+        UUID supplierId,
         String unit,
         BigDecimal costPrice,
         BigDecimal salePrice,

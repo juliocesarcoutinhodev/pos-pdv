@@ -1,6 +1,7 @@
 package br.com.topone.backend.application.usecase.product;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record CreateProductCommand(
         String sku,
@@ -9,6 +10,7 @@ public record CreateProductCommand(
         String description,
         String brand,
         String category,
+        UUID supplierId,
         String unit,
         BigDecimal costPrice,
         BigDecimal salePrice,

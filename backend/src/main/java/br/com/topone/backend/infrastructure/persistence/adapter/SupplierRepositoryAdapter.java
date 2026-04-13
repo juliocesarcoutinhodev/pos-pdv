@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -82,6 +83,7 @@ public class SupplierRepositoryAdapter implements SupplierRepository {
     public PageResult<Supplier> findAll(SupplierFilter filter, int page, int size, PageSort sort) {
         var namePattern = filter.name() != null && !filter.name().isBlank()
                 ? "%" + filter.name().toLowerCase() + "%" : null;
+        var normalizedNamePattern = normalizeSupplierNamePattern(filter.name());
         var taxIdPattern = filter.taxId() != null && !filter.taxId().isBlank()
                 ? "%" + filter.taxId().replaceAll("\\D", "") + "%" : null;
         var emailPattern = filter.email() != null && !filter.email().isBlank()
@@ -98,6 +100,7 @@ public class SupplierRepositoryAdapter implements SupplierRepository {
         var springPage = PageRequest.of(page, size, sortSpec);
         var pageResult = supplierJpaRepository.searchByFilter(
                 namePattern,
+                normalizedNamePattern,
                 taxIdPattern,
                 emailPattern,
                 filter.active(),
@@ -112,5 +115,17 @@ public class SupplierRepositoryAdapter implements SupplierRepository {
                 pageResult.getTotalElements(),
                 pageResult.getTotalPages()
         );
+    }
+
+    private String normalizeSupplierNamePattern(String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+
+        var normalized = name
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[\\s._/\\-]", "");
+
+        return normalized.isBlank() ? null : "%" + normalized + "%";
     }
 }

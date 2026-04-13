@@ -21,6 +21,7 @@ public class ListProductsUseCase {
                         product.getBarcode(),
                         product.getName(),
                         product.getCategory(),
+                        product.getSupplierId(),
                         product.getBrand(),
                         product.getUnit(),
                         product.getSalePrice(),

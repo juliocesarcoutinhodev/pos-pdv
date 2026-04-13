@@ -18,6 +18,7 @@ public record ListProductsResult(
             String barcode,
             String name,
             String category,
+            UUID supplierId,
             String brand,
             String unit,
             BigDecimal salePrice,
