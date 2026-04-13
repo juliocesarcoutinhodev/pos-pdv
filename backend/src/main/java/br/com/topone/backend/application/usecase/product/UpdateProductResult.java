@@ -16,6 +16,7 @@ public record UpdateProductResult(
         String unit,
         BigDecimal costPrice,
         BigDecimal salePrice,
+        BigDecimal marginPercentage,
         BigDecimal promotionalPrice,
         BigDecimal stockQuantity,
         BigDecimal minimumStock,

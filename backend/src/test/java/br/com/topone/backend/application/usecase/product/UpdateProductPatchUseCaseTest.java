@@ -1,5 +1,6 @@
 package br.com.topone.backend.application.usecase.product;
 
+import br.com.topone.backend.domain.exception.InvalidProductPricingException;
 import br.com.topone.backend.domain.exception.ProductBarcodeAlreadyExistsException;
 import br.com.topone.backend.domain.exception.SupplierNotFoundException;
 import br.com.topone.backend.domain.model.Product;
@@ -38,32 +39,7 @@ class UpdateProductPatchUseCaseTest {
     @Test
     void shouldPatchProductAndDeactivate() {
         var productId = UUID.randomUUID();
-        var product = Product.create(
-                "SKU-001",
-                "7890001112223",
-                "Produto XPTO",
-                "Descricao antiga",
-                "Marca antiga",
-                "Categoria antiga",
-                null,
-                "UN",
-                new BigDecimal("10.00"),
-                new BigDecimal("15.00"),
-                null,
-                new BigDecimal("4"),
-                new BigDecimal("1"),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                "image-old"
-        );
+        var product = createMinimalProduct("SKU-001", "7890001112223", "Produto XPTO", new BigDecimal("10.00"), new BigDecimal("15.00"));
         product.setId(productId);
         product.setCreatedAt(Instant.now());
 
@@ -78,7 +54,8 @@ class UpdateProductPatchUseCaseTest {
                 null,
                 null,
                 null,
-                new BigDecimal("17.9"),
+                new BigDecimal("17.90"),
+                null,
                 null,
                 new BigDecimal("7.2"),
                 null,
@@ -110,6 +87,7 @@ class UpdateProductPatchUseCaseTest {
         assertThat(result.name()).isEqualTo("Produto Atualizado");
         assertThat(result.category()).isEqualTo("Categoria Nova");
         assertThat(result.salePrice()).isEqualByComparingTo("17.90");
+        assertThat(result.marginPercentage()).isEqualByComparingTo("79.00");
         assertThat(result.stockQuantity()).isEqualByComparingTo("7.200");
         assertThat(result.barcode()).isEqualTo("7895554443332");
         assertThat(result.imageId()).isEqualTo("image-new");
@@ -117,19 +95,26 @@ class UpdateProductPatchUseCaseTest {
     }
 
     @Test
-    void shouldThrowWhenBarcodeAlreadyExistsForAnotherProduct() {
+    void shouldCalculateSalePriceOnPatchWhenMarginIsInformed() {
         var productId = UUID.randomUUID();
-        var product = Product.create(
-                "SKU-001",
-                "7890001112223",
-                "Produto XPTO",
+        var product = createMinimalProduct("SKU-001", null, "Produto XPTO", new BigDecimal("20.00"), new BigDecimal("24.00"));
+        product.setId(productId);
+        product.setCreatedAt(Instant.now());
+
+        var command = new UpdateProductPatchCommand(
+                productId,
                 null,
                 null,
                 null,
                 null,
-                "UN",
                 null,
-                new BigDecimal("10.00"),
+                null,
+                null,
+                null,
+                null,
+                null,
+                new BigDecimal("25.00"),
+                null,
                 null,
                 null,
                 null,
@@ -145,6 +130,65 @@ class UpdateProductPatchUseCaseTest {
                 null,
                 null
         );
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findBySkuExcludingId("SKU-001", productId)).thenReturn(Optional.empty());
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0, Product.class));
+
+        var result = useCase.execute(command);
+
+        assertThat(result.salePrice()).isEqualByComparingTo("25.00");
+        assertThat(result.marginPercentage()).isEqualByComparingTo("25.00");
+    }
+
+    @Test
+    void shouldThrowWhenMarginIsInformedWithoutCostOnPatch() {
+        var productId = UUID.randomUUID();
+        var product = createMinimalProduct("SKU-001", null, "Produto XPTO", null, new BigDecimal("10.00"));
+        product.setId(productId);
+
+        var command = new UpdateProductPatchCommand(
+                productId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                new BigDecimal("20.00"),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+
+        assertThatThrownBy(() -> useCase.execute(command))
+                .isInstanceOf(InvalidProductPricingException.class);
+
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenBarcodeAlreadyExistsForAnotherProduct() {
+        var productId = UUID.randomUUID();
+        var product = createMinimalProduct("SKU-001", "7890001112223", "Produto XPTO", null, new BigDecimal("10.00"));
         product.setId(productId);
 
         var command = new UpdateProductPatchCommand(
@@ -173,35 +217,11 @@ class UpdateProductPatchUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
-        var anotherProduct = Product.create(
-                "SKU-002",
-                "7891234567890",
-                "Outro produto",
-                null,
-                null,
-                null,
-                null,
-                "UN",
-                null,
-                new BigDecimal("20.00"),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        var anotherProduct = createMinimalProduct("SKU-002", "7891234567890", "Outro produto", null, new BigDecimal("20.00"));
         anotherProduct.setId(UUID.randomUUID());
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
@@ -219,32 +239,7 @@ class UpdateProductPatchUseCaseTest {
     void shouldThrowWhenSupplierDoesNotExist() {
         var productId = UUID.randomUUID();
         var supplierId = UUID.randomUUID();
-        var product = Product.create(
-                "SKU-001",
-                null,
-                "Produto XPTO",
-                null,
-                null,
-                null,
-                null,
-                "UN",
-                null,
-                new BigDecimal("10.00"),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        var product = createMinimalProduct("SKU-001", null, "Produto XPTO", null, new BigDecimal("10.00"));
         product.setId(productId);
 
         var command = new UpdateProductPatchCommand(
@@ -273,6 +268,7 @@ class UpdateProductPatchUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -283,5 +279,34 @@ class UpdateProductPatchUseCaseTest {
                 .isInstanceOf(SupplierNotFoundException.class);
 
         verify(productRepository, never()).save(any());
+    }
+
+    private Product createMinimalProduct(String sku, String barcode, String name, BigDecimal costPrice, BigDecimal salePrice) {
+        return Product.create(
+                sku,
+                barcode,
+                name,
+                null,
+                null,
+                null,
+                null,
+                "UN",
+                costPrice,
+                salePrice,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
     }
 }

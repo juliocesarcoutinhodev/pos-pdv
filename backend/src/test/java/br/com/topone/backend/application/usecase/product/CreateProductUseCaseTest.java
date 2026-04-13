@@ -1,6 +1,7 @@
 package br.com.topone.backend.application.usecase.product;
 
 import br.com.topone.backend.domain.exception.ProductBarcodeAlreadyExistsException;
+import br.com.topone.backend.domain.exception.InvalidProductPricingException;
 import br.com.topone.backend.domain.exception.ProductSkuAlreadyExistsException;
 import br.com.topone.backend.domain.exception.SupplierNotFoundException;
 import br.com.topone.backend.domain.model.Product;
@@ -49,6 +50,7 @@ class CreateProductUseCaseTest {
                 " un ",
                 new BigDecimal("10.5"),
                 new BigDecimal("25"),
+                null,
                 new BigDecimal("21.998"),
                 new BigDecimal("5.1"),
                 new BigDecimal("1"),
@@ -85,6 +87,7 @@ class CreateProductUseCaseTest {
         assertThat(result.unit()).isEqualTo("UN");
         assertThat(result.costPrice()).isEqualByComparingTo("10.50");
         assertThat(result.salePrice()).isEqualByComparingTo("25.00");
+        assertThat(result.marginPercentage()).isEqualByComparingTo("138.10");
         assertThat(result.promotionalPrice()).isEqualByComparingTo("22.00");
         assertThat(result.stockQuantity()).isEqualByComparingTo("5.100");
         assertThat(result.minimumStock()).isEqualByComparingTo("1.000");
@@ -95,6 +98,86 @@ class CreateProductUseCaseTest {
         assertThat(result.pisSituation()).isEqualTo("01");
         assertThat(result.cofinsSituation()).isEqualTo("01");
         assertThat(result.imageId()).isEqualTo("image-123");
+    }
+
+    @Test
+    void shouldCalculateSalePriceWhenMarginIsInformed() {
+        var command = new CreateProductCommand(
+                "SKU-001",
+                null,
+                "Produto XPTO",
+                null,
+                null,
+                null,
+                null,
+                "UN",
+                new BigDecimal("10.00"),
+                null,
+                new BigDecimal("60.00"),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        when(productRepository.existsBySku("SKU-001")).thenReturn(false);
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
+            var product = invocation.getArgument(0, Product.class);
+            product.setId(UUID.randomUUID());
+            product.setCreatedAt(Instant.now());
+            return product;
+        });
+
+        var result = useCase.execute(command);
+
+        assertThat(result.salePrice()).isEqualByComparingTo("16.00");
+        assertThat(result.marginPercentage()).isEqualByComparingTo("60.00");
+    }
+
+    @Test
+    void shouldThrowWhenSalePriceAndMarginAreMissing() {
+        var command = new CreateProductCommand(
+                "SKU-001",
+                null,
+                "Produto XPTO",
+                null,
+                null,
+                null,
+                null,
+                "UN",
+                new BigDecimal("10.00"),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertThatThrownBy(() -> useCase.execute(command))
+                .isInstanceOf(InvalidProductPricingException.class);
+
+        verify(productRepository, never()).save(any());
     }
 
     @Test
@@ -110,6 +193,7 @@ class CreateProductUseCaseTest {
                 "UN",
                 null,
                 new BigDecimal("10.00"),
+                null,
                 null,
                 null,
                 null,
@@ -158,6 +242,7 @@ class CreateProductUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -182,6 +267,7 @@ class CreateProductUseCaseTest {
                 "UN",
                 null,
                 new BigDecimal("10.00"),
+                null,
                 null,
                 null,
                 null,

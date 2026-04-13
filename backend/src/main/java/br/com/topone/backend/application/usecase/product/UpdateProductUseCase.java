@@ -36,7 +36,12 @@ public class UpdateProductUseCase {
         product.changeSupplierId(command.supplierId());
         product.changeUnit(command.unit());
         product.changeCostPrice(command.costPrice());
-        product.changeSalePrice(command.salePrice());
+        var resolvedSalePrice = ProductPricingCalculator.resolveSalePriceForCreateOrUpdate(
+                product.getCostPrice(),
+                command.salePrice(),
+                command.marginPercentage()
+        );
+        product.changeSalePrice(resolvedSalePrice);
         product.changePromotionalPrice(command.promotionalPrice());
         product.changeStockQuantity(command.stockQuantity());
         product.changeMinimumStock(command.minimumStock());
@@ -85,6 +90,7 @@ public class UpdateProductUseCase {
                 product.getUnit(),
                 product.getCostPrice(),
                 product.getSalePrice(),
+                ProductPricingCalculator.calculateMarginPercentage(product.getCostPrice(), product.getSalePrice()),
                 product.getPromotionalPrice(),
                 product.getStockQuantity(),
                 product.getMinimumStock(),

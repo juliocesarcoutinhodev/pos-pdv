@@ -29,6 +29,7 @@ public class GetProductByIdUseCase {
                 product.getUnit(),
                 product.getCostPrice(),
                 product.getSalePrice(),
+                ProductPricingCalculator.calculateMarginPercentage(product.getCostPrice(), product.getSalePrice()),
                 product.getPromotionalPrice(),
                 product.getStockQuantity(),
                 product.getMinimumStock(),

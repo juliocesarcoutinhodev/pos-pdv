@@ -1,5 +1,6 @@
 package br.com.topone.backend.application.usecase.product;
 
+import br.com.topone.backend.domain.exception.InvalidProductPricingException;
 import br.com.topone.backend.domain.exception.ProductSkuAlreadyExistsException;
 import br.com.topone.backend.domain.exception.SupplierNotFoundException;
 import br.com.topone.backend.domain.model.Product;
@@ -38,32 +39,7 @@ class UpdateProductUseCaseTest {
     @Test
     void shouldUpdateProductWithNormalization() {
         var productId = UUID.randomUUID();
-        var product = Product.create(
-                "SKU-OLD",
-                "7890000000001",
-                "Produto antigo",
-                "Descricao antiga",
-                "Marca antiga",
-                "Categoria antiga",
-                null,
-                "UN",
-                new BigDecimal("10.00"),
-                new BigDecimal("12.00"),
-                null,
-                new BigDecimal("3"),
-                new BigDecimal("1"),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        var product = createMinimalProduct("SKU-OLD", "7890000000001", "Produto antigo", new BigDecimal("10.00"), new BigDecimal("12.00"));
         product.setId(productId);
         product.setCreatedAt(Instant.now());
 
@@ -79,6 +55,7 @@ class UpdateProductUseCaseTest {
                 " kg ",
                 new BigDecimal("15"),
                 new BigDecimal("22"),
+                null,
                 new BigDecimal("20.1"),
                 new BigDecimal("9.5"),
                 new BigDecimal("2"),
@@ -111,16 +88,22 @@ class UpdateProductUseCaseTest {
         assertThat(result.name()).isEqualTo("Produto novo");
         assertThat(result.unit()).isEqualTo("KG");
         assertThat(result.salePrice()).isEqualByComparingTo("22.00");
+        assertThat(result.marginPercentage()).isEqualByComparingTo("46.67");
         assertThat(result.promotionalPrice()).isEqualByComparingTo("20.10");
         assertThat(result.stockQuantity()).isEqualByComparingTo("9.500");
         assertThat(result.active()).isTrue();
     }
 
     @Test
-    void shouldThrowWhenSkuAlreadyExistsForAnotherProduct() {
+    void shouldCalculateSalePriceOnUpdateWhenMarginIsInformed() {
         var productId = UUID.randomUUID();
-        var product = Product.create(
-                "SKU-OLD",
+        var product = createMinimalProduct("SKU-001", null, "Produto", new BigDecimal("10.00"), new BigDecimal("12.00"));
+        product.setId(productId);
+        product.setCreatedAt(Instant.now());
+
+        var command = new UpdateProductCommand(
+                productId,
+                "SKU-001",
                 null,
                 "Produto",
                 null,
@@ -128,8 +111,9 @@ class UpdateProductUseCaseTest {
                 null,
                 null,
                 "UN",
-                null,
                 new BigDecimal("10.00"),
+                null,
+                new BigDecimal("50.00"),
                 null,
                 null,
                 null,
@@ -145,6 +129,64 @@ class UpdateProductUseCaseTest {
                 null,
                 null
         );
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findBySkuExcludingId("SKU-001", productId)).thenReturn(Optional.empty());
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0, Product.class));
+
+        var result = useCase.execute(command);
+
+        assertThat(result.salePrice()).isEqualByComparingTo("15.00");
+        assertThat(result.marginPercentage()).isEqualByComparingTo("50.00");
+    }
+
+    @Test
+    void shouldThrowWhenSalePriceAndMarginAreMissingOnUpdate() {
+        var productId = UUID.randomUUID();
+        var product = createMinimalProduct("SKU-001", null, "Produto", new BigDecimal("10.00"), new BigDecimal("12.00"));
+        product.setId(productId);
+
+        var command = new UpdateProductCommand(
+                productId,
+                "SKU-001",
+                null,
+                "Produto",
+                null,
+                null,
+                null,
+                null,
+                "UN",
+                new BigDecimal("10.00"),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+
+        assertThatThrownBy(() -> useCase.execute(command))
+                .isInstanceOf(InvalidProductPricingException.class);
+
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenSkuAlreadyExistsForAnotherProduct() {
+        var productId = UUID.randomUUID();
+        var product = createMinimalProduct("SKU-OLD", null, "Produto", null, new BigDecimal("10.00"));
         product.setId(productId);
 
         var command = new UpdateProductCommand(
@@ -172,35 +214,11 @@ class UpdateProductUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
-        var anotherProduct = Product.create(
-                "SKU-001",
-                null,
-                "Outro produto",
-                null,
-                null,
-                null,
-                null,
-                "UN",
-                null,
-                new BigDecimal("15.00"),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        var anotherProduct = createMinimalProduct("SKU-001", null, "Outro produto", null, new BigDecimal("15.00"));
         anotherProduct.setId(UUID.randomUUID());
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
@@ -216,32 +234,7 @@ class UpdateProductUseCaseTest {
     void shouldThrowWhenSupplierDoesNotExist() {
         var productId = UUID.randomUUID();
         var supplierId = UUID.randomUUID();
-        var product = Product.create(
-                "SKU-OLD",
-                null,
-                "Produto",
-                null,
-                null,
-                null,
-                null,
-                "UN",
-                null,
-                new BigDecimal("10.00"),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        var product = createMinimalProduct("SKU-OLD", null, "Produto", null, new BigDecimal("10.00"));
         product.setId(productId);
 
         var command = new UpdateProductCommand(
@@ -269,6 +262,7 @@ class UpdateProductUseCaseTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -279,5 +273,34 @@ class UpdateProductUseCaseTest {
                 .isInstanceOf(SupplierNotFoundException.class);
 
         verify(productRepository, never()).save(any());
+    }
+
+    private Product createMinimalProduct(String sku, String barcode, String name, BigDecimal costPrice, BigDecimal salePrice) {
+        return Product.create(
+                sku,
+                barcode,
+                name,
+                null,
+                null,
+                null,
+                null,
+                "UN",
+                costPrice,
+                salePrice,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
     }
 }

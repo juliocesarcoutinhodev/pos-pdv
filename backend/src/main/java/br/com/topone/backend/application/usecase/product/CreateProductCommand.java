@@ -14,6 +14,7 @@ public record CreateProductCommand(
         String unit,
         BigDecimal costPrice,
         BigDecimal salePrice,
+        BigDecimal marginPercentage,
         BigDecimal promotionalPrice,
         BigDecimal stockQuantity,
         BigDecimal minimumStock,

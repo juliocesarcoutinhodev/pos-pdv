@@ -472,6 +472,9 @@ Permissões:
 Retorna uma sugestão de SKU em formato numérico aleatório de 6 dígitos (ex.: `144236`) para facilitar o cadastro.
 
 No cadastro/atualização de produto, o campo `supplierId` é opcional e permite vincular o produto a um fornecedor existente.
+Nos campos comerciais, você pode:
+- informar `costPrice` + `marginPercentage` para o backend calcular `salePrice`;
+- informar `costPrice` + `salePrice` para o backend retornar `marginPercentage` calculada.
 
 **POST `/api/v1/products`** — 201 Created
 ```json
@@ -485,6 +488,7 @@ No cadastro/atualização de produto, o campo `supplierId` é opcional e permite
   "supplierId": "6ecaf8e3-4fec-45af-a6f9-e2fc342f3f72",
   "unit": "UN",
   "costPrice": 18.9,
+  "marginPercentage": 31.75,
   "salePrice": 24.9,
   "promotionalPrice": 22.9,
   "stockQuantity": 50,

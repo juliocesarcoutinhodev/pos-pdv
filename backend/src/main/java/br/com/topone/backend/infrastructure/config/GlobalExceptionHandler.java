@@ -212,6 +212,17 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(InvalidProductPricingException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidProductPricing(InvalidProductPricingException ex) {
+        log.warn("Invalid product pricing | message={}", ex.getMessage());
+        return ResponseEntity.badRequest().body(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida",
+                ex.getMessage(),
+                Instant.now().toString()
+        ));
+    }
+
     @ExceptionHandler(InvalidImageException.class)
     public ResponseEntity<ErrorResponse> handleInvalidImage(InvalidImageException ex) {
         log.warn("Invalid image upload");

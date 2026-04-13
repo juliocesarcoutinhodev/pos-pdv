@@ -19,6 +19,7 @@ const imagePreviewLoading = ref(false);
 const supplierLookupLoading = ref(false);
 const supplierSuggestions = ref([]);
 const selectedSupplier = ref(null);
+const pricingReferenceField = ref('sale');
 
 const SUPPLIER_LOOKUP_DEBOUNCE_MS = 250;
 let supplierLookupTimer = null;
@@ -46,6 +47,7 @@ function createEmptyForm() {
         supplierId: null,
         unit: 'UN',
         costPrice: '',
+        marginPercentage: '',
         salePrice: '',
         promotionalPrice: '',
         stockQuantity: '',
@@ -135,32 +137,41 @@ function handleSupplierSelection(value) {
     form.value.supplierId = selectedOption?.id ?? null;
 }
 
+async function loadSupplierSuggestions(query) {
+    supplierLookupLoading.value = true;
+    try {
+        const params = {
+            page: 0,
+            size: 10,
+            sortBy: 'name',
+            sortDirection: 'asc'
+        };
+
+        if (query) {
+            params.name = query;
+        }
+
+        const response = await listSuppliers(params);
+        supplierSuggestions.value = response.content.map(toSupplierOption).filter((option) => option?.id);
+    } catch {
+        supplierSuggestions.value = [];
+    } finally {
+        supplierLookupLoading.value = false;
+    }
+}
+
 async function handleSupplierLookup(event) {
     const query = sanitizeString(event?.query);
     clearSupplierLookupTimer();
-
-    if (!query) {
-        supplierSuggestions.value = [];
-        return;
-    }
-
-    supplierLookupTimer = setTimeout(async () => {
-        supplierLookupLoading.value = true;
-        try {
-            const response = await listSuppliers({
-                page: 0,
-                size: 10,
-                name: query,
-                sortBy: 'name',
-                sortDirection: 'asc'
-            });
-            supplierSuggestions.value = response.content.map(toSupplierOption).filter((option) => option?.id);
-        } catch {
-            supplierSuggestions.value = [];
-        } finally {
-            supplierLookupLoading.value = false;
-        }
+    supplierLookupTimer = setTimeout(() => {
+        void loadSupplierSuggestions(query);
     }, SUPPLIER_LOOKUP_DEBOUNCE_MS);
+}
+
+async function handleSupplierDropdownClick(event) {
+    clearSupplierLookupTimer();
+    const query = sanitizeString(event?.query);
+    await loadSupplierSuggestions(query);
 }
 
 async function loadSelectedSupplier(supplierId) {
@@ -188,11 +199,90 @@ function parseDecimalInput(value) {
     return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
+function roundDecimal(value, scale = 2) {
+    if (!Number.isFinite(value)) {
+        return null;
+    }
+    return Number(value.toFixed(scale));
+}
+
+function calculateSalePriceFromMargin(costPrice, marginPercentage) {
+    if (!Number.isFinite(costPrice) || !Number.isFinite(marginPercentage)) {
+        return null;
+    }
+
+    return roundDecimal(costPrice * (1 + marginPercentage / 100), 2);
+}
+
+function calculateMarginPercentageFromSale(costPrice, salePrice) {
+    if (!Number.isFinite(costPrice) || !Number.isFinite(salePrice)) {
+        return null;
+    }
+
+    if (costPrice === 0) {
+        return salePrice === 0 ? 0 : null;
+    }
+
+    return roundDecimal(((salePrice - costPrice) / costPrice) * 100, 2);
+}
+
 function decimalToInput(value) {
     if (value === null || value === undefined) {
         return '';
     }
     return String(value);
+}
+
+function syncSalePriceFromMargin() {
+    const costPrice = parseDecimalInput(form.value.costPrice);
+    const marginPercentage = parseDecimalInput(form.value.marginPercentage);
+    if (costPrice === null || marginPercentage === null || Number.isNaN(costPrice) || Number.isNaN(marginPercentage)) {
+        form.value.salePrice = '';
+        return;
+    }
+
+    const calculatedSalePrice = calculateSalePriceFromMargin(costPrice, marginPercentage);
+    if (calculatedSalePrice === null) {
+        form.value.salePrice = '';
+        return;
+    }
+
+    form.value.salePrice = decimalToInput(calculatedSalePrice);
+}
+
+function syncMarginFromSalePrice() {
+    const costPrice = parseDecimalInput(form.value.costPrice);
+    const salePrice = parseDecimalInput(form.value.salePrice);
+    if (costPrice === null || salePrice === null || Number.isNaN(costPrice) || Number.isNaN(salePrice)) {
+        form.value.marginPercentage = '';
+        return;
+    }
+
+    const calculatedMarginPercentage = calculateMarginPercentageFromSale(costPrice, salePrice);
+    form.value.marginPercentage = decimalToInput(calculatedMarginPercentage);
+}
+
+function handleCostPriceInput(value) {
+    form.value.costPrice = value;
+
+    if (pricingReferenceField.value === 'margin') {
+        syncSalePriceFromMargin();
+        return;
+    }
+
+    syncMarginFromSalePrice();
+}
+
+function handleMarginInput(value) {
+    form.value.marginPercentage = value;
+    pricingReferenceField.value = 'margin';
+    syncSalePriceFromMargin();
+}
+
+function handleSalePriceInput(value) {
+    form.value.salePrice = value;
+    pricingReferenceField.value = 'sale';
+    syncMarginFromSalePrice();
 }
 
 function clearImagePreview() {
@@ -318,6 +408,7 @@ function buildPayload() {
         unit: normalizeUnitInput(form.value.unit),
         costPrice: parseDecimalInput(form.value.costPrice),
         salePrice: parseDecimalInput(form.value.salePrice),
+        marginPercentage: parseDecimalInput(form.value.marginPercentage),
         promotionalPrice: parseDecimalInput(form.value.promotionalPrice),
         stockQuantity: parseDecimalInput(form.value.stockQuantity),
         minimumStock: parseDecimalInput(form.value.minimumStock),
@@ -433,11 +524,14 @@ function validatePayload(payload) {
         return false;
     }
 
-    if (!validateNumericField(payload.salePrice, 'Preço de venda', { required: true })) {
+    if (!validateNumericField(payload.salePrice, 'Preço de venda')) {
         return false;
     }
 
     if (!validateNumericField(payload.costPrice, 'Preço de custo')) {
+        return false;
+    }
+    if (!validateNumericField(payload.marginPercentage, 'Margem')) {
         return false;
     }
     if (!validateNumericField(payload.promotionalPrice, 'Preço promocional')) {
@@ -459,6 +553,26 @@ function validatePayload(payload) {
         return false;
     }
 
+    if (payload.salePrice === null && payload.marginPercentage === null) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Preço de venda ou margem obrigatórios',
+            detail: 'Informe o preço de venda ou a margem para calcular o preço automaticamente.',
+            life: 3000
+        });
+        return false;
+    }
+
+    if (payload.marginPercentage !== null && payload.costPrice === null) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Preço de custo obrigatório',
+            detail: 'Informe o preço de custo para calcular o preço de venda pela margem.',
+            life: 3000
+        });
+        return false;
+    }
+
     if (payload.promotionalPrice !== null && !Number.isNaN(payload.promotionalPrice) && payload.salePrice !== null && !Number.isNaN(payload.salePrice) && payload.promotionalPrice > payload.salePrice) {
         toast.add({
             severity: 'warn',
@@ -473,6 +587,8 @@ function validatePayload(payload) {
 }
 
 function mapProductToForm(product) {
+    const marginPercentage = product?.marginPercentage ?? calculateMarginPercentageFromSale(product?.costPrice ?? null, product?.salePrice ?? null);
+
     return {
         id: product?.id ?? null,
         active: Boolean(product?.active),
@@ -485,6 +601,7 @@ function mapProductToForm(product) {
         supplierId: product?.supplierId ?? null,
         unit: product?.unit ?? 'UN',
         costPrice: decimalToInput(product?.costPrice),
+        marginPercentage: decimalToInput(marginPercentage),
         salePrice: decimalToInput(product?.salePrice),
         promotionalPrice: decimalToInput(product?.promotionalPrice),
         stockQuantity: decimalToInput(product?.stockQuantity),
@@ -512,6 +629,7 @@ async function loadProductForEdit() {
     try {
         const product = await getProductById(productId.value);
         form.value = mapProductToForm(product);
+        pricingReferenceField.value = 'sale';
         await loadImagePreview(form.value.imageId);
         await loadSelectedSupplier(form.value.supplierId);
     } catch (error) {
@@ -579,6 +697,7 @@ onMounted(async () => {
         return;
     }
 
+    pricingReferenceField.value = 'sale';
     selectedSupplier.value = null;
     supplierSuggestions.value = [];
     await loadAutoSkuForCreate();
@@ -654,11 +773,15 @@ onUnmounted(() => {
                             :suggestions="supplierSuggestions"
                             optionLabel="name"
                             dropdown
+                            dropdownMode="current"
                             forceSelection
+                            emptySearchMessage="Nenhum fornecedor encontrado"
+                            emptySelectionMessage="Nenhum fornecedor encontrado"
                             class="w-full"
                             :disabled="submitting"
                             :loading="supplierLookupLoading"
                             @complete="handleSupplierLookup"
+                            @dropdown-click="handleSupplierDropdownClick"
                             @update:modelValue="handleSupplierSelection"
                         >
                             <template #option="slotProps">
@@ -680,15 +803,20 @@ onUnmounted(() => {
             <section class="border border-surface-200 dark:border-surface-700 rounded-xl p-4 md:p-5">
                 <div class="font-semibold text-lg mb-4">2. Comercial e estoque</div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label for="product-cost-price" class="block mb-2 font-medium">Preço de custo</label>
-                        <InputText id="product-cost-price" v-model="form.costPrice" type="number" step="0.01" min="0" class="w-full" :disabled="submitting" />
+                        <InputText id="product-cost-price" :modelValue="form.costPrice" type="number" step="0.01" min="0" class="w-full" :disabled="submitting" @update:modelValue="handleCostPriceInput" />
                     </div>
 
                     <div>
-                        <label for="product-sale-price" class="block mb-2 font-medium">Preço de venda *</label>
-                        <InputText id="product-sale-price" v-model="form.salePrice" type="number" step="0.01" min="0" class="w-full" :disabled="submitting" />
+                        <label for="product-margin-percentage" class="block mb-2 font-medium">Margem (%)</label>
+                        <InputText id="product-margin-percentage" :modelValue="form.marginPercentage" type="number" step="0.01" min="0" class="w-full" :disabled="submitting" @update:modelValue="handleMarginInput" />
+                    </div>
+
+                    <div>
+                        <label for="product-sale-price" class="block mb-2 font-medium">Preço de venda</label>
+                        <InputText id="product-sale-price" :modelValue="form.salePrice" type="number" step="0.01" min="0" class="w-full" :disabled="submitting" @update:modelValue="handleSalePriceInput" />
                     </div>
 
                     <div>

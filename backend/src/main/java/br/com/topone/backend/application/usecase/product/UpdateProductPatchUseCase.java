@@ -55,8 +55,13 @@ public class UpdateProductPatchUseCase {
         if (command.costPrice() != null) {
             product.changeCostPrice(command.costPrice());
         }
-        if (command.salePrice() != null) {
-            product.changeSalePrice(command.salePrice());
+        var resolvedSalePrice = ProductPricingCalculator.resolveSalePriceForPatch(
+                product.getCostPrice(),
+                command.salePrice(),
+                command.marginPercentage()
+        );
+        if (resolvedSalePrice != null) {
+            product.changeSalePrice(resolvedSalePrice);
         }
         if (command.promotionalPrice() != null) {
             product.changePromotionalPrice(command.promotionalPrice());
@@ -140,6 +145,7 @@ public class UpdateProductPatchUseCase {
                 product.getUnit(),
                 product.getCostPrice(),
                 product.getSalePrice(),
+                ProductPricingCalculator.calculateMarginPercentage(product.getCostPrice(), product.getSalePrice()),
                 product.getPromotionalPrice(),
                 product.getStockQuantity(),
                 product.getMinimumStock(),

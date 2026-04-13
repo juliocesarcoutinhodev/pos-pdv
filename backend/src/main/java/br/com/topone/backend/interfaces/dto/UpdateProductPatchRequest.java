@@ -17,6 +17,7 @@ public record UpdateProductPatchRequest(
         @Size(max = 10) String unit,
         @PositiveOrZero BigDecimal costPrice,
         @PositiveOrZero BigDecimal salePrice,
+        @PositiveOrZero BigDecimal marginPercentage,
         @PositiveOrZero BigDecimal promotionalPrice,
         @PositiveOrZero BigDecimal stockQuantity,
         @PositiveOrZero BigDecimal minimumStock,

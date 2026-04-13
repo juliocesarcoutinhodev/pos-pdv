@@ -1,7 +1,6 @@
 package br.com.topone.backend.interfaces.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
@@ -18,7 +17,8 @@ public record CreateProductRequest(
         UUID supplierId,
         @NotBlank @Size(max = 10) String unit,
         @PositiveOrZero BigDecimal costPrice,
-        @NotNull @PositiveOrZero BigDecimal salePrice,
+        @PositiveOrZero BigDecimal salePrice,
+        @PositiveOrZero BigDecimal marginPercentage,
         @PositiveOrZero BigDecimal promotionalPrice,
         @PositiveOrZero BigDecimal stockQuantity,
         @PositiveOrZero BigDecimal minimumStock,

@@ -23,6 +23,12 @@ public class CreateProductUseCase {
 
     @Transactional
     public CreateProductResult execute(CreateProductCommand command) {
+        var resolvedSalePrice = ProductPricingCalculator.resolveSalePriceForCreateOrUpdate(
+                command.costPrice(),
+                command.salePrice(),
+                command.marginPercentage()
+        );
+
         var product = Product.create(
                 command.sku(),
                 command.barcode(),
@@ -33,7 +39,7 @@ public class CreateProductUseCase {
                 command.supplierId(),
                 command.unit(),
                 command.costPrice(),
-                command.salePrice(),
+                resolvedSalePrice,
                 command.promotionalPrice(),
                 command.stockQuantity(),
                 command.minimumStock(),
@@ -75,6 +81,7 @@ public class CreateProductUseCase {
                 saved.getUnit(),
                 saved.getCostPrice(),
                 saved.getSalePrice(),
+                ProductPricingCalculator.calculateMarginPercentage(saved.getCostPrice(), saved.getSalePrice()),
                 saved.getPromotionalPrice(),
                 saved.getStockQuantity(),
                 saved.getMinimumStock(),
