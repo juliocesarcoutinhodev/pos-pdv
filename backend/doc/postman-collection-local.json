@@ -56,6 +56,16 @@
       "type": "string"
     },
     {
+      "key": "product_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "product_sku",
+      "value": "144236",
+      "type": "string"
+    },
+    {
       "key": "image_id",
       "value": "",
       "type": "string"
@@ -1506,6 +1516,341 @@
               ]
             },
             "description": "Deactivate customer (soft delete)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Product Management (authenticated; ADMIN for edit/deactivate)",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products?page=0&size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Page number"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                },
+                {
+                  "key": "name",
+                  "value": "",
+                  "description": "Filter by name (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "sku",
+                  "value": "",
+                  "description": "Filter by SKU (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "barcode",
+                  "value": "",
+                  "description": "Filter by barcode (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "description": "Filter by category (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "active",
+                  "value": "",
+                  "description": "Filter by active status: true/false",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "",
+                  "description": "Sort field: name, sku, barcode, category, salePrice, stockQuantity, createdAt",
+                  "disabled": true
+                },
+                {
+                  "key": "sortDirection",
+                  "value": "",
+                  "description": "Sort direction: asc/desc",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List products with optional filters, pagination and sorting."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Next Product SKU",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/next-sku",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "next-sku"
+              ]
+            },
+            "description": "Get a suggested SKU for product creation and store it in {{product_sku}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get next product sku successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var body = pm.response.json();",
+                  "    pm.collectionVariables.set(\"product_sku\", body.sku);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"{{product_sku}}\",\n  \"barcode\": \"7891234567890\",\n  \"name\": \"Arroz Tipo 1 5kg\",\n  \"description\": \"Pacote com 5kg\",\n  \"brand\": \"Marca XPTO\",\n  \"category\": \"Mercearia\",\n  \"unit\": \"UN\",\n  \"costPrice\": 18.9,\n  \"salePrice\": 24.9,\n  \"promotionalPrice\": 22.9,\n  \"stockQuantity\": 50,\n  \"minimumStock\": 10,\n  \"ncm\": \"10063021\",\n  \"cest\": \"1704700\",\n  \"cfop\": \"5102\",\n  \"taxOrigin\": \"0\",\n  \"taxSituation\": \"60\",\n  \"icmsRate\": 18,\n  \"pisSituation\": \"01\",\n  \"pisRate\": 1.65,\n  \"cofinsSituation\": \"01\",\n  \"cofinsRate\": 7.6,\n  \"imageId\": \"{{image_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ]
+            },
+            "description": "Create a product and store its id in {{product_id}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Create product successful\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var body = pm.response.json();",
+                  "    pm.collectionVariables.set(\"product_id\", body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Product By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/{{product_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{product_id}}"
+              ]
+            },
+            "description": "Get product details by id."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"{{product_sku}}\",\n  \"barcode\": \"7891234567890\",\n  \"name\": \"Arroz Tipo 1 5kg Premium\",\n  \"description\": \"Pacote com 5kg - safra nova\",\n  \"brand\": \"Marca XPTO\",\n  \"category\": \"Mercearia\",\n  \"unit\": \"UN\",\n  \"costPrice\": 19.5,\n  \"salePrice\": 26.9,\n  \"promotionalPrice\": 24.9,\n  \"stockQuantity\": 45,\n  \"minimumStock\": 8,\n  \"ncm\": \"10063021\",\n  \"cest\": \"1704700\",\n  \"cfop\": \"5102\",\n  \"taxOrigin\": \"0\",\n  \"taxSituation\": \"60\",\n  \"icmsRate\": 18,\n  \"pisSituation\": \"01\",\n  \"pisRate\": 1.65,\n  \"cofinsSituation\": \"01\",\n  \"cofinsRate\": 7.6,\n  \"imageId\": \"{{image_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/{{product_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{product_id}}"
+              ]
+            },
+            "description": "Full update for product."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salePrice\": 25.9,\n  \"promotionalPrice\": 23.9,\n  \"stockQuantity\": 42,\n  \"minimumStock\": 10,\n  \"category\": \"Basicos\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/{{product_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{product_id}}"
+              ]
+            },
+            "description": "Partial update for product."
+          },
+          "response": []
+        },
+        {
+          "name": "Reactivate Product",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/{{product_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{product_id}}"
+              ]
+            },
+            "description": "Reactivate a previously deactivated product."
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate Product",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/{{product_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{product_id}}"
+              ]
+            },
+            "description": "Deactivate product (soft delete)."
           },
           "response": []
         }

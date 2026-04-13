@@ -31,6 +31,16 @@ const router = createRouter({
             children: [{ path: '', component: () => import('@/views/products/products.vue') }]
         },
         {
+            path: '/products/new',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/products/product-form.vue') }]
+        },
+        {
+            path: '/products/:id/edit',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/products/product-form.vue') }]
+        },
+        {
             path: '/products/inventory',
             component: AppLayout,
             children: [{ path: '', component: () => import('@/views/products/inventory.vue') }]
@@ -108,6 +118,18 @@ const router = createRouter({
         {
             path: '/entities/suppliers/:id/edit',
             redirect: (to) => `/pages/suppliers/${to.params.id}/edit`
+        },
+        {
+            path: '/entities/products',
+            redirect: '/products/list'
+        },
+        {
+            path: '/entities/products/new',
+            redirect: '/products/new'
+        },
+        {
+            path: '/entities/products/:id/edit',
+            redirect: (to) => `/products/${to.params.id}/edit`
         },
         {
             path: '/entities/users',

@@ -179,6 +179,39 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProductNotFound(ProductNotFoundException ex) {
+        log.warn("Product not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                "Produto não encontrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(ProductSkuAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleProductSkuAlreadyExists(ProductSkuAlreadyExistsException ex) {
+        log.warn("Product sku already exists");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflito",
+                "SKU do produto já cadastrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(ProductBarcodeAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleProductBarcodeAlreadyExists(ProductBarcodeAlreadyExistsException ex) {
+        log.warn("Product barcode already exists");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflito",
+                "Código de barras do produto já cadastrado",
+                Instant.now().toString()
+        ));
+    }
+
     @ExceptionHandler(InvalidImageException.class)
     public ResponseEntity<ErrorResponse> handleInvalidImage(InvalidImageException ex) {
         log.warn("Invalid image upload");

@@ -10,6 +10,9 @@ import br.com.topone.backend.application.usecase.customer.CustomerAddressCommand
 import br.com.topone.backend.application.usecase.customer.CustomerAddressPatchCommand;
 import br.com.topone.backend.application.usecase.customer.UpdateCustomerCommand;
 import br.com.topone.backend.application.usecase.customer.UpdateCustomerPatchCommand;
+import br.com.topone.backend.application.usecase.product.CreateProductCommand;
+import br.com.topone.backend.application.usecase.product.UpdateProductCommand;
+import br.com.topone.backend.application.usecase.product.UpdateProductPatchCommand;
 import br.com.topone.backend.application.usecase.supplier.CreateSupplierCommand;
 import br.com.topone.backend.application.usecase.supplier.SupplierAddressCommand;
 import br.com.topone.backend.application.usecase.supplier.SupplierAddressPatchCommand;
@@ -53,6 +56,12 @@ public interface DtoCommandMapper {
     UpdateCustomerCommand toUpdateCustomerCommand(UpdateCustomerRequest request, UUID id);
 
     UpdateCustomerPatchCommand toPatchCustomerCommand(UpdateCustomerPatchRequest request, UUID id);
+
+    CreateProductCommand toCreateProductCommand(CreateProductRequest request);
+
+    UpdateProductCommand toUpdateProductCommand(UpdateProductRequest request, UUID id);
+
+    UpdateProductPatchCommand toPatchProductCommand(UpdateProductPatchRequest request, UUID id);
 
     SupplierAddressCommand toSupplierAddressCommand(AddressRequest request);
 

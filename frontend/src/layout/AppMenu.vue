@@ -23,10 +23,7 @@ onMounted(() => {
         {
             label: 'Produtos',
             icon: 'pi pi-fw pi-box',
-            items: [
-                { label: 'Lista de Produtos', icon: 'pi pi-fw pi-box', to: '/products/list' },
-                { label: 'Estoque', icon: 'pi pi-fw pi-inbox', to: '/products/inventory' }
-            ]
+            items: [{ label: 'Produtos', icon: 'pi pi-fw pi-box', to: '/products/list' }]
         },
         {
             label: 'Cadastros',

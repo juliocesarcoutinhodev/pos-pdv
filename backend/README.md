@@ -452,6 +452,57 @@ Permissões:
 **GET `/api/v1/customers?page=0&size=20`** — 200 OK  
 Query params opcionais: `name` (parcial), `taxId` (parcial), `email` (parcial), `active` (true/false), `sortBy` (`name`, `taxId`, `createdAt`) e `sortDirection` (`asc`/`desc`).
 
+### CRUD de Produtos
+
+| Metodo | Path                      | Auth | Descricao                                      |
+| ------ | ------------------------- | ---- | ---------------------------------------------- |
+| GET    | `/api/v1/products`        | Sim  | Listar produtos com filtros/paginacao          |
+| GET    | `/api/v1/products/next-sku` | Sim | Gerar sugestao de SKU para novo cadastro       |
+| GET    | `/api/v1/products/{id}`   | Sim  | Detalhes de um produto                         |
+| POST   | `/api/v1/products`        | Sim  | Criar novo produto                             |
+| PUT    | `/api/v1/products/{id}`   | Sim  | Atualizacao completa                           |
+| PATCH  | `/api/v1/products/{id}`   | Sim  | Atualizacao parcial (inclui ativar/desativar) |
+| DELETE | `/api/v1/products/{id}`   | Sim  | Desativar produto (soft delete)                |
+
+Permissões:
+- `GET /api/v1/products`, `GET /api/v1/products/next-sku`, `GET /api/v1/products/{id}` e `POST /api/v1/products` exigem apenas usuário autenticado.
+- `PUT`, `PATCH` e `DELETE` em `/api/v1/products/**` exigem role `ADMIN`.
+
+**GET `/api/v1/products/next-sku`** — 200 OK  
+Retorna uma sugestão de SKU em formato numérico aleatório de 6 dígitos (ex.: `144236`) para facilitar o cadastro.
+
+**POST `/api/v1/products`** — 201 Created
+```json
+{
+  "sku": "144236",
+  "barcode": "7891234567890",
+  "name": "Arroz Tipo 1 5kg",
+  "description": "Pacote com 5kg",
+  "brand": "Marca XPTO",
+  "category": "Mercearia",
+  "unit": "UN",
+  "costPrice": 18.9,
+  "salePrice": 24.9,
+  "promotionalPrice": 22.9,
+  "stockQuantity": 50,
+  "minimumStock": 10,
+  "ncm": "10063021",
+  "cest": "1704700",
+  "cfop": "5102",
+  "taxOrigin": "0",
+  "taxSituation": "60",
+  "icmsRate": 18,
+  "pisSituation": "01",
+  "pisRate": 1.65,
+  "cofinsSituation": "01",
+  "cofinsRate": 7.6,
+  "imageId": "3d5bfa71-412a-4f73-bdd8-3fb4dfe58f99"
+}
+```
+
+**GET `/api/v1/products?page=0&size=20`** — 200 OK  
+Query params opcionais: `name` (parcial), `sku` (parcial), `barcode` (parcial), `category` (parcial), `active` (true/false), `sortBy` (`name`, `sku`, `barcode`, `category`, `salePrice`, `stockQuantity`, `createdAt`) e `sortDirection` (`asc`/`desc`).
+
 ### Imagens (MinIO)
 
 | Metodo | Path                            | Auth | Descricao                                          |
