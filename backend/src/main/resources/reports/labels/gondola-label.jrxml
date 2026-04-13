@@ -1,15 +1,15 @@
 <!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
 <jasperReport name="EtiquetaGondola100x30" language="java" pageWidth="283" pageHeight="85" columnWidth="283" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="996deb39-aba0-408c-a7df-e1f9241cf421">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="vps"/>
-	<style name="ProductName" fontName="DejaVu Sans" fontSize="11.0" bold="true"/>
-	<style name="PriceValue" fontName="DejaVu Sans" fontSize="32.0" bold="true"/>
-	<style name="BarcodeCode" fontName="DejaVu Sans" fontSize="7.0"/>
+	<style name="ProductName" fontName="SansSerif" fontSize="11.0" bold="true"/>
+	<style name="PriceValue" fontName="SansSerif" fontSize="32.0" bold="true"/>
+	<style name="BarcodeCode" fontName="SansSerif" fontSize="7.0"/>
 	<parameter name="JOB_ID" class="java.lang.String"/>
 	<query language="sql"><![CDATA[
     SELECT
         i.name AS name,
-        COALESCE(NULLIF(i.barcode, ''), i.sku) AS barcode,
-        COALESCE(i.promotional_price, i.sale_price) AS salePrice
+        COALESCE(NULLIF(i.barcode, ''), NULLIF(i.sku, ''), i.product_id::text) AS barcode,
+        COALESCE(i.promotional_price, i.sale_price) AS "salePrice"
     FROM tb_label_print_job_items i
     WHERE i.job_id = CAST($P{JOB_ID} AS UUID)
     ]]></query>

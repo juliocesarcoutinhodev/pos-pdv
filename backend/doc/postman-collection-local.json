@@ -2077,6 +2077,35 @@
             "description": "Get a label print job with snapshot items for reprint."
           },
           "response": []
+        },
+        {
+          "name": "Get Label Print Job Report (PDF)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/labels/jobs/{{label_job_id}}/report",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "labels",
+                "jobs",
+                "{{label_job_id}}",
+                "report"
+              ]
+            },
+            "description": "Generate and return label print job PDF using Jasper template."
+          },
+          "response": []
         }
       ]
     },

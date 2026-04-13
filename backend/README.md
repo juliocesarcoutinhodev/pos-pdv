@@ -518,6 +518,7 @@ Query params opcionais: `name` (parcial), `sku` (parcial), `barcode` (parcial), 
 | POST   | `/api/v1/labels/jobs`             | Sim  | Criar lote de impressao com snapshot dos itens         |
 | GET    | `/api/v1/labels/jobs`             | Sim  | Listar historico de lotes para reimpressao             |
 | GET    | `/api/v1/labels/jobs/{id}`        | Sim  | Detalhar lote com itens e quantidades                  |
+| GET    | `/api/v1/labels/jobs/{id}/report` | Sim  | Gerar PDF do lote no template Jasper (`100x30`)        |
 
 Permissões:
 - Todos os endpoints de `/api/v1/labels/**` exigem usuário autenticado.
@@ -544,6 +545,9 @@ Query params opcionais: `date` (`yyyy-MM-dd`, padrão dia atual), `name` (parcia
 
 **GET `/api/v1/labels/jobs?page=0&size=20`** — 200 OK  
 Query params opcionais: `referenceDate` (`yyyy-MM-dd`), `sortBy` (`createdAt`, `referenceDate`) e `sortDirection` (`asc`/`desc`).
+
+**GET `/api/v1/labels/jobs/{id}/report`** — 200 OK  
+Retorna o PDF (`application/pdf`) do lote com base no template `reports/labels/gondola-label.jrxml`.
 
 ### Imagens (MinIO)
 

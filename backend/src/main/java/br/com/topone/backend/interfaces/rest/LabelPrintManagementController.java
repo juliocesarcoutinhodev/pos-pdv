@@ -2,6 +2,8 @@ package br.com.topone.backend.interfaces.rest;
 
 import br.com.topone.backend.application.usecase.label.CreateLabelPrintJobUseCase;
 import br.com.topone.backend.application.usecase.label.CreateLabelPrintJobResult;
+import br.com.topone.backend.application.usecase.label.GenerateLabelPrintJobReportCommand;
+import br.com.topone.backend.application.usecase.label.GenerateLabelPrintJobReportUseCase;
 import br.com.topone.backend.application.usecase.label.GetLabelPrintJobByIdCommand;
 import br.com.topone.backend.application.usecase.label.GetLabelPrintJobByIdUseCase;
 import br.com.topone.backend.application.usecase.label.ListLabelPrintJobsCommand;
@@ -19,7 +21,10 @@ import br.com.topone.backend.interfaces.dto.LabelPrintSuggestionResponse;
 import br.com.topone.backend.interfaces.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.UUID;
 
@@ -55,6 +61,7 @@ public class LabelPrintManagementController {
     private final CreateLabelPrintJobUseCase createLabelPrintJobUseCase;
     private final ListLabelPrintJobsUseCase listLabelPrintJobsUseCase;
     private final GetLabelPrintJobByIdUseCase getLabelPrintJobByIdUseCase;
+    private final GenerateLabelPrintJobReportUseCase generateLabelPrintJobReportUseCase;
     private final DtoCommandMapper dtoCommandMapper;
 
     @GetMapping("/suggestions")
@@ -149,6 +156,24 @@ public class LabelPrintManagementController {
     public ResponseEntity<LabelPrintJobResponse> getJobById(@PathVariable UUID id) {
         var result = getLabelPrintJobByIdUseCase.execute(new GetLabelPrintJobByIdCommand(id));
         return ResponseEntity.ok(toResponse(result));
+    }
+
+    @GetMapping(value = "/jobs/{id}/report", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
+    public ResponseEntity<byte[]> getJobReport(@PathVariable UUID id) {
+        var report = generateLabelPrintJobReportUseCase.execute(new GenerateLabelPrintJobReportCommand(id));
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.inline()
+                                .filename(report.fileName(), StandardCharsets.UTF_8)
+                                .build()
+                                .toString()
+                )
+                .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(report.content().length)
+                .body(report.content());
     }
 
     private LabelPrintJobResponse toResponse(CreateLabelPrintJobResult result) {
