@@ -1309,6 +1309,126 @@
           "response": []
         },
         {
+          "name": "Get Customer Summary Report (PDF)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers/reports/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "reports",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "",
+                  "description": "Filter by customer name (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "active",
+                  "value": "",
+                  "description": "Filter by status: true/false",
+                  "disabled": true
+                },
+                {
+                  "key": "birthMonth",
+                  "value": "",
+                  "description": "Birthday month filter: 1..12",
+                  "disabled": true
+                },
+                {
+                  "key": "birthDateFrom",
+                  "value": "",
+                  "description": "Birthday date start (yyyy-MM-dd)",
+                  "disabled": true
+                },
+                {
+                  "key": "birthDateTo",
+                  "value": "",
+                  "description": "Birthday date end (yyyy-MM-dd)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Generate customer summary report PDF (Jasper)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer Detailed Report (PDF)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers/reports/detailed",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "reports",
+                "detailed"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "",
+                  "description": "Filter by customer name (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "active",
+                  "value": "",
+                  "description": "Filter by status: true/false",
+                  "disabled": true
+                },
+                {
+                  "key": "birthMonth",
+                  "value": "",
+                  "description": "Birthday month filter: 1..12",
+                  "disabled": true
+                },
+                {
+                  "key": "birthDateFrom",
+                  "value": "",
+                  "description": "Birthday date start (yyyy-MM-dd)",
+                  "disabled": true
+                },
+                {
+                  "key": "birthDateTo",
+                  "value": "",
+                  "description": "Birthday date end (yyyy-MM-dd)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Generate customer detailed report PDF (Jasper)."
+          },
+          "response": []
+        },
+        {
           "name": "Create Customer",
           "request": {
             "method": "POST",

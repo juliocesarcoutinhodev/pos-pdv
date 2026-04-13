@@ -85,6 +85,12 @@ Todas configuraveis via `.env` (padrao Spring Boot 4.x).
 | `MINIO_SECRET_KEY`                  | *(sem padrao)*                       | Secret key do MinIO |
 | `MINIO_BUCKET`                      | `images`                             | Bucket para imagens do sistema |
 | `MINIO_AUTO_CREATE_BUCKET`          | `true`                               | Cria bucket automaticamente se nao existir |
+| `REPORT_COMPANY_LEGAL_NAME`         | vazio                                | Razao social para cabecalho dos relatorios de clientes |
+| `REPORT_COMPANY_TRADE_NAME`         | vazio                                | Nome fantasia para cabecalho dos relatorios de clientes |
+| `REPORT_COMPANY_TAX_ID`             | vazio                                | CNPJ da empresa no cabecalho dos relatorios de clientes |
+| `REPORT_COMPANY_PHONE`              | vazio                                | Telefone da empresa no cabecalho dos relatorios de clientes |
+| `REPORT_COMPANY_EMAIL`              | vazio                                | E-mail da empresa no cabecalho dos relatorios de clientes |
+| `REPORT_COMPANY_ADDRESS_LINE`       | vazio                                | Endereco em uma linha para cabecalho dos relatorios de clientes |
 | `SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE` | `10MB`                          | Limite maximo por arquivo no upload |
 | `SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE` | `10MB`                       | Limite maximo total da requisicao multipart |
 
@@ -416,6 +422,8 @@ Desativar fornecedor (soft delete) — define `deletedAt`. Nenhum dado e deletad
 | Metodo | Path                       | Auth | Descricao                                      |
 | ------ | -------------------------- | ---- | ---------------------------------------------- |
 | GET    | `/api/v1/customers`        | Sim  | Listar clientes com filtros/paginacao          |
+| GET    | `/api/v1/customers/reports/summary`  | Sim  | Gerar PDF resumido de clientes (Jasper)        |
+| GET    | `/api/v1/customers/reports/detailed` | Sim  | Gerar PDF detalhado de clientes (Jasper)       |
 | GET    | `/api/v1/customers/{id}`   | Sim  | Detalhes de um cliente                         |
 | POST   | `/api/v1/customers`        | Sim  | Criar novo cliente                             |
 | PUT    | `/api/v1/customers/{id}`   | Sim  | Atualizacao completa                           |
@@ -424,6 +432,7 @@ Desativar fornecedor (soft delete) — define `deletedAt`. Nenhum dado e deletad
 
 Permissões:
 - `GET /api/v1/customers`, `GET /api/v1/customers/{id}` e `POST /api/v1/customers` exigem apenas usuário autenticado.
+- `GET /api/v1/customers/reports/summary` e `GET /api/v1/customers/reports/detailed` exigem usuário autenticado.
 - `PUT`, `PATCH` e `DELETE` em `/api/v1/customers/**` exigem role `ADMIN`.
 
 **POST `/api/v1/customers`** — 201 Created
@@ -451,6 +460,16 @@ Permissões:
 
 **GET `/api/v1/customers?page=0&size=20`** — 200 OK  
 Query params opcionais: `name` (parcial), `taxId` (parcial), `email` (parcial), `active` (true/false), `sortBy` (`name`, `taxId`, `createdAt`) e `sortDirection` (`asc`/`desc`).
+
+**GET `/api/v1/customers/reports/summary`** — 200 OK  
+Retorna PDF (`application/pdf`) com relatório resumido usando template `reports/customers/customers-summary.jrxml`.
+
+**GET `/api/v1/customers/reports/detailed`** — 200 OK  
+Retorna PDF (`application/pdf`) com relatório detalhado usando template `reports/customers/customers-detailed.jrxml`.
+
+Filtros opcionais para ambos os relatórios: `name` (parcial), `active` (`true`/`false`), `birthMonth` (`1..12`), `birthDateFrom` (`yyyy-MM-dd`) e `birthDateTo` (`yyyy-MM-dd`).
+
+No relatório detalhado, o cabeçalho da empresa é preenchido pelas variáveis `REPORT_COMPANY_*` (trade name/razão social, CNPJ, contato e endereço).
 
 ### CRUD de Produtos
 

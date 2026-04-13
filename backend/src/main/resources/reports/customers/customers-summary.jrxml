@@ -1,0 +1,168 @@
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
+<jasperReport name="CustomersSummary" language="java" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="50a10fe9-c0c5-4092-b815-e8df0b00ca46">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="vps"/>
+	<style name="Title" fontName="SansSerif" fontSize="22.0" bold="true"/>
+	<style name="Subtitle" fontName="SansSerif" fontSize="11.0"/>
+	<style name="FilterLabel" fontName="SansSerif" fontSize="9.0" bold="true"/>
+	<style name="FilterValue" fontName="SansSerif" fontSize="9.0"/>
+	<style name="HeaderCell" fontName="SansSerif" fontSize="10.0" bold="true"/>
+	<style name="DetailCell" fontName="SansSerif" fontSize="9.0"/>
+	<style name="SummaryLabel" fontName="SansSerif" fontSize="10.0" bold="true"/>
+	<style name="FooterCell" fontName="SansSerif" fontSize="8.0"/>
+	<parameter name="REPORT_TITLE" class="java.lang.String">
+		<defaultValueExpression><![CDATA["Relatorio de Clientes - Resumido"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NAME_FILTER" class="java.lang.String"/>
+	<parameter name="ACTIVE_FILTER" class="java.lang.Boolean"/>
+	<parameter name="BIRTH_MONTH" class="java.lang.Integer"/>
+	<parameter name="BIRTH_DATE_FROM" class="java.sql.Date"/>
+	<parameter name="BIRTH_DATE_TO" class="java.sql.Date"/>
+	<parameter name="PRINTED_AT" forPrompting="false" class="java.util.Date">
+		<defaultValueExpression><![CDATA[new java.util.Date()]]></defaultValueExpression>
+	</parameter>
+	<query language="sql"><![CDATA[
+SELECT
+    c.id::text AS id,
+    c.name AS name,
+    c.tax_id AS tax_id,
+    c.phone AS phone,
+    c.email AS email,
+    c.birth_date AS birth_date,
+    a.city AS city,
+    a.state AS state,
+    CASE WHEN c.deleted_at IS NULL THEN 'Ativo' ELSE 'Inativo' END AS status
+FROM tb_customers c
+LEFT JOIN tb_addresses a ON a.id = c.address_id
+WHERE
+    ($P{NAME_FILTER} IS NULL OR TRIM($P{NAME_FILTER}) = '' OR c.name ILIKE '%' || $P{NAME_FILTER} || '%')
+    AND ($P{ACTIVE_FILTER} IS NULL OR (c.deleted_at IS NULL) = $P{ACTIVE_FILTER})
+    AND ($P{BIRTH_MONTH} IS NULL OR EXTRACT(MONTH FROM c.birth_date)::int = $P{BIRTH_MONTH})
+    AND ($P{BIRTH_DATE_FROM} IS NULL OR c.birth_date >= $P{BIRTH_DATE_FROM})
+    AND ($P{BIRTH_DATE_TO} IS NULL OR c.birth_date <= $P{BIRTH_DATE_TO})
+ORDER BY c.name
+    ]]></query>
+	<field name="id" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="tax_id" class="java.lang.String"/>
+	<field name="phone" class="java.lang.String"/>
+	<field name="email" class="java.lang.String"/>
+	<field name="birth_date" class="java.sql.Date"/>
+	<field name="city" class="java.lang.String"/>
+	<field name="state" class="java.lang.String"/>
+	<field name="status" class="java.lang.String"/>
+	<variable name="TOTAL_CUSTOMERS" calculation="Count" class="java.lang.Integer">
+		<expression><![CDATA[$F{id}]]></expression>
+	</variable>
+	<title height="68">
+		<element kind="rectangle" uuid="ba834eae-e526-4833-9c69-5f19624aabd7" mode="Opaque" x="0" y="0" width="802" height="68" backcolor="#EEF2FF"/>
+		<element kind="textField" uuid="18fa1b2c-1be4-4088-b848-2e47ee2f5708" x="14" y="10" width="560" height="28" fontSize="20.0" vTextAlign="Middle" style="Title">
+			<expression><![CDATA[$P{REPORT_TITLE}]]></expression>
+		</element>
+		<element kind="textField" uuid="63c3b9d2-5bcb-4b2f-b9cc-f3d64f54eaee" x="14" y="40" width="560" height="18" vTextAlign="Middle" style="Subtitle">
+			<expression><![CDATA["Visao rapida para conferencia e impressao de clientes"]]></expression>
+		</element>
+	</title>
+	<pageHeader height="44">
+		<element kind="textField" uuid="98a5d92e-8428-442c-8463-854ca504834a" x="0" y="0" width="84" height="14" style="FilterLabel">
+			<expression><![CDATA["Nome:"]]></expression>
+		</element>
+		<element kind="textField" uuid="cdccc6d2-e531-42c5-97f9-23c4ed198e3a" x="84" y="0" width="250" height="14" style="FilterValue">
+			<expression><![CDATA[$P{NAME_FILTER} == null || $P{NAME_FILTER}.trim().isEmpty() ? "Todos" : $P{NAME_FILTER}]]></expression>
+		</element>
+		<element kind="textField" uuid="52f7c84c-a7c5-4573-8cb2-17c4e76a2610" x="346" y="0" width="84" height="14" style="FilterLabel">
+			<expression><![CDATA["Status:"]]></expression>
+		</element>
+		<element kind="textField" uuid="e71fc847-78e9-49fd-aa4d-1a875bf6480b" x="430" y="0" width="180" height="14" style="FilterValue">
+			<expression><![CDATA[$P{ACTIVE_FILTER} == null ? "Todos" : ($P{ACTIVE_FILTER} ? "Apenas ativos" : "Apenas inativos")]]></expression>
+		</element>
+		<element kind="textField" uuid="73577b60-a7c7-469d-8439-4473f7b2610c" x="620" y="0" width="70" height="14" style="FilterLabel">
+			<expression><![CDATA["Mes:"]]></expression>
+		</element>
+		<element kind="textField" uuid="dacdd74f-26a4-485b-b58a-395c7ce41322" x="690" y="0" width="112" height="14" hTextAlign="Right" style="FilterValue">
+			<expression><![CDATA[$P{BIRTH_MONTH} == null ? "Todos" : String.valueOf($P{BIRTH_MONTH})]]></expression>
+		</element>
+		<element kind="textField" uuid="8279e8d2-b93f-4bd9-82b5-cb21777c1830" x="0" y="20" width="84" height="14" style="FilterLabel">
+			<expression><![CDATA["Nascimento:"]]></expression>
+		</element>
+		<element kind="textField" uuid="ea72c552-62f0-4a18-84d1-309596a7c503" x="84" y="20" width="430" height="14" style="FilterValue">
+			<expression><![CDATA[
+($P{BIRTH_DATE_FROM} == null ? "sem inicio" : new java.text.SimpleDateFormat("dd/MM/yyyy").format($P{BIRTH_DATE_FROM}))
++ " ate " +
+($P{BIRTH_DATE_TO} == null ? "sem fim" : new java.text.SimpleDateFormat("dd/MM/yyyy").format($P{BIRTH_DATE_TO}))
+            ]]></expression>
+		</element>
+	</pageHeader>
+	<columnHeader height="22">
+		<element kind="rectangle" uuid="4dc3aea6-e5f7-478a-b3bf-3b1b288817f2" mode="Opaque" x="0" y="0" width="802" height="22" backcolor="#2563EB"/>
+		<element kind="textField" uuid="34d7dce6-5362-496b-ba3e-c4e7bbcad7a9" x="0" y="0" width="200" height="22" forecolor="#FFFFFF" hTextAlign="Center" vTextAlign="Middle" style="HeaderCell">
+			<expression><![CDATA["Nome"]]></expression>
+		</element>
+		<element kind="textField" uuid="51fd4007-faa4-4c76-9b2f-f84bbe619724" x="200" y="0" width="100" height="22" forecolor="#FFFFFF" hTextAlign="Center" vTextAlign="Middle" style="HeaderCell">
+			<expression><![CDATA["Documento"]]></expression>
+		</element>
+		<element kind="textField" uuid="f5ff9e15-259d-47fe-a5a9-f5cab4d99d2e" x="300" y="0" width="95" height="22" forecolor="#FFFFFF" hTextAlign="Center" vTextAlign="Middle" style="HeaderCell">
+			<expression><![CDATA["Telefone"]]></expression>
+		</element>
+		<element kind="textField" uuid="5d1f9ffb-013f-49fc-a18b-23d0027f3ad2" x="395" y="0" width="170" height="22" forecolor="#FFFFFF" hTextAlign="Center" vTextAlign="Middle" style="HeaderCell">
+			<expression><![CDATA["E-mail"]]></expression>
+		</element>
+		<element kind="textField" uuid="ab73f2a0-5a1f-440d-ade0-0be56d4e11de" x="565" y="0" width="80" height="22" forecolor="#FFFFFF" hTextAlign="Center" vTextAlign="Middle" style="HeaderCell">
+			<expression><![CDATA["Nascimento"]]></expression>
+		</element>
+		<element kind="textField" uuid="2fbbe894-ca4a-4a7d-a298-69a2267224a1" x="645" y="0" width="90" height="22" forecolor="#FFFFFF" hTextAlign="Center" vTextAlign="Middle" style="HeaderCell">
+			<expression><![CDATA["Cidade/UF"]]></expression>
+		</element>
+		<element kind="textField" uuid="b062cdcf-7e98-4c91-9624-4955c0baa487" x="735" y="0" width="67" height="22" forecolor="#FFFFFF" hTextAlign="Center" vTextAlign="Middle" style="HeaderCell">
+			<expression><![CDATA["Status"]]></expression>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="22" splitType="Stretch">
+			<element kind="textField" uuid="0058fc47-9280-4cd3-8504-71b518f4f524" x="0" y="0" width="200" height="22" vTextAlign="Middle" style="DetailCell">
+				<expression><![CDATA[$F{name}]]></expression>
+			</element>
+			<element kind="textField" uuid="407a3a1c-4b9d-4ece-961a-e8862533e262" x="200" y="0" width="100" height="22" hTextAlign="Center" vTextAlign="Middle" style="DetailCell">
+				<expression><![CDATA[$F{tax_id}]]></expression>
+			</element>
+			<element kind="textField" uuid="af9facb0-a24c-47dd-8130-9169ed9553a8" x="300" y="0" width="95" height="22" hTextAlign="Center" vTextAlign="Middle" style="DetailCell">
+				<expression><![CDATA[$F{phone} == null ? "-" : $F{phone}]]></expression>
+			</element>
+			<element kind="textField" uuid="beca97ec-6585-4d1f-8521-4e69d3f3a29b" x="395" y="0" width="170" height="22" vTextAlign="Middle" style="DetailCell">
+				<expression><![CDATA[$F{email} == null ? "-" : $F{email}]]></expression>
+			</element>
+			<element kind="textField" uuid="56fc6710-93e7-488f-867b-d0d34754d0f2" x="565" y="0" width="80" height="22" pattern="dd/MM/yyyy" hTextAlign="Center" vTextAlign="Middle" style="DetailCell">
+				<expression><![CDATA[$F{birth_date}]]></expression>
+			</element>
+			<element kind="textField" uuid="a1374f3f-1d0c-45db-b41d-77abd180fcb7" x="645" y="0" width="90" height="22" hTextAlign="Center" vTextAlign="Middle" style="DetailCell">
+				<expression><![CDATA[($F{city} == null ? "-" : $F{city}) + "/" + ($F{state} == null ? "-" : $F{state})]]></expression>
+			</element>
+			<element kind="textField" uuid="74de5bbf-cde6-49b2-8f2e-7a38d9da1f5c" x="735" y="0" width="67" height="22" bold="true" hTextAlign="Center" vTextAlign="Middle" style="DetailCell">
+				<expression><![CDATA[$F{status}]]></expression>
+			</element>
+		</band>
+	</detail>
+	<pageFooter height="22">
+		<element kind="line" uuid="5539ecf8-08cb-4070-8e5b-f7b79f04afe9" x="0" y="0" width="802" height="1"/>
+		<element kind="textField" uuid="f5b796af-54df-449e-bbdc-7ed5bd6aef4f" x="0" y="6" width="260" height="14" pattern="dd/MM/yyyy HH:mm:ss" style="FooterCell">
+			<expression><![CDATA[$P{PRINTED_AT}]]></expression>
+		</element>
+		<element kind="textField" uuid="e876e40d-404b-4da6-8920-44c3e0bb4142" x="622" y="6" width="180" height="14" hTextAlign="Right" style="FooterCell">
+			<expression><![CDATA["Pagina " + $V{PAGE_NUMBER}]]></expression>
+		</element>
+	</pageFooter>
+	<summary height="30">
+		<element kind="rectangle" uuid="829dac94-e39d-41a5-b639-336dc5a6cd4f" mode="Opaque" x="0" y="3" width="802" height="24" backcolor="#E2E8F0"/>
+		<element kind="textField" uuid="c9e2db2c-25f0-435c-86a1-c71ed3711113" x="10" y="8" width="170" height="14" style="SummaryLabel">
+			<expression><![CDATA["Total de clientes:"]]></expression>
+		</element>
+		<element kind="textField" uuid="49f5bc29-c03b-4f1b-bc58-33e4077464ab" x="720" y="8" width="80" height="14" hTextAlign="Right" style="SummaryLabel">
+			<expression><![CDATA[$V{TOTAL_CUSTOMERS}]]></expression>
+		</element>
+	</summary>
+	<noData height="80">
+		<element kind="rectangle" uuid="4eaf946a-a2de-4aa9-9352-a462c5da96a4" mode="Opaque" x="0" y="10" width="802" height="60" backcolor="#F8FAFC"/>
+		<element kind="textField" uuid="9500936e-7c2b-4587-bb5c-ac549bfa3080" x="0" y="32" width="802" height="20" fontName="SansSerif" fontSize="12.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA["Nenhum cliente encontrado para os filtros informados."]]></expression>
+		</element>
+	</noData>
+</jasperReport>

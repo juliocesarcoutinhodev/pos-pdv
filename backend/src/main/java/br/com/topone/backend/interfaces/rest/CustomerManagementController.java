@@ -7,11 +7,16 @@ import br.com.topone.backend.infrastructure.security.AuthorizationPolicies;
 import br.com.topone.backend.interfaces.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,6 +33,7 @@ public class CustomerManagementController {
     private final UpdateCustomerUseCase updateCustomerUseCase;
     private final UpdateCustomerPatchUseCase updateCustomerPatchUseCase;
     private final DeactivateCustomerUseCase deactivateCustomerUseCase;
+    private final GenerateCustomerReportUseCase generateCustomerReportUseCase;
     private final DtoCommandMapper dtoCommandMapper;
 
     @GetMapping
@@ -70,6 +76,46 @@ public class CustomerManagementController {
                 result.totalElements(),
                 result.totalPages()
         ));
+    }
+
+    @GetMapping(value = "/reports/summary", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
+    public ResponseEntity<byte[]> getSummaryReport(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) Integer birthMonth,
+            @RequestParam(required = false) LocalDate birthDateFrom,
+            @RequestParam(required = false) LocalDate birthDateTo
+    ) {
+        var report = generateCustomerReportUseCase.execute(new GenerateCustomerReportCommand(
+                CustomerReportType.SUMMARY,
+                name,
+                active,
+                birthMonth,
+                birthDateFrom,
+                birthDateTo
+        ));
+        return toPdfResponse(report);
+    }
+
+    @GetMapping(value = "/reports/detailed", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
+    public ResponseEntity<byte[]> getDetailedReport(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) Integer birthMonth,
+            @RequestParam(required = false) LocalDate birthDateFrom,
+            @RequestParam(required = false) LocalDate birthDateTo
+    ) {
+        var report = generateCustomerReportUseCase.execute(new GenerateCustomerReportCommand(
+                CustomerReportType.DETAILED,
+                name,
+                active,
+                birthMonth,
+                birthDateFrom,
+                birthDateTo
+        ));
+        return toPdfResponse(report);
     }
 
     @GetMapping("/{id}")
@@ -175,5 +221,19 @@ public class CustomerManagementController {
                 address.city(),
                 address.state()
         );
+    }
+
+    private ResponseEntity<byte[]> toPdfResponse(GenerateCustomerReportResult report) {
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.inline()
+                                .filename(report.fileName(), StandardCharsets.UTF_8)
+                                .build()
+                                .toString()
+                )
+                .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(report.content().length)
+                .body(report.content());
     }
 }

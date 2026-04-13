@@ -256,6 +256,28 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(InvalidCustomerReportException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCustomerReport(InvalidCustomerReportException ex) {
+        log.warn("Invalid customer report filters | message={}", ex.getMessage());
+        return ResponseEntity.badRequest().body(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida",
+                ex.getMessage(),
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(CustomerReportGenerationException.class)
+    public ResponseEntity<ErrorResponse> handleCustomerReportGeneration(CustomerReportGenerationException ex) {
+        log.error("Customer report generation failure | message={}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponse(
+                HttpStatus.BAD_GATEWAY.value(),
+                "Falha de integração",
+                "Não foi possível gerar o relatório de clientes",
+                Instant.now().toString()
+        ));
+    }
+
     @ExceptionHandler(InvalidImageException.class)
     public ResponseEntity<ErrorResponse> handleInvalidImage(InvalidImageException ex) {
         log.warn("Invalid image upload");

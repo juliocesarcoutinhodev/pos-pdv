@@ -41,7 +41,8 @@ onMounted(() => {
             items: [
                 { label: 'Vendas do Dia', icon: 'pi pi-fw pi-calendar', to: '/reports/daily-sales' },
                 { label: 'Fechamento', icon: 'pi pi-fw pi-calculator', to: '/reports/closing' },
-                { label: 'Etiquetas de Gôndola', icon: 'pi pi-fw pi-tags', to: '/reports/labels' }
+                { label: 'Etiquetas de Gôndola', icon: 'pi pi-fw pi-tags', to: '/reports/labels' },
+                { label: 'Clientes', icon: 'pi pi-fw pi-id-card', to: '/reports/customers' }
             ]
         },
         {
