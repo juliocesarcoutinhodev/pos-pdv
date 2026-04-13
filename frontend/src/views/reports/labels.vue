@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { useToast } from 'primevue/usetoast';
-import { createLabelPrintJob, getLabelPrintJobById, listLabelPrintJobs, listLabelSuggestions } from '@/services/labelPrintService.js';
+import { createLabelPrintJob, downloadLabelPrintJobReport, listLabelPrintJobs, listLabelSuggestions } from '@/services/labelPrintService.js';
 import { useErrorHandler } from '@/services/errorHandler.js';
 
 const toast = useToast();
@@ -69,15 +69,6 @@ function formatCurrency(value) {
         style: 'currency',
         currency: 'BRL'
     }).format(Number(value));
-}
-
-function escapeHtml(value) {
-    return String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
 }
 
 async function loadSuggestions() {
@@ -165,120 +156,61 @@ function clearQueue() {
     printQueue.value = [];
 }
 
-function buildPrintableHtml(job) {
-    const labels = [];
-    job.items.forEach((item) => {
-        const quantity = normalizeQuantity(item.quantity);
-        for (let index = 0; index < quantity; index += 1) {
-            labels.push(item);
-        }
-    });
+function openPopupWindow() {
+    const popupWindow = window.open('', '_blank');
 
-    const labelsHtml = labels
-        .map(
-            (item) => `
-                <article class="label-card">
-                    <header class="label-name">${escapeHtml(item.name)}</header>
-                    <div class="label-meta">
-                        <span>SKU: ${escapeHtml(item.sku || '-')}</span>
-                        <span>UN: ${escapeHtml(item.unit || '-')}</span>
-                    </div>
-                    <div class="label-price">${escapeHtml(formatCurrency(item.promotionalPrice ?? item.salePrice))}</div>
-                    <div class="label-secondary">
-                        Preço normal: ${escapeHtml(formatCurrency(item.salePrice))}
-                    </div>
-                    <div class="label-barcode">${escapeHtml(item.barcode || '')}</div>
-                </article>
-            `
-        )
-        .join('');
+    if (!popupWindow) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Popup bloqueado',
+            detail: 'Permita popups no navegador para abrir o PDF de etiquetas.',
+            life: 4000
+        });
+        return null;
+    }
 
-    return `
+    popupWindow.document.write(`
         <!DOCTYPE html>
         <html lang="pt-BR">
             <head>
                 <meta charset="UTF-8" />
-                <title>Etiquetas - Lote ${escapeHtml(job.id)}</title>
-                <style>
-                    * { box-sizing: border-box; font-family: Arial, sans-serif; }
-                    body { margin: 12px; color: #111827; }
-                    .header { margin-bottom: 12px; }
-                    .header h1 { font-size: 16px; margin: 0 0 4px 0; }
-                    .header p { margin: 0; font-size: 12px; color: #374151; }
-                    .labels-grid {
-                        display: grid;
-                        grid-template-columns: repeat(3, minmax(0, 1fr));
-                        gap: 8px;
-                    }
-                    .label-card {
-                        border: 1px solid #111827;
-                        border-radius: 6px;
-                        padding: 8px;
-                        min-height: 92px;
-                    }
-                    .label-name {
-                        font-size: 12px;
-                        font-weight: 700;
-                        line-height: 1.2;
-                        min-height: 30px;
-                    }
-                    .label-meta {
-                        margin-top: 4px;
-                        display: flex;
-                        justify-content: space-between;
-                        font-size: 10px;
-                    }
-                    .label-price {
-                        margin-top: 6px;
-                        font-size: 20px;
-                        font-weight: 700;
-                    }
-                    .label-secondary {
-                        margin-top: 2px;
-                        font-size: 10px;
-                    }
-                    .label-barcode {
-                        margin-top: 4px;
-                        font-size: 10px;
-                        letter-spacing: 0.4px;
-                    }
-                    @media print {
-                        body { margin: 0; }
-                        .header { margin: 0 0 8px 0; padding: 0 6px; }
-                    }
-                </style>
+                <title>Gerando PDF...</title>
             </head>
-            <body>
-                <section class="header">
-                    <h1>Lote de etiquetas #${escapeHtml(job.id)}</h1>
-                    <p>Referência: ${escapeHtml(formatDate(job.referenceDate))} • Produtos: ${job.totalProducts} • Etiquetas: ${job.totalLabels}</p>
-                </section>
-                <section class="labels-grid">${labelsHtml}</section>
+            <body style="font-family: Arial, sans-serif; padding: 16px;">
+                Gerando PDF de etiquetas...
             </body>
         </html>
-    `;
+    `);
+    popupWindow.document.close();
+    return popupWindow;
 }
 
-function printJob(job) {
-    const printWindow = window.open('', '_blank');
+function openPdfInWindow(blob, popupWindow) {
+    const blobUrl = URL.createObjectURL(blob);
 
-    if (!printWindow) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Popup bloqueado',
-            detail: 'Permita popups no navegador para abrir a impressão de etiquetas.',
-            life: 4000
-        });
-        return;
+    if (popupWindow && !popupWindow.closed) {
+        popupWindow.location.href = blobUrl;
+        popupWindow.focus();
+    } else {
+        const newWindow = window.open(blobUrl, '_blank');
+        if (!newWindow) {
+            URL.revokeObjectURL(blobUrl);
+            toast.add({
+                severity: 'warn',
+                summary: 'Popup bloqueado',
+                detail: 'Permita popups no navegador para abrir o PDF de etiquetas.',
+                life: 4000
+            });
+            return;
+        }
     }
 
-    printWindow.document.open();
-    printWindow.document.write(buildPrintableHtml(job));
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.onload = () => {
-        printWindow.print();
-    };
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+}
+
+async function openJobReport(jobId, popupWindow) {
+    const report = await downloadLabelPrintJobReport(jobId);
+    openPdfInWindow(report.blob, popupWindow);
 }
 
 async function handleGenerateJob() {
@@ -289,6 +221,11 @@ async function handleGenerateJob() {
             detail: 'Adicione ao menos um produto na lista para imprimir etiquetas.',
             life: 3000
         });
+        return;
+    }
+
+    const popupWindow = openPopupWindow();
+    if (!popupWindow) {
         return;
     }
 
@@ -303,7 +240,7 @@ async function handleGenerateJob() {
         };
 
         const createdJob = await createLabelPrintJob(payload);
-        printJob(createdJob);
+        await openJobReport(createdJob.id, popupWindow);
         clearQueue();
         await loadHistory();
 
@@ -314,6 +251,9 @@ async function handleGenerateJob() {
             life: 3000
         });
     } catch (error) {
+        if (!popupWindow.closed) {
+            popupWindow.close();
+        }
         showApiErrorToast(toast, error);
     } finally {
         creatingJob.value = false;
@@ -321,10 +261,17 @@ async function handleGenerateJob() {
 }
 
 async function handleReprint(jobId) {
+    const popupWindow = openPopupWindow();
+    if (!popupWindow) {
+        return;
+    }
+
     try {
-        const job = await getLabelPrintJobById(jobId);
-        printJob(job);
+        await openJobReport(jobId, popupWindow);
     } catch (error) {
+        if (!popupWindow.closed) {
+            popupWindow.close();
+        }
         showApiErrorToast(toast, error);
     }
 }

@@ -150,3 +150,36 @@ export async function getLabelPrintJobById(id) {
     const response = await api.get(`/api/v1/labels/jobs/${id}`);
     return normalizeJobDetail(response.data);
 }
+
+function extractFileName(contentDisposition) {
+    if (!contentDisposition) {
+        return null;
+    }
+
+    const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) {
+        return decodeURIComponent(utf8Match[1]);
+    }
+
+    const simpleMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+    if (simpleMatch?.[1]) {
+        return simpleMatch[1];
+    }
+
+    return null;
+}
+
+/**
+ * Downloads the report PDF for a label print job.
+ * @param {string} id
+ */
+export async function downloadLabelPrintJobReport(id) {
+    const response = await api.get(`/api/v1/labels/jobs/${id}/report`, {
+        responseType: 'blob'
+    });
+
+    return {
+        blob: response.data,
+        fileName: extractFileName(response.headers?.['content-disposition']) ?? `etiquetas-${id}.pdf`
+    };
+}
