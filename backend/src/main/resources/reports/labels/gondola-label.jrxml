@@ -1,0 +1,38 @@
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
+<jasperReport name="EtiquetaGondola100x30" language="java" pageWidth="283" pageHeight="85" columnWidth="283" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="996deb39-aba0-408c-a7df-e1f9241cf421">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="vps"/>
+	<style name="ProductName" fontName="DejaVu Sans" fontSize="11.0" bold="true"/>
+	<style name="PriceValue" fontName="DejaVu Sans" fontSize="32.0" bold="true"/>
+	<style name="BarcodeCode" fontName="DejaVu Sans" fontSize="7.0"/>
+	<parameter name="JOB_ID" class="java.lang.String"/>
+	<query language="sql"><![CDATA[
+    SELECT
+        i.name AS name,
+        COALESCE(NULLIF(i.barcode, ''), i.sku) AS barcode,
+        COALESCE(i.promotional_price, i.sale_price) AS salePrice
+    FROM tb_label_print_job_items i
+    WHERE i.job_id = CAST($P{JOB_ID} AS UUID)
+    ]]></query>
+	<field name="name" class="java.lang.String"/>
+	<field name="barcode" class="java.lang.String"/>
+	<field name="salePrice" class="java.math.BigDecimal"/>
+	<detail>
+		<band height="85" splitType="Stretch">
+			<element kind="textField" uuid="95ea7ec6-2ec2-4112-9f29-0d8a2f8e3335" x="5" y="2" width="273" height="28" fontSize="12.0" vTextAlign="Top" style="ProductName">
+				<expression><![CDATA[$F{name}]]></expression>
+			</element>
+			<element kind="component" uuid="0f6d1c23-c64b-4c30-a9bc-7631cc0c9694" x="5" y="30" width="235" height="42">
+				<component kind="barcode4j:Code128" moduleWidth="1.2" textPosition="none">
+					<codeExpression><![CDATA[$F{barcode}]]></codeExpression>
+				</component>
+			</element>
+			<element kind="textField" uuid="0df33785-5f17-42fb-9d4a-e4febdd16fb4" x="5" y="73" width="130" height="10" hTextAlign="Center" style="BarcodeCode">
+				<expression><![CDATA[$F{barcode} == null ? "" : $F{barcode}]]></expression>
+			</element>
+			<element kind="textField" uuid="602e2293-79a3-44bd-b6b0-55e1158ce7d2" x="140" y="22" width="138" height="50" fontSize="26.0" pattern="¤ #,##0.00" hTextAlign="Right" vTextAlign="Bottom" style="PriceValue">
+				<expression><![CDATA[$F{salePrice}]]></expression>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			</element>
+		</band>
+	</detail>
+</jasperReport>
