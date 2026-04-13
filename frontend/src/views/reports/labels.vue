@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { useToast } from 'primevue/usetoast';
-import { createLabelPrintJob, downloadLabelPrintJobReport, listLabelPrintJobs, listLabelSuggestions } from '@/services/labelPrintService.js';
+import { createLabelPrintJob, downloadLabelPrintJobReport, getLabelPrintJobById, listLabelPrintJobs, listLabelSuggestions } from '@/services/labelPrintService.js';
 import { useErrorHandler } from '@/services/errorHandler.js';
 
 const toast = useToast();
@@ -13,6 +13,9 @@ const creatingJob = ref(false);
 const suggestions = ref([]);
 const historyJobs = ref([]);
 const printQueue = ref([]);
+const historyJobDetailsVisible = ref(false);
+const historyJobDetailsLoading = ref(false);
+const selectedHistoryJob = ref(null);
 
 const filters = ref({
     date: toLocalDateInput(new Date()),
@@ -276,6 +279,31 @@ async function handleReprint(jobId) {
     }
 }
 
+async function openHistoryJobDetails(jobId) {
+    historyJobDetailsVisible.value = true;
+    historyJobDetailsLoading.value = true;
+    selectedHistoryJob.value = null;
+
+    try {
+        selectedHistoryJob.value = await getLabelPrintJobById(jobId);
+    } catch (error) {
+        historyJobDetailsVisible.value = false;
+        showApiErrorToast(toast, error);
+    } finally {
+        historyJobDetailsLoading.value = false;
+    }
+}
+
+async function handleHistoryRowClick(event) {
+    await openHistoryJobDetails(event.data.id);
+}
+
+function closeHistoryJobDetails() {
+    historyJobDetailsVisible.value = false;
+    historyJobDetailsLoading.value = false;
+    selectedHistoryJob.value = null;
+}
+
 onMounted(async () => {
     await refreshData();
 });
@@ -381,7 +409,7 @@ onMounted(async () => {
         <section class="border border-surface-200 dark:border-surface-700 rounded-xl p-4 md:p-5">
             <div class="font-semibold text-lg mb-3">3. Histórico de lotes</div>
 
-            <DataTable :value="historyJobs" :loading="historyLoading" dataKey="id" tableStyle="min-width: 60rem">
+            <DataTable :value="historyJobs" :loading="historyLoading" dataKey="id" tableStyle="min-width: 60rem" class="app-clickable-rows" @row-click="handleHistoryRowClick">
                 <template #empty>Nenhum lote de impressão encontrado.</template>
                 <Column field="id" header="Lote">
                     <template #body="slotProps">{{ slotProps.data.id }}</template>
@@ -396,10 +424,54 @@ onMounted(async () => {
                 </Column>
                 <Column header="Ação" style="width: 7rem">
                     <template #body="slotProps">
-                        <Button icon="pi pi-print" label="Reimprimir" size="small" severity="secondary" outlined @click="handleReprint(slotProps.data.id)" />
+                        <Button icon="pi pi-print" label="Reimprimir" size="small" severity="secondary" outlined @click.stop="handleReprint(slotProps.data.id)" />
                     </template>
                 </Column>
             </DataTable>
         </section>
+
+        <Dialog v-model:visible="historyJobDetailsVisible" modal header="Itens do lote" :style="{ width: '62rem' }" @hide="closeHistoryJobDetails">
+            <div v-if="historyJobDetailsLoading" class="py-5 text-sm text-muted-color">Carregando itens do lote...</div>
+
+            <div v-else-if="selectedHistoryJob" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div>
+                        <div class="text-sm text-muted-color">Lote</div>
+                        <div class="font-medium break-all">{{ selectedHistoryJob.id }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-muted-color">Data referência</div>
+                        <div class="font-medium">{{ formatDate(selectedHistoryJob.referenceDate) }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-muted-color">Produtos</div>
+                        <div class="font-medium">{{ selectedHistoryJob.totalProducts }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-muted-color">Etiquetas</div>
+                        <div class="font-medium">{{ selectedHistoryJob.totalLabels }}</div>
+                    </div>
+                </div>
+
+                <DataTable :value="selectedHistoryJob.items" dataKey="productId" tableStyle="min-width: 54rem">
+                    <template #empty>Esse lote não possui itens.</template>
+                    <Column field="name" header="Produto" />
+                    <Column field="sku" header="SKU" />
+                    <Column field="barcode" header="Código de barras">
+                        <template #body="slotProps">{{ slotProps.data.barcode || '-' }}</template>
+                    </Column>
+                    <Column field="unit" header="Unidade">
+                        <template #body="slotProps">{{ slotProps.data.unit || '-' }}</template>
+                    </Column>
+                    <Column field="salePrice" header="Preço venda">
+                        <template #body="slotProps">{{ formatCurrency(slotProps.data.salePrice) }}</template>
+                    </Column>
+                    <Column field="promotionalPrice" header="Promocional">
+                        <template #body="slotProps">{{ formatCurrency(slotProps.data.promotionalPrice) }}</template>
+                    </Column>
+                    <Column field="quantity" header="Qtd. etiquetas" />
+                </DataTable>
+            </div>
+        </Dialog>
     </div>
 </template>
