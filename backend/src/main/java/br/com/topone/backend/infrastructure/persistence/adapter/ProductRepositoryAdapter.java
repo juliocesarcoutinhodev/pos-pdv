@@ -14,11 +14,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public class ProductRepositoryAdapter implements ProductRepository {
+
+    private static final Instant DEFAULT_CREATED_AT_START = Instant.EPOCH;
+    private static final Instant DEFAULT_CREATED_AT_END = Instant.parse("9999-12-31T23:59:59Z");
 
     private final ProductJpaRepository productJpaRepository;
     private final ProductMapper mapper;
@@ -78,6 +83,12 @@ public class ProductRepositoryAdapter implements ProductRepository {
                 ? "%" + Product.normalizeBarcode(filter.barcode()) + "%" : null;
         var categoryPattern = filter.category() != null && !filter.category().isBlank()
                 ? "%" + filter.category().toLowerCase() + "%" : null;
+        var createdAtStart = filter.createdDate() != null
+                ? filter.createdDate().atStartOfDay(ZoneId.systemDefault()).toInstant()
+                : DEFAULT_CREATED_AT_START;
+        var createdAtEnd = filter.createdDate() != null
+                ? filter.createdDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
+                : DEFAULT_CREATED_AT_END;
 
         var sortSpec = sort != null && sort.isSorted()
                 ? Sort.by(
@@ -94,6 +105,8 @@ public class ProductRepositoryAdapter implements ProductRepository {
                 barcodePattern,
                 categoryPattern,
                 filter.active(),
+                createdAtStart,
+                createdAtEnd,
                 springPage
         );
 

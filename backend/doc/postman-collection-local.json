@@ -61,6 +61,16 @@
       "type": "string"
     },
     {
+      "key": "label_job_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "label_reference_date",
+      "value": "2026-04-13",
+      "type": "string"
+    },
+    {
       "key": "product_sku",
       "value": "144236",
       "type": "string"
@@ -1851,6 +1861,220 @@
               ]
             },
             "description": "Deactivate product (soft delete)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Label Print Management (authenticated)",
+      "item": [
+        {
+          "name": "List Label Suggestions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/labels/suggestions?date={{label_reference_date}}&page=0&size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "labels",
+                "suggestions"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "{{label_reference_date}}",
+                  "description": "Filter suggestions by product creation date (yyyy-MM-dd)"
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Page number"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                },
+                {
+                  "key": "name",
+                  "value": "",
+                  "description": "Filter by product name (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "sku",
+                  "value": "",
+                  "description": "Filter by SKU (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "description": "Filter by category (partial)",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "",
+                  "description": "Sort field: name, sku, category, createdAt",
+                  "disabled": true
+                },
+                {
+                  "key": "sortDirection",
+                  "value": "",
+                  "description": "Sort direction: asc/desc",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List products suggested for shelf label printing."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Label Print Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"referenceDate\": \"{{label_reference_date}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{product_id}}\",\n      \"quantity\": 5\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/labels/jobs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "labels",
+                "jobs"
+              ]
+            },
+            "description": "Create a label print job and store the id in {{label_job_id}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Create label print job successful\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var body = pm.response.json();",
+                  "    pm.collectionVariables.set(\"label_job_id\", body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "List Label Print Jobs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/labels/jobs?page=0&size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "labels",
+                "jobs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Page number"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                },
+                {
+                  "key": "referenceDate",
+                  "value": "",
+                  "description": "Filter history by reference date (yyyy-MM-dd)",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "",
+                  "description": "Sort field: createdAt, referenceDate",
+                  "disabled": true
+                },
+                {
+                  "key": "sortDirection",
+                  "value": "",
+                  "description": "Sort direction: asc/desc",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List label print jobs history."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Label Print Job By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/labels/jobs/{{label_job_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "labels",
+                "jobs",
+                "{{label_job_id}}"
+              ]
+            },
+            "description": "Get a label print job with snapshot items for reprint."
           },
           "response": []
         }

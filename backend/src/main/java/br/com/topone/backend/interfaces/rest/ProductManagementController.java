@@ -80,7 +80,7 @@ public class ProductManagementController {
             @RequestParam(required = false) String sortDirection
     ) {
         var result = listProductsUseCase.execute(new ListProductsCommand(
-                new ProductFilter(name, sku, barcode, category, active),
+                new ProductFilter(name, sku, barcode, category, active, null),
                 page,
                 size,
                 PageSort.by(sortBy, sortDirection, ALLOWED_SORT_FIELDS)

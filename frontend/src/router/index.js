@@ -56,6 +56,11 @@ const router = createRouter({
             children: [{ path: '', component: () => import('@/views/reports/closing.vue') }]
         },
         {
+            path: '/reports/labels',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/reports/labels.vue') }]
+        },
+        {
             path: '/pages/customers',
             component: AppLayout,
             children: [{ path: '', component: () => import('@/views/pages/customers.vue') }]

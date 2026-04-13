@@ -510,6 +510,41 @@ Nos campos comerciais, você pode:
 **GET `/api/v1/products?page=0&size=20`** — 200 OK  
 Query params opcionais: `name` (parcial), `sku` (parcial), `barcode` (parcial), `category` (parcial), `active` (true/false), `sortBy` (`name`, `sku`, `barcode`, `category`, `salePrice`, `stockQuantity`, `createdAt`) e `sortDirection` (`asc`/`desc`).
 
+### Impressão de Etiquetas de Gôndola
+
+| Metodo | Path                              | Auth | Descricao                                              |
+| ------ | --------------------------------- | ---- | ------------------------------------------------------ |
+| GET    | `/api/v1/labels/suggestions`      | Sim  | Sugestoes de produtos para montar lista de etiquetas   |
+| POST   | `/api/v1/labels/jobs`             | Sim  | Criar lote de impressao com snapshot dos itens         |
+| GET    | `/api/v1/labels/jobs`             | Sim  | Listar historico de lotes para reimpressao             |
+| GET    | `/api/v1/labels/jobs/{id}`        | Sim  | Detalhar lote com itens e quantidades                  |
+
+Permissões:
+- Todos os endpoints de `/api/v1/labels/**` exigem usuário autenticado.
+
+**GET `/api/v1/labels/suggestions?date=2026-04-13&page=0&size=20`** — 200 OK  
+Query params opcionais: `date` (`yyyy-MM-dd`, padrão dia atual), `name` (parcial), `sku` (parcial), `category` (parcial), `sortBy` (`name`, `sku`, `category`, `createdAt`) e `sortDirection` (`asc`/`desc`).
+
+**POST `/api/v1/labels/jobs`** — 201 Created
+```json
+{
+  "referenceDate": "2026-04-13",
+  "items": [
+    {
+      "productId": "6b9f6f9f-2c6f-4b23-a8e2-71b06dc1b2dd",
+      "quantity": 5
+    },
+    {
+      "productId": "8e6a2d55-4f2f-4e57-8f9d-4129e4e198f4",
+      "quantity": 2
+    }
+  ]
+}
+```
+
+**GET `/api/v1/labels/jobs?page=0&size=20`** — 200 OK  
+Query params opcionais: `referenceDate` (`yyyy-MM-dd`), `sortBy` (`createdAt`, `referenceDate`) e `sortDirection` (`asc`/`desc`).
+
 ### Imagens (MinIO)
 
 | Metodo | Path                            | Auth | Descricao                                          |
@@ -604,6 +639,8 @@ br.com.topone.backend
 │       ├── login/    # Casos de uso de autenticação (Login, Logout, RefreshToken)
 │       ├── role/     # Casos de uso de roles (CRUD administrativo)
 │       ├── customer/ # Casos de uso de clientes (CRUD + imagem)
+│       ├── product/  # Casos de uso de produtos (CRUD + SKU/margem)
+│       ├── label/    # Casos de uso de impressão de etiquetas de gôndola
 │       ├── image/    # Casos de uso de upload/download de imagens
 │       ├── supplier/ # Casos de uso de fornecedores (CRUD administrativo)
 │       └── user/     # Casos de uso de usuário (CRUD administrativo)

@@ -10,6 +10,8 @@ import br.com.topone.backend.application.usecase.customer.CustomerAddressCommand
 import br.com.topone.backend.application.usecase.customer.CustomerAddressPatchCommand;
 import br.com.topone.backend.application.usecase.customer.UpdateCustomerCommand;
 import br.com.topone.backend.application.usecase.customer.UpdateCustomerPatchCommand;
+import br.com.topone.backend.application.usecase.label.CreateLabelPrintJobCommand;
+import br.com.topone.backend.application.usecase.label.CreateLabelPrintJobItemCommand;
 import br.com.topone.backend.application.usecase.product.CreateProductCommand;
 import br.com.topone.backend.application.usecase.product.UpdateProductCommand;
 import br.com.topone.backend.application.usecase.product.UpdateProductPatchCommand;
@@ -56,6 +58,10 @@ public interface DtoCommandMapper {
     UpdateCustomerCommand toUpdateCustomerCommand(UpdateCustomerRequest request, UUID id);
 
     UpdateCustomerPatchCommand toPatchCustomerCommand(UpdateCustomerPatchRequest request, UUID id);
+
+    CreateLabelPrintJobCommand toCreateLabelPrintJobCommand(CreateLabelPrintJobRequest request);
+
+    CreateLabelPrintJobItemCommand toCreateLabelPrintJobItemCommand(LabelPrintJobItemRequest request);
 
     CreateProductCommand toCreateProductCommand(CreateProductRequest request);
 

@@ -223,6 +223,28 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(LabelPrintJobNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleLabelPrintJobNotFound(LabelPrintJobNotFoundException ex) {
+        log.warn("Label print job not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                "Lote de impressão não encontrado",
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(InvalidLabelPrintJobException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidLabelPrintJob(InvalidLabelPrintJobException ex) {
+        log.warn("Invalid label print job | message={}", ex.getMessage());
+        return ResponseEntity.badRequest().body(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida",
+                ex.getMessage(),
+                Instant.now().toString()
+        ));
+    }
+
     @ExceptionHandler(InvalidImageException.class)
     public ResponseEntity<ErrorResponse> handleInvalidImage(InvalidImageException ex) {
         log.warn("Invalid image upload");

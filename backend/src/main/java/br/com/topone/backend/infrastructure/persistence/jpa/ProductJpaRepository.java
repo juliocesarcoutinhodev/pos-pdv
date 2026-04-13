@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,11 +34,15 @@ public interface ProductJpaRepository extends JpaRepository<ProductEntity, UUID>
               AND (:active IS NULL
                    OR (:active = true  AND p.deletedAt IS NULL)
                    OR (:active = false AND p.deletedAt IS NOT NULL))
+              AND p.createdAt >= :createdAtStart
+              AND p.createdAt < :createdAtEnd
             """)
     Page<ProductEntity> searchByFilter(@Param("name") String name,
                                        @Param("sku") String sku,
                                        @Param("barcode") String barcode,
                                        @Param("category") String category,
                                        @Param("active") Boolean active,
+                                       @Param("createdAtStart") Instant createdAtStart,
+                                       @Param("createdAtEnd") Instant createdAtEnd,
                                        Pageable pageable);
 }
