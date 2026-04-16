@@ -278,6 +278,61 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(CashRegisterSessionAlreadyOpenException.class)
+    public ResponseEntity<ErrorResponse> handleCashRegisterSessionAlreadyOpen(CashRegisterSessionAlreadyOpenException ex) {
+        log.warn("Cash register already open");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflito",
+                ex.getMessage(),
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(CashRegisterSessionNotOpenException.class)
+    public ResponseEntity<ErrorResponse> handleCashRegisterSessionNotOpen(CashRegisterSessionNotOpenException ex) {
+        log.warn("Cash register not open");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                ex.getMessage(),
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(InvalidCashOperationException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCashOperation(InvalidCashOperationException ex) {
+        log.warn("Invalid cash operation | message={}", ex.getMessage());
+        return ResponseEntity.badRequest().body(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida",
+                ex.getMessage(),
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(InvalidSaleException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSale(InvalidSaleException ex) {
+        log.warn("Invalid sale | message={}", ex.getMessage());
+        return ResponseEntity.badRequest().body(new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida",
+                ex.getMessage(),
+                Instant.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(InsufficientProductStockException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientProductStock(InsufficientProductStockException ex) {
+        log.warn("Insufficient product stock | message={}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflito",
+                ex.getMessage(),
+                Instant.now().toString()
+        ));
+    }
+
     @ExceptionHandler(InvalidImageException.class)
     public ResponseEntity<ErrorResponse> handleInvalidImage(InvalidImageException ex) {
         log.warn("Invalid image upload");

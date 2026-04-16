@@ -17,8 +17,8 @@ const router = createRouter({
         },
         {
             path: '/sales/pos',
-            component: AppLayout,
-            children: [{ path: '', component: () => import('@/views/sales/pdv.vue') }]
+            name: 'sales-pos',
+            component: () => import('@/views/sales/pdv.vue')
         },
         {
             path: '/sales/history',

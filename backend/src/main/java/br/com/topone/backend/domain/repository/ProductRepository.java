@@ -11,6 +11,10 @@ public interface ProductRepository {
 
     Optional<Product> findById(UUID id);
 
+    Optional<Product> findActiveBySku(String sku);
+
+    Optional<Product> findActiveByBarcode(String barcode);
+
     boolean existsBySku(String sku);
 
     boolean existsByBarcode(String barcode);

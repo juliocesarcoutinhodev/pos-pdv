@@ -25,6 +25,12 @@ public interface ProductJpaRepository extends JpaRepository<ProductEntity, UUID>
     @Query("SELECT p FROM ProductEntity p WHERE p.barcode = :barcode AND p.id != :excludeId")
     Optional<ProductEntity> findByBarcodeExcludingId(@Param("barcode") String barcode, @Param("excludeId") UUID excludeId);
 
+    @Query("SELECT p FROM ProductEntity p WHERE p.sku = :sku AND p.deletedAt IS NULL")
+    Optional<ProductEntity> findActiveBySku(@Param("sku") String sku);
+
+    @Query("SELECT p FROM ProductEntity p WHERE p.barcode = :barcode AND p.deletedAt IS NULL")
+    Optional<ProductEntity> findActiveByBarcode(@Param("barcode") String barcode);
+
     @Query("""
             SELECT p FROM ProductEntity p
             WHERE (:name IS NULL OR LOWER(p.name) LIKE :name)

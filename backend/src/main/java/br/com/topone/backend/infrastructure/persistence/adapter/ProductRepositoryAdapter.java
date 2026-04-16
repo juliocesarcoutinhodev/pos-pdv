@@ -54,6 +54,16 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     @Override
+    public Optional<Product> findActiveBySku(String sku) {
+        return productJpaRepository.findActiveBySku(sku).map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<Product> findActiveByBarcode(String barcode) {
+        return productJpaRepository.findActiveByBarcode(barcode).map(mapper::toDomain);
+    }
+
+    @Override
     public boolean existsBySku(String sku) {
         return productJpaRepository.existsBySku(sku);
     }
