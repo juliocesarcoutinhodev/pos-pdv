@@ -7,12 +7,19 @@ import api from './api.js';
 export async function login(email, password) {
     const response = await api.post('/api/v1/auth/login', { email, password });
     const data = response.data;
+    const sessionResponse = await api.get('/api/v1/me', {
+        headers: {
+            Authorization: `Bearer ${data.accessToken}`
+        }
+    });
+    const roles = Array.isArray(sessionResponse.data?.roles) ? sessionResponse.data.roles : [];
 
     return {
         id: data.user.id,
         email: data.user.email,
         name: data.user.name,
         provider: data.user.provider,
+        roles,
         accessToken: data.accessToken,
         expiresIn: data.expiresIn
     };

@@ -5,6 +5,15 @@ const user = ref(null);
 const isAuthenticated = computed(() => user.value !== null);
 const loading = ref(false);
 
+function hasCashierRole(roles) {
+    if (!Array.isArray(roles)) {
+        return false;
+    }
+
+    const normalizedRoles = roles.map((role) => String(role).toUpperCase());
+    return normalizedRoles.some((role) => role === 'CAIXA' || role === 'CASHIER');
+}
+
 function hydrateFromStorage() {
     const stored = sessionStorage.getItem('user');
     if (stored) {
@@ -25,7 +34,7 @@ async function handleLogin(email, password) {
         localStorage.setItem('access_token', data.accessToken);
         sessionStorage.setItem('user', JSON.stringify(data));
         user.value = data;
-        window.location.href = '/dashboard';
+        window.location.href = hasCashierRole(data.roles) ? '/sales/pos' : '/dashboard';
     } finally {
         loading.value = false;
     }
