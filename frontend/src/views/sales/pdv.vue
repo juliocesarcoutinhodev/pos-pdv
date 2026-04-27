@@ -1,26 +1,38 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
+import { useAuth } from '@/composables/useAuth.js';
 import { useErrorHandler } from '@/services/errorHandler.js';
+import { listProducts } from '@/services/productService.js';
 import { createCashMovement, createPdvSale, getCurrentCashRegister, listRecentPdvSales, lookupPdvProduct, openCashRegister } from '@/services/pdvService.js';
 
+const confirm = useConfirm();
 const toast = useToast();
 const { showApiErrorToast } = useErrorHandler();
+const { logout } = useAuth();
 
 const loading = ref(false);
 const finalizingSale = ref(false);
 const cashDialogVisible = ref(false);
 const movementDialogVisible = ref(false);
+const paymentDialogVisible = ref(false);
 const movementType = ref('SUPPLY');
+const productLookupLoading = ref(false);
 
 const codeInputRef = ref(null);
 const paidAmountInputRef = ref(null);
 const selectedCartItem = ref(null);
 const productCode = ref('');
+const productSuggestions = ref([]);
+const pendingQuantityMultiplier = ref(null);
 const discountAmount = ref(0);
 const paymentMethod = ref('CASH');
 const paidAmount = ref(0);
 const notes = ref('');
+let productLookupTimer = null;
+
+const PRODUCT_LOOKUP_DEBOUNCE_MS = 250;
 
 const cashForm = ref({
     openingAmount: 0
@@ -43,23 +55,56 @@ const paymentOptions = [
     { label: 'Outro', value: 'OTHER' }
 ];
 
-const subtotalAmount = computed(() => cartItems.value.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0));
+function toNumericValue(value) {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : 0;
+    }
 
-const totalAmount = computed(() => Math.max(0, subtotalAmount.value - Number(discountAmount.value || 0)));
-const changeAmount = computed(() => (paymentMethod.value === 'CASH' ? Math.max(0, Number(paidAmount.value || 0) - totalAmount.value) : 0));
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            return 0;
+        }
+
+        const cleaned = trimmed.replace(/[^\d,.-]/g, '');
+        if (!cleaned) {
+            return 0;
+        }
+
+        let normalized = cleaned;
+        const lastComma = normalized.lastIndexOf(',');
+        const lastDot = normalized.lastIndexOf('.');
+
+        if (lastComma >= 0 && lastDot >= 0) {
+            if (lastComma > lastDot) {
+                normalized = normalized.replace(/\./g, '').replace(',', '.');
+            } else {
+                normalized = normalized.replace(/,/g, '');
+            }
+        } else if (lastComma >= 0) {
+            normalized = normalized.replace(',', '.');
+        }
+
+        const parsed = Number(normalized);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    return 0;
+}
+
+const subtotalAmount = computed(() => cartItems.value.reduce((sum, item) => sum + toNumericValue(item.lineTotal), 0));
+
+const totalAmount = computed(() => Math.max(0, subtotalAmount.value - toNumericValue(discountAmount.value)));
+const changeAmount = computed(() => (paymentMethod.value === 'CASH' ? Math.max(0, toNumericValue(paidAmount.value) - totalAmount.value) : 0));
 
 const isCashOpen = computed(() => Boolean(currentCash.value?.sessionId));
 
 function normalizeMoney(value) {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) {
-        return 0;
-    }
-    return Number(parsed.toFixed(2));
+    return Number(toNumericValue(value).toFixed(2));
 }
 
 function normalizeQuantity(value) {
-    const parsed = Number(value);
+    const parsed = toNumericValue(value);
     if (!Number.isFinite(parsed) || parsed <= 0) {
         return 1;
     }
@@ -78,10 +123,60 @@ function paymentMethodLabel(value) {
     return option?.label ?? value;
 }
 
+function clearProductLookupTimer() {
+    if (productLookupTimer) {
+        clearTimeout(productLookupTimer);
+        productLookupTimer = null;
+    }
+}
+
+function normalizeLookupText(value) {
+    if (value && typeof value === 'object') {
+        return String(value?.name ?? value?.sku ?? value?.barcode ?? '').trim();
+    }
+    return String(value ?? '').trim();
+}
+
+function parseQuantityValue(value) {
+    const normalized = String(value ?? '').replace(',', '.');
+    const parsed = Number(normalized);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return null;
+    }
+    return normalizeQuantity(parsed);
+}
+
+function parseQuantityCommand(value) {
+    const input = normalizeLookupText(value).replace(/\s+/g, '');
+    if (!input) {
+        return null;
+    }
+
+    const armOnlyMatch = input.match(/^(\d+(?:[.,]\d{1,3})?)x$/i);
+    if (armOnlyMatch) {
+        const quantity = parseQuantityValue(armOnlyMatch[1]);
+        return quantity ? { quantity, code: null, armOnly: true } : null;
+    }
+
+    const inlineMatch = input.match(/^(\d+(?:[.,]\d{1,3})?)x(.+)$/i);
+    if (inlineMatch) {
+        const quantity = parseQuantityValue(inlineMatch[1]);
+        const code = inlineMatch[2]?.trim();
+        if (!quantity || !code) {
+            return null;
+        }
+        return { quantity, code, armOnly: false };
+    }
+
+    return null;
+}
+
 function resetSale() {
     cartItems.value = [];
     selectedCartItem.value = null;
     productCode.value = '';
+    productSuggestions.value = [];
+    pendingQuantityMultiplier.value = null;
     discountAmount.value = 0;
     paymentMethod.value = 'CASH';
     paidAmount.value = 0;
@@ -104,6 +199,181 @@ function focusPaidAmount() {
     const inputElement = paidAmountInputRef.value?.$el?.querySelector('input');
     inputElement?.focus();
     inputElement?.select();
+}
+
+function resolvePaidAmountForSale() {
+    const modelValue = toNumericValue(paidAmount.value);
+    if (modelValue > 0) {
+        return modelValue;
+    }
+
+    const rawInputValue = paidAmountInputRef.value?.$el?.querySelector('input')?.value;
+    return toNumericValue(rawInputValue);
+}
+
+function ensureCashOpen() {
+    if (isCashOpen.value) {
+        return true;
+    }
+
+    toast.add({
+        severity: 'warn',
+        summary: 'Caixa fechado',
+        detail: 'Abra o caixa antes de iniciar as vendas.',
+        life: 3000
+    });
+    return false;
+}
+
+function upsertProductInCart(product, quantityToAdd = 1) {
+    const incrementQuantity = normalizeQuantity(quantityToAdd);
+    const existing = cartItems.value.find((item) => item.productId === product.id);
+
+    if (existing) {
+        updateCartLine(existing, existing.quantity + incrementQuantity);
+        selectedCartItem.value = existing;
+        return;
+    }
+
+    const unitPrice = normalizeMoney(product.unitPrice ?? product.salePrice);
+    const line = {
+        productId: product.id,
+        sku: product.sku,
+        barcode: product.barcode,
+        name: product.name,
+        unit: product.unit,
+        unitPrice,
+        quantity: incrementQuantity,
+        lineTotal: normalizeMoney(unitPrice * incrementQuantity)
+    };
+    cartItems.value.push(line);
+    selectedCartItem.value = line;
+}
+
+async function loadProductSuggestions(query) {
+    const normalizedQuery = String(query ?? '').trim();
+    if (normalizedQuery.length < 2) {
+        productSuggestions.value = [];
+        return;
+    }
+
+    productLookupLoading.value = true;
+    try {
+        const result = await listProducts({
+            page: 0,
+            size: 10,
+            active: true,
+            name: normalizedQuery,
+            sortBy: 'name',
+            sortDirection: 'asc'
+        });
+        productSuggestions.value = result.content.filter((product) => product.id);
+    } catch {
+        productSuggestions.value = [];
+    } finally {
+        productLookupLoading.value = false;
+    }
+}
+
+function handleProductLookup(event) {
+    clearProductLookupTimer();
+    const query = String(event?.query ?? '').trim();
+    productLookupTimer = setTimeout(() => {
+        void loadProductSuggestions(query);
+    }, PRODUCT_LOOKUP_DEBOUNCE_MS);
+}
+
+async function handleProductDropdownClick(event) {
+    clearProductLookupTimer();
+    const query = String(event?.query ?? '').trim();
+    await loadProductSuggestions(query);
+}
+
+function clearProductLookupInput() {
+    productCode.value = '';
+    productSuggestions.value = [];
+}
+
+async function resolveProductFromInput(inputValue) {
+    if (inputValue && typeof inputValue === 'object' && inputValue.id) {
+        return inputValue;
+    }
+
+    const code = normalizeLookupText(inputValue);
+    if (!code) {
+        return null;
+    }
+
+    try {
+        return await lookupPdvProduct(code);
+    } catch (lookupError) {
+        const result = await listProducts({
+            page: 0,
+            size: 1,
+            active: true,
+            name: code,
+            sortBy: 'name',
+            sortDirection: 'asc'
+        });
+        if (result.content.length > 0) {
+            return result.content[0];
+        }
+        throw lookupError;
+    }
+}
+
+function confirmExitSystem() {
+    confirm.require({
+        header: 'Sair do sistema',
+        message: 'Deseja sair do sistema? O caixa continuará aberto.',
+        icon: 'pi pi-exclamation-triangle',
+        rejectLabel: 'Cancelar',
+        acceptLabel: 'Sair',
+        accept: () => {
+            void logout();
+        }
+    });
+}
+
+function closeTopmostDialog() {
+    if (paymentDialogVisible.value) {
+        paymentDialogVisible.value = false;
+        return true;
+    }
+
+    if (movementDialogVisible.value) {
+        movementDialogVisible.value = false;
+        return true;
+    }
+
+    if (cashDialogVisible.value) {
+        cashDialogVisible.value = false;
+        return true;
+    }
+
+    return false;
+}
+
+async function openPaymentDialog() {
+    if (!ensureCashOpen()) {
+        return;
+    }
+
+    if (!cartItems.value.length) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Carrinho vazio',
+            detail: 'Adicione itens para abrir a finalização.',
+            life: 3000
+        });
+        return;
+    }
+
+    paymentDialogVisible.value = true;
+    if (paymentMethod.value === 'CASH') {
+        await nextTick();
+        focusPaidAmount();
+    }
 }
 
 async function loadCurrentCash() {
@@ -183,48 +453,60 @@ async function handleCashMovement() {
 }
 
 async function handleAddProductByCode() {
-    const code = productCode.value?.trim();
-    if (!code) {
+    const normalizedInput = normalizeLookupText(productCode.value);
+    if (!normalizedInput) {
         return;
     }
 
-    if (!isCashOpen.value) {
+    const quantityCommand = parseQuantityCommand(normalizedInput);
+    if (quantityCommand?.armOnly) {
+        pendingQuantityMultiplier.value = quantityCommand.quantity;
+        clearProductLookupInput();
         toast.add({
-            severity: 'warn',
-            summary: 'Caixa fechado',
-            detail: 'Abra o caixa antes de iniciar as vendas.',
-            life: 3000
+            severity: 'info',
+            summary: 'Multiplicador aplicado',
+            detail: `Próximo item será adicionado com quantidade ${quantityCommand.quantity}.`,
+            life: 2500
         });
+        focusCodeInput();
+        return;
+    }
+
+    if (!ensureCashOpen()) {
         return;
     }
 
     try {
-        const product = await lookupPdvProduct(code);
-        const existing = cartItems.value.find((item) => item.productId === product.id);
-
-        if (existing) {
-            updateCartLine(existing, existing.quantity + 1);
-            selectedCartItem.value = existing;
-        } else {
-            const line = {
-                productId: product.id,
-                sku: product.sku,
-                barcode: product.barcode,
-                name: product.name,
-                unit: product.unit,
-                unitPrice: normalizeMoney(product.unitPrice),
-                quantity: 1,
-                lineTotal: normalizeMoney(product.unitPrice)
-            };
-            cartItems.value.push(line);
-            selectedCartItem.value = line;
+        const inputForLookup = quantityCommand?.code ?? productCode.value;
+        const product = await resolveProductFromInput(inputForLookup);
+        if (!product) {
+            return;
         }
-
-        productCode.value = '';
+        const quantityToAdd = quantityCommand?.quantity ?? pendingQuantityMultiplier.value ?? 1;
+        upsertProductInCart(product, quantityToAdd);
+        pendingQuantityMultiplier.value = null;
+        clearProductLookupInput();
         focusCodeInput();
     } catch (error) {
         showApiErrorToast(toast, error);
     }
+}
+
+async function handleProductSuggestionSelect(event) {
+    if (!ensureCashOpen()) {
+        return;
+    }
+
+    const selectedProduct = event?.value;
+    if (!selectedProduct?.id) {
+        return;
+    }
+
+    const quantityToAdd = pendingQuantityMultiplier.value ?? 1;
+    upsertProductInCart(selectedProduct, quantityToAdd);
+    pendingQuantityMultiplier.value = null;
+    clearProductLookupInput();
+    focusCodeInput();
 }
 
 function removeSelectedItem() {
@@ -251,7 +533,7 @@ async function handleFinalizeSale() {
         const payload = {
             paymentMethod: paymentMethod.value,
             discountAmount: normalizeMoney(discountAmount.value),
-            paidAmount: paymentMethod.value === 'CASH' ? normalizeMoney(paidAmount.value) : normalizeMoney(totalAmount.value),
+            paidAmount: paymentMethod.value === 'CASH' ? normalizeMoney(resolvePaidAmountForSale()) : normalizeMoney(totalAmount.value),
             notes: notes.value,
             items: cartItems.value.map((item) => ({
                 productId: item.productId,
@@ -266,6 +548,7 @@ async function handleFinalizeSale() {
             detail: 'Venda registrada com sucesso.',
             life: 3000
         });
+        paymentDialogVisible.value = false;
         resetSale();
         await refreshPdvState();
         focusCodeInput();
@@ -299,15 +582,29 @@ function handleShortcut(event) {
 
     if (event.key === 'F4') {
         event.preventDefault();
-        focusPaidAmount();
+        void openPaymentDialog();
         return;
     }
 
     if (event.key === 'F8') {
         event.preventDefault();
+        if (!paymentDialogVisible.value) {
+            void openPaymentDialog();
+            return;
+        }
+
         if (!finalizingSale.value) {
             void handleFinalizeSale();
         }
+        return;
+    }
+
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        if (closeTopmostDialog()) {
+            return;
+        }
+        confirmExitSystem();
     }
 }
 
@@ -322,6 +619,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+    clearProductLookupTimer();
     window.removeEventListener('keydown', handleShortcut);
 });
 </script>
@@ -329,11 +627,12 @@ onUnmounted(() => {
 <template>
     <div class="pdv-screen">
         <Toast />
+        <ConfirmDialog />
 
         <section class="pdv-topbar">
             <div class="pdv-title">
                 <h1>Frente de Caixa</h1>
-                <span>F1 código • F2 +1 item • F3 remover • F4 pagamento • F8 finalizar</span>
+                <span>F1 código • F2 +1 item • F3 remover • F4 pagamento • F8 abrir/confirmar • Esc sair • 2x multiplicador</span>
             </div>
 
             <div class="pdv-topbar-actions">
@@ -351,8 +650,31 @@ onUnmounted(() => {
         </section>
 
         <section class="pdv-scanner">
-            <InputText ref="codeInputRef" v-model="productCode" class="w-full" placeholder="Leia o código de barras ou SKU (F1)" @keyup.enter="handleAddProductByCode" />
+            <AutoComplete
+                ref="codeInputRef"
+                v-model="productCode"
+                :suggestions="productSuggestions"
+                optionLabel="name"
+                dropdown
+                dropdownMode="current"
+                class="w-full"
+                placeholder="Leia código/SKU, digite nome ou use 2x para multiplicar"
+                :loading="productLookupLoading"
+                @complete="handleProductLookup"
+                @dropdown-click="handleProductDropdownClick"
+                @item-select="handleProductSuggestionSelect"
+                @keyup.enter="handleAddProductByCode"
+            >
+                <template #option="slotProps">
+                    <div class="flex flex-column">
+                        <span class="font-medium">{{ slotProps.option.name }}</span>
+                        <small class="text-500">SKU: {{ slotProps.option.sku || '—' }} • Código: {{ slotProps.option.barcode || '—' }}</small>
+                    </div>
+                </template>
+            </AutoComplete>
             <Button icon="pi pi-plus" label="Adicionar item" :disabled="!isCashOpen" @click="handleAddProductByCode" />
+
+            <div v-if="pendingQuantityMultiplier" class="pdv-multiplier-badge">Multiplicador ativo: {{ pendingQuantityMultiplier }}x</div>
         </section>
 
         <section class="pdv-body">
@@ -400,27 +722,7 @@ onUnmounted(() => {
                         <span>Troco</span>
                         <strong>{{ formatCurrency(changeAmount) }}</strong>
                     </div>
-
-                    <div class="pdv-form-grid">
-                        <div>
-                            <label class="block mb-2">Desconto</label>
-                            <InputNumber v-model="discountAmount" mode="currency" currency="BRL" locale="pt-BR" class="w-full" />
-                        </div>
-                        <div>
-                            <label class="block mb-2">Pagamento</label>
-                            <Select v-model="paymentMethod" :options="paymentOptions" optionLabel="label" optionValue="value" class="w-full" />
-                        </div>
-                        <div>
-                            <label class="block mb-2">Valor recebido (F4)</label>
-                            <InputNumber ref="paidAmountInputRef" v-model="paidAmount" mode="currency" currency="BRL" locale="pt-BR" class="w-full" :disabled="paymentMethod !== 'CASH'" />
-                        </div>
-                        <div>
-                            <label class="block mb-2">Observação</label>
-                            <InputText v-model="notes" class="w-full" />
-                        </div>
-                    </div>
-
-                    <Button icon="pi pi-check-circle" label="Finalizar venda (F8)" class="w-full mt-2" :disabled="!isCashOpen || finalizingSale" :loading="finalizingSale" @click="handleFinalizeSale" />
+                    <Button icon="pi pi-wallet" label="Pagamento (F4/F8)" class="w-full mt-2" :disabled="!isCashOpen" @click="openPaymentDialog" />
                 </div>
 
                 <div class="pdv-checkout-card recent">
@@ -441,7 +743,7 @@ onUnmounted(() => {
             </aside>
         </section>
 
-        <Dialog v-model:visible="cashDialogVisible" modal header="Abertura de caixa" :style="{ width: '24rem' }">
+        <Dialog v-model:visible="cashDialogVisible" modal :closeOnEscape="false" header="Abertura de caixa" :style="{ width: '24rem' }">
             <div class="flex flex-column gap-3">
                 <div>
                     <label class="block mb-2">Suprimento inicial</label>
@@ -451,7 +753,7 @@ onUnmounted(() => {
             </div>
         </Dialog>
 
-        <Dialog v-model:visible="movementDialogVisible" modal :header="movementType === 'SUPPLY' ? 'Lançar suprimento' : 'Lançar sangria'" :style="{ width: '24rem' }">
+        <Dialog v-model:visible="movementDialogVisible" modal :closeOnEscape="false" :header="movementType === 'SUPPLY' ? 'Lançar suprimento' : 'Lançar sangria'" :style="{ width: '24rem' }">
             <div class="flex flex-column gap-3">
                 <div>
                     <label class="block mb-2">Valor</label>
@@ -462,6 +764,49 @@ onUnmounted(() => {
                     <InputText v-model="movementForm.note" class="w-full" />
                 </div>
                 <Button icon="pi pi-check" label="Confirmar movimentação" class="w-full" @click="handleCashMovement" />
+            </div>
+        </Dialog>
+
+        <Dialog v-model:visible="paymentDialogVisible" modal :closeOnEscape="false" header="Finalização da venda" :style="{ width: '42rem' }" :breakpoints="{ '960px': '90vw', '640px': '95vw' }">
+            <div class="payment-dialog">
+                <div class="payment-totals">
+                    <div class="payment-total-card">
+                        <span>Subtotal</span>
+                        <strong>{{ formatCurrency(subtotalAmount) }}</strong>
+                    </div>
+                    <div class="payment-total-card highlight">
+                        <span>Total</span>
+                        <strong>{{ formatCurrency(totalAmount) }}</strong>
+                    </div>
+                    <div class="payment-total-card">
+                        <span>Troco</span>
+                        <strong>{{ formatCurrency(changeAmount) }}</strong>
+                    </div>
+                </div>
+
+                <div class="payment-fields">
+                    <div class="payment-field">
+                        <label class="block mb-2">Desconto</label>
+                        <InputNumber v-model="discountAmount" mode="currency" currency="BRL" locale="pt-BR" class="w-full" />
+                    </div>
+                    <div class="payment-field">
+                        <label class="block mb-2">Pagamento</label>
+                        <Select v-model="paymentMethod" :options="paymentOptions" optionLabel="label" optionValue="value" class="w-full" />
+                    </div>
+                    <div class="payment-field">
+                        <label class="block mb-2">Valor recebido (F4)</label>
+                        <InputNumber ref="paidAmountInputRef" v-model="paidAmount" mode="currency" currency="BRL" locale="pt-BR" class="w-full" :disabled="paymentMethod !== 'CASH'" />
+                    </div>
+                    <div class="payment-field">
+                        <label class="block mb-2">Observação</label>
+                        <InputText v-model="notes" class="w-full" />
+                    </div>
+                </div>
+
+                <div class="payment-actions">
+                    <Button label="Cancelar" severity="secondary" outlined @click="paymentDialogVisible = false" />
+                    <Button icon="pi pi-check-circle" label="Finalizar venda (F8)" :loading="finalizingSale" @click="handleFinalizeSale" />
+                </div>
             </div>
         </Dialog>
     </div>
@@ -547,6 +892,18 @@ onUnmounted(() => {
     gap: 0.75rem;
 }
 
+.pdv-multiplier-badge {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-top: -0.25rem;
+    font-size: 0.82rem;
+    color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary-color) 40%, transparent);
+    border-radius: 999px;
+    padding: 0.25rem 0.65rem;
+}
+
 .pdv-cart-panel {
     min-height: 0;
     padding: 0.75rem;
@@ -598,6 +955,68 @@ onUnmounted(() => {
     gap: 0.55rem;
 }
 
+.payment-dialog {
+    display: grid;
+    gap: 1rem;
+}
+
+.payment-totals {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+}
+
+.payment-total-card {
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    background: var(--surface-ground);
+    padding: 0.65rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.payment-total-card span {
+    font-size: 0.78rem;
+    color: var(--text-color-secondary);
+}
+
+.payment-total-card strong {
+    font-size: 1rem;
+}
+
+.payment-total-card.highlight {
+    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--surface-border));
+    background: color-mix(in srgb, var(--primary-color) 10%, var(--surface-card));
+}
+
+.payment-total-card.highlight strong {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.payment-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+}
+
+.payment-field {
+    min-width: 0;
+}
+
+.payment-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+:deep(.payment-dialog .p-inputnumber),
+:deep(.payment-dialog .p-select) {
+    width: 100%;
+}
+
 .pdv-checkout-card.recent {
     min-height: 0;
     display: grid;
@@ -643,6 +1062,19 @@ onUnmounted(() => {
 
     .pdv-scanner {
         grid-template-columns: 1fr;
+    }
+
+    .payment-totals,
+    .payment-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-actions {
+        justify-content: stretch;
+    }
+
+    .payment-actions :deep(.p-button) {
+        width: 100%;
     }
 }
 </style>
