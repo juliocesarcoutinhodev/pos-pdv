@@ -22,6 +22,8 @@ const productLookupLoading = ref(false);
 
 const codeInputRef = ref(null);
 const paidAmountInputRef = ref(null);
+const cashAmountInputRef = ref(null);
+const movementAmountInputRef = ref(null);
 const selectedCartItem = ref(null);
 const productCode = ref('');
 const productSuggestions = ref([]);
@@ -35,11 +37,11 @@ let productLookupTimer = null;
 const PRODUCT_LOOKUP_DEBOUNCE_MS = 250;
 
 const cashForm = ref({
-    openingAmount: 0
+    openingAmount: null
 });
 
 const movementForm = ref({
-    amount: 0,
+    amount: null,
     note: ''
 });
 
@@ -197,6 +199,18 @@ function focusCodeInput() {
 
 function focusPaidAmount() {
     const inputElement = paidAmountInputRef.value?.$el?.querySelector('input');
+    inputElement?.focus();
+    inputElement?.select();
+}
+
+function focusCashAmount() {
+    const inputElement = cashAmountInputRef.value?.$el?.querySelector('input');
+    inputElement?.focus();
+    inputElement?.select();
+}
+
+function focusMovementAmount() {
+    const inputElement = movementAmountInputRef.value?.$el?.querySelector('input');
     inputElement?.focus();
     inputElement?.select();
 }
@@ -407,12 +421,22 @@ async function refreshPdvState() {
 }
 
 async function handleOpenCash() {
+    if (toNumericValue(cashForm.value.openingAmount) <= 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Valor inválido',
+            detail: 'Informe um valor maior que zero para abrir o caixa.',
+            life: 3000
+        });
+        return;
+    }
+
     try {
         await openCashRegister({
             openingAmount: normalizeMoney(cashForm.value.openingAmount)
         });
         cashDialogVisible.value = false;
-        cashForm.value.openingAmount = 0;
+        cashForm.value.openingAmount = null;
         await refreshPdvState();
         toast.add({
             severity: 'success',
@@ -426,13 +450,34 @@ async function handleOpenCash() {
     }
 }
 
+function openCashDialog() {
+    cashForm.value.openingAmount = null;
+    cashDialogVisible.value = true;
+    nextTick(() => {
+        focusCashAmount();
+    });
+}
+
 function openMovementDialog(type) {
     movementType.value = type;
-    movementForm.value = { amount: 0, note: '' };
+    movementForm.value = { amount: null, note: '' };
     movementDialogVisible.value = true;
+    nextTick(() => {
+        focusMovementAmount();
+    });
 }
 
 async function handleCashMovement() {
+    if (toNumericValue(movementForm.value.amount) <= 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Valor inválido',
+            detail: 'Informe um valor maior que zero para a movimentação.',
+            life: 3000
+        });
+        return;
+    }
+
     try {
         await createCashMovement({
             type: movementType.value,
@@ -642,7 +687,7 @@ onUnmounted(() => {
                     <strong>{{ formatCurrency(currentCash.cashBalance) }}</strong>
                 </div>
                 <div class="pdv-actions-group">
-                    <Button icon="pi pi-lock-open" label="Abrir caixa" severity="success" @click="cashDialogVisible = true" />
+                    <Button icon="pi pi-lock-open" label="Abrir caixa" severity="success" @click="openCashDialog" />
                     <Button icon="pi pi-plus-circle" label="Suprimento" severity="info" outlined :disabled="!isCashOpen" @click="openMovementDialog('SUPPLY')" />
                     <Button icon="pi pi-minus-circle" label="Sangria" severity="warn" outlined :disabled="!isCashOpen" @click="openMovementDialog('WITHDRAWAL')" />
                 </div>
@@ -743,28 +788,38 @@ onUnmounted(() => {
             </aside>
         </section>
 
-        <Dialog v-model:visible="cashDialogVisible" modal :closeOnEscape="false" header="Abertura de caixa" :style="{ width: '24rem' }">
+        <Dialog v-model:visible="cashDialogVisible" modal :closeOnEscape="false" header="Abertura de caixa" :style="{ width: '30rem', maxWidth: '95vw' }" :breakpoints="{ '640px': '95vw' }">
             <div class="flex flex-column gap-3">
                 <div>
                     <label class="block mb-2">Suprimento inicial</label>
-                    <InputNumber v-model="cashForm.openingAmount" mode="currency" currency="BRL" locale="pt-BR" class="w-full" />
+                    <InputNumber ref="cashAmountInputRef" v-model="cashForm.openingAmount" mode="currency" currency="BRL" locale="pt-BR" class="w-full" :allowEmpty="true" :minFractionDigits="2" :maxFractionDigits="2" />
                 </div>
-                <Button icon="pi pi-check" label="Confirmar abertura" class="w-full" @click="handleOpenCash" />
             </div>
+            <template #footer>
+                <div class="pdv-dialog-actions">
+                    <Button label="Cancelar" severity="secondary" outlined @click="cashDialogVisible = false" />
+                    <Button icon="pi pi-check" label="Confirmar abertura" @click="handleOpenCash" />
+                </div>
+            </template>
         </Dialog>
 
-        <Dialog v-model:visible="movementDialogVisible" modal :closeOnEscape="false" :header="movementType === 'SUPPLY' ? 'Lançar suprimento' : 'Lançar sangria'" :style="{ width: '24rem' }">
+        <Dialog v-model:visible="movementDialogVisible" modal :closeOnEscape="false" :header="movementType === 'SUPPLY' ? 'Lançar suprimento' : 'Lançar sangria'" :style="{ width: '30rem', maxWidth: '95vw' }" :breakpoints="{ '640px': '95vw' }">
             <div class="flex flex-column gap-3">
                 <div>
                     <label class="block mb-2">Valor</label>
-                    <InputNumber v-model="movementForm.amount" mode="currency" currency="BRL" locale="pt-BR" class="w-full" />
+                    <InputNumber ref="movementAmountInputRef" v-model="movementForm.amount" mode="currency" currency="BRL" locale="pt-BR" class="w-full" :allowEmpty="true" :minFractionDigits="2" :maxFractionDigits="2" />
                 </div>
                 <div>
                     <label class="block mb-2">Observação</label>
-                    <InputText v-model="movementForm.note" class="w-full" />
+                    <Textarea v-model="movementForm.note" rows="4" class="w-full" />
                 </div>
-                <Button icon="pi pi-check" label="Confirmar movimentação" class="w-full" @click="handleCashMovement" />
             </div>
+            <template #footer>
+                <div class="pdv-dialog-actions">
+                    <Button label="Cancelar" severity="secondary" outlined @click="movementDialogVisible = false" />
+                    <Button icon="pi pi-check" label="Confirmar movimentação" @click="handleCashMovement" />
+                </div>
+            </template>
         </Dialog>
 
         <Dialog v-model:visible="paymentDialogVisible" modal :closeOnEscape="false" header="Finalização da venda" :style="{ width: '42rem' }" :breakpoints="{ '960px': '90vw', '640px': '95vw' }">
@@ -821,6 +876,23 @@ onUnmounted(() => {
     grid-template-rows: auto auto 1fr;
     gap: 0.75rem;
     overflow: hidden;
+}
+
+.pdv-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+    .pdv-dialog-actions {
+        flex-direction: column;
+    }
+
+    .pdv-dialog-actions :deep(.p-button) {
+        width: 100%;
+    }
 }
 
 .pdv-topbar,

@@ -91,6 +91,26 @@ class RbacAuthorizationTest {
     }
 
     @Test
+    void adminToken_shouldAccessOpenCashRegistersMonitoringEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("ADMIN", "Administrador do sistema")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(get("/api/v1/pdv/monitor/open-cash-registers")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void userToken_shouldGet403OnOpenCashRegistersMonitoringEndpoint() throws Exception {
+        var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
+        var token = jwtTokenService.generateAccessToken(user);
+
+        mockMvc.perform(get("/api/v1/pdv/monitor/open-cash-registers")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void userToken_shouldAccessRegularEndpoint() throws Exception {
         var user = buildUser(Set.of(Role.create("USER", "Usuário padrão")));
         var token = jwtTokenService.generateAccessToken(user);

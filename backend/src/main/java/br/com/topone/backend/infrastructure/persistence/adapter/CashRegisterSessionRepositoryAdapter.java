@@ -7,6 +7,7 @@ import br.com.topone.backend.infrastructure.persistence.entity.CashRegisterSessi
 import br.com.topone.backend.infrastructure.persistence.jpa.CashRegisterSessionJpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,6 +24,19 @@ public class CashRegisterSessionRepositoryAdapter implements CashRegisterSession
     public Optional<CashRegisterSession> findOpenByUserId(UUID userId) {
         return cashRegisterSessionJpaRepository.findFirstByUserIdAndStatusOrderByOpenedAtDesc(userId, CashRegisterSessionStatus.OPEN)
                 .map(this::toDomain);
+    }
+
+    @Override
+    public Optional<CashRegisterSession> findOpenById(UUID sessionId) {
+        return cashRegisterSessionJpaRepository.findByIdAndStatus(sessionId, CashRegisterSessionStatus.OPEN)
+                .map(this::toDomain);
+    }
+
+    @Override
+    public List<CashRegisterSession> findAllOpenSessions() {
+        return cashRegisterSessionJpaRepository.findByStatusOrderByOpenedAtDesc(CashRegisterSessionStatus.OPEN).stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     @Override
@@ -53,4 +67,3 @@ public class CashRegisterSessionRepositoryAdapter implements CashRegisterSession
                 .build();
     }
 }
-

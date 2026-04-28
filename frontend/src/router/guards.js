@@ -15,6 +15,15 @@ function hasCashierRole(user) {
     return normalizedRoles.some((role) => role === 'CAIXA' || role === 'CASHIER');
 }
 
+function hasAdminRole(user) {
+    if (!user || !Array.isArray(user.roles)) {
+        return false;
+    }
+
+    const normalizedRoles = user.roles.map((role) => String(role).toUpperCase());
+    return normalizedRoles.includes('ADMIN');
+}
+
 function readSessionUser() {
     const raw = sessionStorage.getItem('user');
     if (!raw) {
@@ -39,8 +48,18 @@ export function setupAuthGuards(router) {
             return;
         }
 
-        if (isAuthed && hasCashierRole(sessionUser) && to.path !== '/sales/pos') {
+        if (isAuthed && hasCashierRole(sessionUser) && !hasAdminRole(sessionUser) && to.path !== '/sales/pos') {
             next('/sales/pos');
+            return;
+        }
+
+        if (isAuthed && hasAdminRole(sessionUser) && to.path === '/sales/pos') {
+            next('/sales/monitoring');
+            return;
+        }
+
+        if (isAuthed && !hasAdminRole(sessionUser) && to.path === '/sales/monitoring') {
+            next('/dashboard');
             return;
         }
 

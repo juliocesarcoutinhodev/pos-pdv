@@ -6,9 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 public interface CashRegisterSessionJpaRepository extends JpaRepository<CashRegisterSessionEntity, UUID> {
 
     Optional<CashRegisterSessionEntity> findFirstByUserIdAndStatusOrderByOpenedAtDesc(UUID userId, CashRegisterSessionStatus status);
-}
 
+    Optional<CashRegisterSessionEntity> findByIdAndStatus(UUID id, CashRegisterSessionStatus status);
+
+    List<CashRegisterSessionEntity> findByStatusOrderByOpenedAtDesc(CashRegisterSessionStatus status);
+}

@@ -20,6 +20,8 @@ public interface PdvSaleJpaRepository extends JpaRepository<PdvSaleEntity, UUID>
             """)
     BigDecimal sumTotalAmountBySession(@Param("sessionId") UUID sessionId);
 
+    long countByCashRegisterSessionId(UUID sessionId);
+
     @Query("""
             SELECT COALESCE(SUM(s.paidAmount - s.changeAmount), 0)
             FROM PdvSaleEntity s
@@ -29,6 +31,14 @@ public interface PdvSaleJpaRepository extends JpaRepository<PdvSaleEntity, UUID>
     BigDecimal sumCashNetBySessionAndMethod(@Param("sessionId") UUID sessionId, @Param("method") PdvPaymentMethod method);
 
     @Query("""
+            SELECT s.paymentMethod, COALESCE(SUM(s.totalAmount), 0), COUNT(s.id)
+            FROM PdvSaleEntity s
+            WHERE s.cashRegisterSession.id = :sessionId
+            GROUP BY s.paymentMethod
+            """)
+    List<Object[]> sumTotalAmountGroupedByPaymentMethod(@Param("sessionId") UUID sessionId);
+
+    @Query("""
             SELECT s
             FROM PdvSaleEntity s
             WHERE s.cashRegisterSession.id = :sessionId
@@ -36,4 +46,3 @@ public interface PdvSaleJpaRepository extends JpaRepository<PdvSaleEntity, UUID>
             """)
     List<PdvSaleEntity> findRecentBySession(@Param("sessionId") UUID sessionId, Pageable pageable);
 }
-

@@ -1,5 +1,6 @@
 package br.com.topone.backend.domain.repository;
 
+import br.com.topone.backend.domain.model.PdvPaymentMethod;
 import br.com.topone.backend.domain.model.PdvSale;
 
 import java.math.BigDecimal;
@@ -12,8 +13,18 @@ public interface PdvSaleRepository {
 
     BigDecimal sumTotalAmountBySession(UUID sessionId);
 
+    long countBySession(UUID sessionId);
+
     BigDecimal sumCashNetBySession(UUID sessionId);
 
-    List<PdvSale> findRecentBySession(UUID sessionId, int limit);
-}
+    List<PaymentMethodTotal> listTotalsByPaymentMethod(UUID sessionId);
 
+    List<PdvSale> findRecentBySession(UUID sessionId, int limit);
+
+    record PaymentMethodTotal(
+            PdvPaymentMethod paymentMethod,
+            BigDecimal totalAmount,
+            long salesCount
+    ) {
+    }
+}

@@ -26,6 +26,11 @@ const router = createRouter({
             children: [{ path: '', component: () => import('@/views/sales/sales-history.vue') }]
         },
         {
+            path: '/sales/monitoring',
+            component: AppLayout,
+            children: [{ path: '', component: () => import('@/views/sales/cash-register-monitoring.vue') }]
+        },
+        {
             path: '/products/list',
             component: AppLayout,
             children: [{ path: '', component: () => import('@/views/products/products.vue') }]

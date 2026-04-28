@@ -33,3 +33,13 @@ export async function listRecentPdvSales(limit = 10) {
     });
     return response.data;
 }
+
+export async function listOpenCashRegistersForMonitoring() {
+    const response = await api.get('/api/v1/pdv/monitor/open-cash-registers');
+    return Array.isArray(response.data) ? response.data : [];
+}
+
+export async function getOpenCashRegisterMonitoringSummary(sessionId) {
+    const response = await api.get(`/api/v1/pdv/monitor/open-cash-registers/${sessionId}/summary`);
+    return response.data;
+}

@@ -568,6 +568,21 @@ Query params opcionais: `referenceDate` (`yyyy-MM-dd`), `sortBy` (`createdAt`, `
 **GET `/api/v1/labels/jobs/{id}/report`** — 200 OK  
 Retorna o PDF (`application/pdf`) do lote com base no template `reports/labels/gondola-label.jrxml`.
 
+### PDV e Monitoramento de Caixa
+
+| Metodo | Path                                               | Auth | Descricao |
+| ------ | -------------------------------------------------- | ---- | --------- |
+| GET    | `/api/v1/pdv/cash/current`                         | Sim  | Retorna o caixa aberto do usuário logado |
+| POST   | `/api/v1/pdv/cash/open`                            | Sim  | Abre caixa para o usuário logado |
+| POST   | `/api/v1/pdv/cash/movements`                       | Sim  | Lança suprimento/sangria no caixa atual |
+| GET    | `/api/v1/pdv/sales/recent?limit=10`                | Sim  | Lista últimas vendas do caixa atual |
+| GET    | `/api/v1/pdv/monitor/open-cash-registers`          | Sim (ADMIN) | Lista caixas abertos para monitoramento |
+| GET    | `/api/v1/pdv/monitor/open-cash-registers/{id}/summary` | Sim (ADMIN) | Resumo do caixa (vendas e formas de pagamento) |
+
+Permissões:
+- Endpoints operacionais de PDV exigem usuário autenticado.
+- Endpoints `/api/v1/pdv/monitor/**` exigem role `ADMIN`.
+
 ### Imagens (MinIO)
 
 | Metodo | Path                            | Auth | Descricao                                          |

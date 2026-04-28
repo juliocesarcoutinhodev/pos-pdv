@@ -70,8 +70,24 @@ public class PdvSaleRepositoryAdapter implements PdvSaleRepository {
     }
 
     @Override
+    public long countBySession(UUID sessionId) {
+        return pdvSaleJpaRepository.countByCashRegisterSessionId(sessionId);
+    }
+
+    @Override
     public BigDecimal sumCashNetBySession(UUID sessionId) {
         return pdvSaleJpaRepository.sumCashNetBySessionAndMethod(sessionId, PdvPaymentMethod.CASH);
+    }
+
+    @Override
+    public List<PaymentMethodTotal> listTotalsByPaymentMethod(UUID sessionId) {
+        return pdvSaleJpaRepository.sumTotalAmountGroupedByPaymentMethod(sessionId).stream()
+                .map(row -> new PaymentMethodTotal(
+                        (PdvPaymentMethod) row[0],
+                        (BigDecimal) row[1],
+                        ((Number) row[2]).longValue()
+                ))
+                .toList();
     }
 
     @Override
@@ -112,4 +128,3 @@ public class PdvSaleRepositoryAdapter implements PdvSaleRepository {
                 .build();
     }
 }
-

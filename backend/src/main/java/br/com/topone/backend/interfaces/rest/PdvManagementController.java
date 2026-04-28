@@ -23,6 +23,8 @@ public class PdvManagementController {
     private final LookupPdvProductUseCase lookupPdvProductUseCase;
     private final CreatePdvSaleUseCase createPdvSaleUseCase;
     private final ListRecentPdvSalesUseCase listRecentPdvSalesUseCase;
+    private final ListOpenCashRegistersForMonitoringUseCase listOpenCashRegistersForMonitoringUseCase;
+    private final GetCashRegisterMonitoringSummaryUseCase getCashRegisterMonitoringSummaryUseCase;
 
     @GetMapping("/cash/current")
     @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
@@ -101,6 +103,61 @@ public class PdvManagementController {
         return ResponseEntity.ok(sales);
     }
 
+    @GetMapping("/monitor/open-cash-registers")
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
+    public ResponseEntity<java.util.List<OpenCashRegisterMonitorResponse>> listOpenCashRegistersForMonitoring() {
+        var result = listOpenCashRegistersForMonitoringUseCase.execute().stream()
+                .map(item -> new OpenCashRegisterMonitorResponse(
+                        item.sessionId(),
+                        item.userId(),
+                        item.userName(),
+                        item.status(),
+                        item.openedAt(),
+                        item.cashBalance()
+                ))
+                .toList();
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/monitor/open-cash-registers/{sessionId}/summary")
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
+    public ResponseEntity<CashRegisterMonitoringSummaryResponse> getOpenCashRegisterSummary(
+            @PathVariable java.util.UUID sessionId
+    ) {
+        var result = getCashRegisterMonitoringSummaryUseCase.execute(sessionId);
+        return ResponseEntity.ok(new CashRegisterMonitoringSummaryResponse(
+                result.sessionId(),
+                result.userId(),
+                result.userName(),
+                result.status(),
+                result.openedAt(),
+                result.openingAmount(),
+                result.suppliesAmount(),
+                result.withdrawalsAmount(),
+                result.salesAmount(),
+                result.cashBalance(),
+                result.salesCount(),
+                result.paymentSummary().stream()
+                        .map(item -> new CashRegisterPaymentSummaryResponse(
+                                item.paymentMethod(),
+                                item.totalAmount(),
+                                item.salesCount()
+                        ))
+                        .toList(),
+                result.recentSales().stream()
+                        .map(item -> new CashRegisterSaleSummaryResponse(
+                                item.id(),
+                                item.paymentMethod(),
+                                item.totalAmount(),
+                                item.paidAmount(),
+                                item.changeAmount(),
+                                item.createdAt(),
+                                item.itemsCount()
+                        ))
+                        .toList()
+        ));
+    }
+
     private CashRegisterStatusResponse toCashStatusResponse(CashRegisterStatusResult result) {
         return new CashRegisterStatusResponse(
                 result.sessionId(),
@@ -142,4 +199,3 @@ public class PdvManagementController {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }
-
