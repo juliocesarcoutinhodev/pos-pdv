@@ -6,7 +6,32 @@ import AppMenuItem from './AppMenuItem.vue';
 const { user, logout } = useAuth();
 const model = ref([]);
 
+function normalizedRoles() {
+    const roles = Array.isArray(user.value?.roles) ? user.value.roles : [];
+    return roles.map((role) => String(role).toUpperCase());
+}
+
+function hasAdminRole() {
+    return normalizedRoles().includes('ADMIN');
+}
+
+function hasCashierRole() {
+    return normalizedRoles().some((role) => role === 'CAIXA' || role === 'CASHIER');
+}
+
 onMounted(() => {
+    const isAdmin = hasAdminRole();
+    const isCashierOnly = hasCashierRole() && !isAdmin;
+    const salesItems = [{ label: 'Histórico de Vendas', icon: 'pi pi-fw pi-list', to: '/sales/history' }];
+
+    if (isCashierOnly) {
+        salesItems.unshift({ label: 'PDV', icon: 'pi pi-fw pi-desktop', to: '/sales/pos' });
+    }
+
+    if (isAdmin) {
+        salesItems.unshift({ label: 'Monitoramento de Caixas', icon: 'pi pi-fw pi-desktop', to: '/sales/monitoring' });
+    }
+
     model.value = [
         {
             label: 'Início',
@@ -15,10 +40,7 @@ onMounted(() => {
         {
             label: 'Vendas',
             icon: 'pi pi-fw pi-shopping-cart',
-            items: [
-                { label: 'PDV', icon: 'pi pi-fw pi-desktop', to: '/sales/pos' },
-                { label: 'Histórico de Vendas', icon: 'pi pi-fw pi-list', to: '/sales/history' }
-            ]
+            items: salesItems
         },
         {
             label: 'Produtos',
