@@ -41,6 +41,19 @@ public class CashRegisterSessionRepositoryAdapter implements CashRegisterSession
     }
 
     @Override
+    public List<CashRegisterSession> findAllSessions() {
+        return cashRegisterSessionJpaRepository.findAllByOrderByOpenedAtDesc().stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public Optional<CashRegisterSession> findById(UUID sessionId) {
+        return cashRegisterSessionJpaRepository.findById(sessionId)
+                .map(this::toDomain);
+    }
+
+    @Override
     public List<CashRegisterSession> findOpenedBetween(Instant fromInclusive, Instant toExclusive) {
         return cashRegisterSessionJpaRepository.findOpenedBetween(fromInclusive, toExclusive).stream()
                 .map(this::toDomain)

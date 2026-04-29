@@ -40,15 +40,24 @@ class ListOpenCashRegistersForMonitoringUseCaseTest {
     private ListOpenCashRegistersForMonitoringUseCase useCase;
 
     @Test
-    void shouldReturnOpenCashRegisterCardWithBalanceAndUserName() {
+    void shouldReturnCashRegisterCardsIncludingClosedSessions() {
         var sessionId = UUID.randomUUID();
         var userId = UUID.randomUUID();
-        var session = CashRegisterSession.builder()
+        var openSession = CashRegisterSession.builder()
                 .id(sessionId)
                 .userId(userId)
                 .openingAmount(new BigDecimal("100.00"))
                 .openedAt(Instant.now())
                 .status(CashRegisterSessionStatus.OPEN)
+                .build();
+        var closedSession = CashRegisterSession.builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .openingAmount(new BigDecimal("100.00"))
+                .openedAt(Instant.now().minusSeconds(3600))
+                .closedAt(Instant.now())
+                .closingAmount(new BigDecimal("160.00"))
+                .status(CashRegisterSessionStatus.CLOSED)
                 .build();
         var user = User.builder()
                 .id(userId)
@@ -57,18 +66,28 @@ class ListOpenCashRegistersForMonitoringUseCaseTest {
                 .provider(AuthProvider.LOCAL)
                 .build();
 
-        when(cashRegisterSessionRepository.findAllOpenSessions()).thenReturn(List.of(session));
+        when(cashRegisterSessionRepository.findAllSessions()).thenReturn(List.of(openSession, closedSession));
         when(cashMovementRepository.sumAmountBySessionAndType(sessionId, CashMovementType.SUPPLY)).thenReturn(new BigDecimal("20.00"));
         when(cashMovementRepository.sumAmountBySessionAndType(sessionId, CashMovementType.WITHDRAWAL)).thenReturn(new BigDecimal("10.00"));
         when(pdvSaleRepository.sumCashNetBySession(sessionId)).thenReturn(new BigDecimal("55.40"));
+        when(cashMovementRepository.sumAmountBySessionAndType(closedSession.getId(), CashMovementType.SUPPLY)).thenReturn(new BigDecimal("20.00"));
+        when(cashMovementRepository.sumAmountBySessionAndType(closedSession.getId(), CashMovementType.WITHDRAWAL)).thenReturn(new BigDecimal("10.00"));
+        when(pdvSaleRepository.sumCashNetBySession(closedSession.getId())).thenReturn(new BigDecimal("50.00"));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         var result = useCase.execute();
 
-        assertThat(result).hasSize(1);
+        assertThat(result).hasSize(2);
         var first = result.getFirst();
         assertThat(first.userName()).isEqualTo("Caixa 01");
         assertThat(first.status()).isEqualTo(CashRegisterSessionStatus.OPEN);
         assertThat(first.cashBalance()).isEqualByComparingTo("165.40");
+        assertThat(first.closingAmount()).isNull();
+        assertThat(first.differenceAmount()).isNull();
+
+        var second = result.get(1);
+        assertThat(second.status()).isEqualTo(CashRegisterSessionStatus.CLOSED);
+        assertThat(second.closingAmount()).isEqualByComparingTo("160.00");
+        assertThat(second.differenceAmount()).isEqualByComparingTo("0.00");
     }
 }

@@ -8,7 +8,7 @@ const toast = useToast();
 const { showApiErrorToast } = useErrorHandler();
 
 const loading = ref(false);
-const openCashRegisters = ref([]);
+const cashRegisters = ref([]);
 
 const summaryLoading = ref(false);
 const summaryDialogVisible = ref(false);
@@ -46,12 +46,20 @@ function paymentMethodLabel(value) {
 async function loadOpenCashRegisters() {
     loading.value = true;
     try {
-        openCashRegisters.value = await listOpenCashRegistersForMonitoring();
+        cashRegisters.value = await listOpenCashRegistersForMonitoring();
     } catch (error) {
         showApiErrorToast(toast, error);
     } finally {
         loading.value = false;
     }
+}
+
+function statusLabel(status) {
+    return status === 'CLOSED' ? 'Fechado' : 'Aberto';
+}
+
+function statusSeverity(status) {
+    return status === 'CLOSED' ? 'contrast' : 'success';
 }
 
 async function openSummary(sessionId) {
@@ -76,23 +84,23 @@ onMounted(() => {
 <template>
     <div class="card">
         <div class="flex items-center justify-between mb-4">
-            <div class="font-semibold text-xl">Monitoramento dos Caixas Abertos</div>
+            <div class="font-semibold text-xl">Monitoramento dos Caixas</div>
             <Button icon="pi pi-refresh" label="Atualizar" outlined size="small" :loading="loading" @click="loadOpenCashRegisters" />
         </div>
 
         <ProgressSpinner v-if="loading" style="width: 2rem; height: 2rem" strokeWidth="6" class="block mx-auto my-8" />
 
-        <Message v-else-if="openCashRegisters.length === 0" severity="info" :closable="false"> Nenhum caixa aberto no momento. </Message>
+        <Message v-else-if="cashRegisters.length === 0" severity="info" :closable="false"> Nenhum caixa encontrado no momento. </Message>
 
         <div v-else class="grid grid-cols-12 gap-4">
-            <div v-for="cashRegister in openCashRegisters" :key="cashRegister.sessionId" class="col-span-12 md:col-span-6 xl:col-span-4">
+            <div v-for="cashRegister in cashRegisters" :key="cashRegister.sessionId" class="col-span-12 md:col-span-6 xl:col-span-4">
                 <div class="border border-surface-200 dark:border-surface-700 rounded-xl p-4 h-full cursor-pointer hover:border-primary transition-colors" @click="openSummary(cashRegister.sessionId)">
                     <div class="flex items-start justify-between mb-3 gap-3">
                         <div>
                             <div class="text-sm text-muted-color">Caixa</div>
                             <div class="text-lg font-semibold">{{ cashRegister.userName }}</div>
                         </div>
-                        <Tag :value="cashRegister.status" severity="success" />
+                        <Tag :value="statusLabel(cashRegister.status)" :severity="statusSeverity(cashRegister.status)" />
                     </div>
 
                     <div class="space-y-2 text-sm">
@@ -101,8 +109,20 @@ onMounted(() => {
                             <span>{{ formatDateTime(cashRegister.openedAt) }}</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-muted-color">Valor em caixa</span>
+                            <span class="text-muted-color">Fechamento</span>
+                            <span>{{ formatDateTime(cashRegister.closedAt) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-muted-color">Saldo esperado</span>
                             <span class="font-semibold">{{ formatCurrency(cashRegister.cashBalance) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-muted-color">Valor fechado</span>
+                            <span class="font-semibold">{{ cashRegister.closingAmount != null ? formatCurrency(cashRegister.closingAmount) : '-' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-muted-color">Diferença</span>
+                            <span class="font-semibold">{{ cashRegister.differenceAmount != null ? formatCurrency(cashRegister.differenceAmount) : '-' }}</span>
                         </div>
                     </div>
                 </div>
@@ -123,6 +143,12 @@ onMounted(() => {
                 </div>
                 <div class="col-span-12 md:col-span-6 xl:col-span-3">
                     <div class="p-3 rounded-lg border border-surface-200 dark:border-surface-700">
+                        <div class="text-sm text-muted-color">Status</div>
+                        <div class="font-semibold">{{ statusLabel(selectedSummary.status) }}</div>
+                    </div>
+                </div>
+                <div class="col-span-12 md:col-span-6 xl:col-span-3">
+                    <div class="p-3 rounded-lg border border-surface-200 dark:border-surface-700">
                         <div class="text-sm text-muted-color">Vendas</div>
                         <div class="font-semibold">{{ selectedSummary.salesCount }}</div>
                     </div>
@@ -135,8 +161,35 @@ onMounted(() => {
                 </div>
                 <div class="col-span-12 md:col-span-6 xl:col-span-3">
                     <div class="p-3 rounded-lg border border-surface-200 dark:border-surface-700">
-                        <div class="text-sm text-muted-color">Saldo em caixa</div>
+                        <div class="text-sm text-muted-color">Saldo esperado</div>
                         <div class="font-semibold">{{ formatCurrency(selectedSummary.cashBalance) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-3 mb-5">
+                <div class="col-span-12 md:col-span-6 xl:col-span-3">
+                    <div class="p-3 rounded-lg border border-surface-200 dark:border-surface-700">
+                        <div class="text-sm text-muted-color">Aberto em</div>
+                        <div class="font-semibold">{{ formatDateTime(selectedSummary.openedAt) }}</div>
+                    </div>
+                </div>
+                <div class="col-span-12 md:col-span-6 xl:col-span-3">
+                    <div class="p-3 rounded-lg border border-surface-200 dark:border-surface-700">
+                        <div class="text-sm text-muted-color">Fechado em</div>
+                        <div class="font-semibold">{{ formatDateTime(selectedSummary.closedAt) }}</div>
+                    </div>
+                </div>
+                <div class="col-span-12 md:col-span-6 xl:col-span-3">
+                    <div class="p-3 rounded-lg border border-surface-200 dark:border-surface-700">
+                        <div class="text-sm text-muted-color">Valor fechado</div>
+                        <div class="font-semibold">{{ selectedSummary.closingAmount != null ? formatCurrency(selectedSummary.closingAmount) : '-' }}</div>
+                    </div>
+                </div>
+                <div class="col-span-12 md:col-span-6 xl:col-span-3">
+                    <div class="p-3 rounded-lg border border-surface-200 dark:border-surface-700">
+                        <div class="text-sm text-muted-color">Diferença</div>
+                        <div class="font-semibold">{{ selectedSummary.differenceAmount != null ? formatCurrency(selectedSummary.differenceAmount) : '-' }}</div>
                     </div>
                 </div>
             </div>

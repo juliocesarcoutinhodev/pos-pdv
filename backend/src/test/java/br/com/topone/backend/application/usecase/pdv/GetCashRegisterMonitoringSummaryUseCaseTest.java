@@ -45,6 +45,8 @@ class GetCashRegisterMonitoringSummaryUseCaseTest {
                 .userId(userId)
                 .openingAmount(new BigDecimal("150.00"))
                 .openedAt(Instant.now())
+                .closedAt(Instant.now().plusSeconds(3600))
+                .closingAmount(new BigDecimal("205.00"))
                 .status(CashRegisterSessionStatus.OPEN)
                 .build();
         var user = User.builder()
@@ -63,7 +65,7 @@ class GetCashRegisterMonitoringSummaryUseCaseTest {
                 .items(List.of(PdvSaleItem.builder().id(UUID.randomUUID()).build()))
                 .build();
 
-        when(cashRegisterSessionRepository.findOpenById(sessionId)).thenReturn(Optional.of(session));
+        when(cashRegisterSessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(cashMovementRepository.sumAmountBySessionAndType(sessionId, CashMovementType.SUPPLY)).thenReturn(new BigDecimal("20.00"));
         when(cashMovementRepository.sumAmountBySessionAndType(sessionId, CashMovementType.WITHDRAWAL)).thenReturn(new BigDecimal("5.00"));
@@ -80,6 +82,8 @@ class GetCashRegisterMonitoringSummaryUseCaseTest {
 
         assertThat(result.userName()).isEqualTo("Operador Caixa");
         assertThat(result.cashBalance()).isEqualByComparingTo("205.00");
+        assertThat(result.closingAmount()).isEqualByComparingTo("205.00");
+        assertThat(result.differenceAmount()).isEqualByComparingTo("0.00");
         assertThat(result.salesCount()).isEqualTo(3);
         assertThat(result.paymentSummary()).hasSize(2);
         assertThat(result.recentSales()).hasSize(1);

@@ -1,6 +1,6 @@
 package br.com.topone.backend.application.usecase.pdv;
 
-import br.com.topone.backend.domain.exception.CashRegisterSessionNotOpenException;
+import br.com.topone.backend.domain.exception.CashRegisterSessionNotFoundException;
 import br.com.topone.backend.domain.model.CashMovementType;
 import br.com.topone.backend.domain.repository.CashMovementRepository;
 import br.com.topone.backend.domain.repository.CashRegisterSessionRepository;
@@ -25,23 +25,33 @@ public class GetCashRegisterMonitoringSummaryUseCase {
 
     @Transactional(readOnly = true)
     public CashRegisterMonitoringSummaryResult execute(UUID sessionId) {
-        var session = cashRegisterSessionRepository.findOpenById(sessionId)
-                .orElseThrow(CashRegisterSessionNotOpenException::new);
+        var session = cashRegisterSessionRepository.findById(sessionId)
+                .orElseThrow(CashRegisterSessionNotFoundException::new);
 
         var userName = userRepository.findById(session.getUserId())
                 .map(user -> user.getName())
                 .orElse("Usuário não encontrado");
 
-        var supplies = cashMovementRepository.sumAmountBySessionAndType(session.getId(), CashMovementType.SUPPLY);
-        var withdrawals = cashMovementRepository.sumAmountBySessionAndType(session.getId(), CashMovementType.WITHDRAWAL);
-        var salesAmount = pdvSaleRepository.sumTotalAmountBySession(session.getId());
-        var cashNetSales = pdvSaleRepository.sumCashNetBySession(session.getId());
+        var supplies = CashRegisterBalanceCalculator.normalize(
+                cashMovementRepository.sumAmountBySessionAndType(session.getId(), CashMovementType.SUPPLY)
+        );
+        var withdrawals = CashRegisterBalanceCalculator.normalize(
+                cashMovementRepository.sumAmountBySessionAndType(session.getId(), CashMovementType.WITHDRAWAL)
+        );
+        var salesAmount = CashRegisterBalanceCalculator.normalize(pdvSaleRepository.sumTotalAmountBySession(session.getId()));
+        var cashNetSales = CashRegisterBalanceCalculator.normalize(pdvSaleRepository.sumCashNetBySession(session.getId()));
         var balance = CashRegisterBalanceCalculator.calculate(
                 session.getOpeningAmount(),
                 supplies,
                 withdrawals,
                 cashNetSales
         );
+        var closingAmount = session.getClosingAmount() != null
+                ? CashRegisterBalanceCalculator.normalize(session.getClosingAmount())
+                : null;
+        var differenceAmount = closingAmount != null
+                ? CashRegisterBalanceCalculator.normalize(closingAmount.subtract(balance))
+                : null;
 
         var paymentSummary = pdvSaleRepository.listTotalsByPaymentMethod(session.getId()).stream()
                 .map(item -> new CashRegisterPaymentSummaryResult(
@@ -69,11 +79,14 @@ public class GetCashRegisterMonitoringSummaryUseCase {
                 userName,
                 session.getStatus(),
                 session.getOpenedAt(),
+                session.getClosedAt(),
                 CashRegisterBalanceCalculator.normalize(session.getOpeningAmount()),
-                CashRegisterBalanceCalculator.normalize(supplies),
-                CashRegisterBalanceCalculator.normalize(withdrawals),
-                CashRegisterBalanceCalculator.normalize(salesAmount),
+                supplies,
+                withdrawals,
+                salesAmount,
                 balance,
+                closingAmount,
+                differenceAmount,
                 pdvSaleRepository.countBySession(session.getId()),
                 paymentSummary,
                 recentSales

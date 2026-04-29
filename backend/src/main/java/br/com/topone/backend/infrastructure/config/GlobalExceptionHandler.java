@@ -300,6 +300,17 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(CashRegisterSessionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCashRegisterSessionNotFound(CashRegisterSessionNotFoundException ex) {
+        log.warn("Cash register not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Não encontrado",
+                ex.getMessage(),
+                Instant.now().toString()
+        ));
+    }
+
     @ExceptionHandler(InvalidCashOperationException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCashOperation(InvalidCashOperationException ex) {
         log.warn("Invalid cash operation | message={}", ex.getMessage());

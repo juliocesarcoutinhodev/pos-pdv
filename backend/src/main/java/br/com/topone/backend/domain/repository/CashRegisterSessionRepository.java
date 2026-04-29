@@ -15,6 +15,10 @@ public interface CashRegisterSessionRepository {
 
     List<CashRegisterSession> findAllOpenSessions();
 
+    List<CashRegisterSession> findAllSessions();
+
+    Optional<CashRegisterSession> findById(UUID sessionId);
+
     List<CashRegisterSession> findOpenedBetween(Instant fromInclusive, Instant toExclusive);
 
     long countOpenSessions();

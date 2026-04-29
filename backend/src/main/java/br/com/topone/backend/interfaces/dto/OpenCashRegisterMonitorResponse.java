@@ -12,6 +12,9 @@ public record OpenCashRegisterMonitorResponse(
         String userName,
         CashRegisterSessionStatus status,
         Instant openedAt,
-        BigDecimal cashBalance
+        Instant closedAt,
+        BigDecimal cashBalance,
+        BigDecimal closingAmount,
+        BigDecimal differenceAmount
 ) {
 }

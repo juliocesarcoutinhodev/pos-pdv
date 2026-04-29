@@ -19,6 +19,8 @@ public interface CashRegisterSessionJpaRepository extends JpaRepository<CashRegi
 
     List<CashRegisterSessionEntity> findByStatusOrderByOpenedAtDesc(CashRegisterSessionStatus status);
 
+    List<CashRegisterSessionEntity> findAllByOrderByOpenedAtDesc();
+
     @Query("""
             SELECT s
             FROM CashRegisterSessionEntity s

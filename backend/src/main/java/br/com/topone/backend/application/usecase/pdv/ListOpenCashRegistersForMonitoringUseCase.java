@@ -22,17 +22,25 @@ public class ListOpenCashRegistersForMonitoringUseCase {
 
     @Transactional(readOnly = true)
     public List<OpenCashRegisterMonitorResult> execute() {
-        return cashRegisterSessionRepository.findAllOpenSessions().stream()
+        return cashRegisterSessionRepository.findAllSessions().stream()
                 .map(session -> {
-                    var supplies = cashMovementRepository.sumAmountBySessionAndType(session.getId(), CashMovementType.SUPPLY);
-                    var withdrawals = cashMovementRepository.sumAmountBySessionAndType(session.getId(), CashMovementType.WITHDRAWAL);
-                    var cashNetSales = pdvSaleRepository.sumCashNetBySession(session.getId());
+                    var supplies = CashRegisterBalanceCalculator.normalize(
+                            cashMovementRepository.sumAmountBySessionAndType(session.getId(), CashMovementType.SUPPLY)
+                    );
+                    var withdrawals = CashRegisterBalanceCalculator.normalize(
+                            cashMovementRepository.sumAmountBySessionAndType(session.getId(), CashMovementType.WITHDRAWAL)
+                    );
+                    var cashNetSales = CashRegisterBalanceCalculator.normalize(pdvSaleRepository.sumCashNetBySession(session.getId()));
                     var balance = CashRegisterBalanceCalculator.calculate(
                             session.getOpeningAmount(),
                             supplies,
                             withdrawals,
                             cashNetSales
                     );
+                    var closingAmount = CashRegisterBalanceCalculator.normalize(session.getClosingAmount());
+                    var differenceAmount = session.getClosingAmount() != null
+                            ? CashRegisterBalanceCalculator.normalize(closingAmount.subtract(balance))
+                            : null;
 
                     var userName = userRepository.findById(session.getUserId())
                             .map(user -> user.getName())
@@ -44,7 +52,10 @@ public class ListOpenCashRegistersForMonitoringUseCase {
                             userName,
                             session.getStatus(),
                             session.getOpenedAt(),
-                            balance
+                            session.getClosedAt(),
+                            balance,
+                            session.getClosingAmount() != null ? closingAmount : null,
+                            differenceAmount
                     );
                 })
                 .toList();

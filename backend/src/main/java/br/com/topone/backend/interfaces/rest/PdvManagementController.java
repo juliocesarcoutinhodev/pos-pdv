@@ -271,7 +271,10 @@ public class PdvManagementController {
                         item.userName(),
                         item.status(),
                         item.openedAt(),
-                        item.cashBalance()
+                        item.closedAt(),
+                        item.cashBalance(),
+                        item.closingAmount(),
+                        item.differenceAmount()
                 ))
                 .toList();
         return ResponseEntity.ok(result);
@@ -289,11 +292,14 @@ public class PdvManagementController {
                 result.userName(),
                 result.status(),
                 result.openedAt(),
+                result.closedAt(),
                 result.openingAmount(),
                 result.suppliesAmount(),
                 result.withdrawalsAmount(),
                 result.salesAmount(),
                 result.cashBalance(),
+                result.closingAmount(),
+                result.differenceAmount(),
                 result.salesCount(),
                 result.paymentSummary().stream()
                         .map(item -> new CashRegisterPaymentSummaryResponse(
