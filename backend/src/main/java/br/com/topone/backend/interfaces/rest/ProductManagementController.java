@@ -98,6 +98,7 @@ public class ProductManagementController {
                         product.unit(),
                         product.salePrice(),
                         product.stockQuantity(),
+                        product.minimumStock(),
                         product.imageId(),
                         product.createdAt(),
                         product.updatedAt(),

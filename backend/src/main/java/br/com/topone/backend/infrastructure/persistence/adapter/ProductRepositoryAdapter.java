@@ -84,6 +84,16 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     @Override
+    public long countActiveProducts() {
+        return productJpaRepository.countActiveProducts();
+    }
+
+    @Override
+    public long countLowStockProducts() {
+        return productJpaRepository.countLowStockProducts();
+    }
+
+    @Override
     public PageResult<Product> findAll(ProductFilter filter, int page, int size, PageSort sort) {
         var namePattern = filter.name() != null && !filter.name().isBlank()
                 ? "%" + filter.name().toLowerCase() + "%" : null;

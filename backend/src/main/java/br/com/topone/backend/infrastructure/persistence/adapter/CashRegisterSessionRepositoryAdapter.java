@@ -7,6 +7,7 @@ import br.com.topone.backend.infrastructure.persistence.entity.CashRegisterSessi
 import br.com.topone.backend.infrastructure.persistence.jpa.CashRegisterSessionJpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,6 +38,18 @@ public class CashRegisterSessionRepositoryAdapter implements CashRegisterSession
         return cashRegisterSessionJpaRepository.findByStatusOrderByOpenedAtDesc(CashRegisterSessionStatus.OPEN).stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<CashRegisterSession> findOpenedBetween(Instant fromInclusive, Instant toExclusive) {
+        return cashRegisterSessionJpaRepository.findOpenedBetween(fromInclusive, toExclusive).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public long countOpenSessions() {
+        return cashRegisterSessionJpaRepository.countByStatus(CashRegisterSessionStatus.OPEN);
     }
 
     @Override

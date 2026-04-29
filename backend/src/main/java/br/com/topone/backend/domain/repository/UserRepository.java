@@ -29,4 +29,6 @@ public interface UserRepository {
      */
     Optional<User> findByEmailExcludingId(String email, UUID excludeId);
 
+    long countActiveUsers();
+
 }

@@ -44,4 +44,7 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
                                     @Param("email") String email,
                                     @Param("active") Boolean active,
                                     Pageable pageable);
+
+    @Query("SELECT COUNT(u) FROM UserEntity u WHERE u.deletedAt IS NULL")
+    long countActiveUsers();
 }

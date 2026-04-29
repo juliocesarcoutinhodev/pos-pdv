@@ -48,4 +48,7 @@ public interface SupplierJpaRepository extends JpaRepository<SupplierEntity, UUI
                                         @Param("email") String email,
                                         @Param("active") Boolean active,
                                         Pageable pageable);
+
+    @Query("SELECT COUNT(s) FROM SupplierEntity s WHERE s.deletedAt IS NULL")
+    long countActiveSuppliers();
 }

@@ -32,4 +32,7 @@ public interface CustomerJpaRepository extends JpaRepository<CustomerEntity, UUI
                                         @Param("email") String email,
                                         @Param("active") Boolean active,
                                         Pageable pageable);
+
+    @Query("SELECT COUNT(c) FROM CustomerEntity c WHERE c.deletedAt IS NULL")
+    long countActiveCustomers();
 }

@@ -26,6 +26,7 @@ public class ListProductsUseCase {
                         product.getUnit(),
                         product.getSalePrice(),
                         product.getStockQuantity(),
+                        product.getMinimumStock(),
                         product.getImageId(),
                         product.getCreatedAt(),
                         product.getUpdatedAt(),

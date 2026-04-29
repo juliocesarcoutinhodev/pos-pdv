@@ -4,6 +4,7 @@ import br.com.topone.backend.domain.model.CashRegisterSession;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.Instant;
 import java.util.UUID;
 
 public interface CashRegisterSessionRepository {
@@ -13,6 +14,10 @@ public interface CashRegisterSessionRepository {
     Optional<CashRegisterSession> findOpenById(UUID sessionId);
 
     List<CashRegisterSession> findAllOpenSessions();
+
+    List<CashRegisterSession> findOpenedBetween(Instant fromInclusive, Instant toExclusive);
+
+    long countOpenSessions();
 
     CashRegisterSession save(CashRegisterSession session);
 }

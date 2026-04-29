@@ -51,4 +51,16 @@ public interface ProductJpaRepository extends JpaRepository<ProductEntity, UUID>
                                        @Param("createdAtStart") Instant createdAtStart,
                                        @Param("createdAtEnd") Instant createdAtEnd,
                                        Pageable pageable);
+
+    @Query("SELECT COUNT(p) FROM ProductEntity p WHERE p.deletedAt IS NULL")
+    long countActiveProducts();
+
+    @Query("""
+            SELECT COUNT(p)
+            FROM ProductEntity p
+            WHERE p.deletedAt IS NULL
+              AND p.minimumStock > 0
+              AND p.stockQuantity <= p.minimumStock
+            """)
+    long countLowStockProducts();
 }

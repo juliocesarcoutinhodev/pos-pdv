@@ -23,6 +23,14 @@ onMounted(() => {
     const isAdmin = hasAdminRole();
     const isCashierOnly = hasCashierRole() && !isAdmin;
     const salesItems = [{ label: 'Histórico de Vendas', icon: 'pi pi-fw pi-list', to: '/sales/history' }];
+    const productItems = [
+        { label: 'Produtos', icon: 'pi pi-fw pi-box', to: '/products/list' },
+        { label: 'Estoque', icon: 'pi pi-fw pi-warehouse', to: '/products/inventory' }
+    ];
+    const reportItems = [
+        { label: 'Etiquetas de Gôndola', icon: 'pi pi-fw pi-tags', to: '/reports/labels' },
+        { label: 'Clientes', icon: 'pi pi-fw pi-id-card', to: '/reports/customers' }
+    ];
 
     if (isCashierOnly) {
         salesItems.unshift({ label: 'PDV', icon: 'pi pi-fw pi-desktop', to: '/sales/pos' });
@@ -30,6 +38,7 @@ onMounted(() => {
 
     if (isAdmin) {
         salesItems.unshift({ label: 'Monitoramento de Caixas', icon: 'pi pi-fw pi-desktop', to: '/sales/monitoring' });
+        reportItems.unshift({ label: 'Vendas do Dia', icon: 'pi pi-fw pi-calendar', to: '/reports/daily-sales' }, { label: 'Fechamento', icon: 'pi pi-fw pi-calculator', to: '/reports/closing' });
     }
 
     model.value = [
@@ -45,7 +54,7 @@ onMounted(() => {
         {
             label: 'Produtos',
             icon: 'pi pi-fw pi-box',
-            items: [{ label: 'Produtos', icon: 'pi pi-fw pi-box', to: '/products/list' }]
+            items: productItems
         },
         {
             label: 'Cadastros',
@@ -60,12 +69,7 @@ onMounted(() => {
         {
             label: 'Relatórios',
             icon: 'pi pi-fw pi-chart-bar',
-            items: [
-                { label: 'Vendas do Dia', icon: 'pi pi-fw pi-calendar', to: '/reports/daily-sales' },
-                { label: 'Fechamento', icon: 'pi pi-fw pi-calculator', to: '/reports/closing' },
-                { label: 'Etiquetas de Gôndola', icon: 'pi pi-fw pi-tags', to: '/reports/labels' },
-                { label: 'Clientes', icon: 'pi pi-fw pi-id-card', to: '/reports/customers' }
-            ]
+            items: reportItems
         },
         {
             label: `${user.value?.name ?? 'Usuário'}`,

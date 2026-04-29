@@ -60,6 +60,11 @@ public class CustomerRepositoryAdapter implements CustomerRepository {
     }
 
     @Override
+    public long countActiveCustomers() {
+        return customerJpaRepository.countActiveCustomers();
+    }
+
+    @Override
     public PageResult<Customer> findAll(CustomerFilter filter, int page, int size, PageSort sort) {
         var namePattern = filter.name() != null && !filter.name().isBlank()
                 ? "%" + filter.name().toLowerCase() + "%" : null;

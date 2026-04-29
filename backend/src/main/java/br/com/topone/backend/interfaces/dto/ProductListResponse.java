@@ -15,6 +15,7 @@ public record ProductListResponse(
         String unit,
         BigDecimal salePrice,
         BigDecimal stockQuantity,
+        BigDecimal minimumStock,
         String imageId,
         Instant createdAt,
         Instant updatedAt,

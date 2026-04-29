@@ -18,10 +18,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class DataInitializer {
 
-    private static final String ADMIN_EMAIL = "admin@email.com";
-    private static final String ADMIN_PASSWORD = "admin123";
     private static final String USER_ROLE_NAME = "USER";
     private static final String ADMIN_ROLE_NAME = "ADMIN";
+    private final AdminSeedProperties adminSeedProperties;
 
     @Bean
     public CommandLineRunner initData(
@@ -33,16 +32,30 @@ public class DataInitializer {
             var adminRole = ensureRole(roleRepository, ADMIN_ROLE_NAME, "Administrador do sistema");
             var adminRoles = Set.of(userRole, adminRole);
 
-            var existing = userRepository.findByEmailIncludingDeleted(ADMIN_EMAIL);
-            if (existing.isPresent()) {
-                log.debug("Admin user already exists | email={}", ADMIN_EMAIL);
+            if (!adminSeedProperties.isEnabled()) {
+                log.info("Admin seed disabled by configuration");
                 return;
             }
 
-            var user = User.createLocalUser(ADMIN_EMAIL, "Admin", passwordEncoder.encode(ADMIN_PASSWORD));
+            var adminEmail = normalize(adminSeedProperties.getEmail());
+            var adminName = normalize(adminSeedProperties.getName());
+            var adminPassword = adminSeedProperties.getPassword();
+
+            if (adminEmail == null || adminPassword == null || adminPassword.isBlank()) {
+                log.warn("Skipping admin seed due to invalid configuration");
+                return;
+            }
+
+            var existing = userRepository.findByEmailIncludingDeleted(adminEmail);
+            if (existing.isPresent()) {
+                log.debug("Admin user already exists | email={}", adminEmail);
+                return;
+            }
+
+            var user = User.createLocalUser(adminEmail, adminName != null ? adminName : "Admin", passwordEncoder.encode(adminPassword));
             user.assignRoles(adminRoles);
             userRepository.save(user);
-            log.info("Admin user created | email={}", ADMIN_EMAIL);
+            log.info("Admin user created | email={}", adminEmail);
         };
     }
 
@@ -53,5 +66,14 @@ public class DataInitializer {
                     log.info("Role seeded | name={} | id={}", saved.getName(), saved.getId());
                     return saved;
                 });
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        var normalized = value.trim();
+        return normalized.isBlank() ? null : normalized;
     }
 }

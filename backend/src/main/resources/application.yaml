@@ -98,6 +98,12 @@ app:
       phone: ${REPORT_COMPANY_PHONE:}
       email: ${REPORT_COMPANY_EMAIL:}
       address-line: ${REPORT_COMPANY_ADDRESS_LINE:}
+  seed:
+    admin:
+      enabled: ${APP_SEED_ADMIN_ENABLED:true}
+      email: ${APP_SEED_ADMIN_EMAIL:admin@email.com}
+      name: ${APP_SEED_ADMIN_NAME:Admin}
+      password: ${APP_SEED_ADMIN_PASSWORD:}
 
 management:
   endpoints:

@@ -31,6 +31,7 @@ function normalizeProductListItem(data) {
         unit: data?.unit ?? '',
         salePrice: toNumberOrNull(data?.salePrice),
         stockQuantity: toNumberOrNull(data?.stockQuantity),
+        minimumStock: toNumberOrNull(data?.minimumStock),
         imageId: data?.imageId ?? null,
         createdAt: data?.createdAt ?? null,
         updatedAt: data?.updatedAt ?? null,

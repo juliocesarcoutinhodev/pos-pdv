@@ -23,6 +23,7 @@ public record ListProductsResult(
             String unit,
             BigDecimal salePrice,
             BigDecimal stockQuantity,
+            BigDecimal minimumStock,
             String imageId,
             Instant createdAt,
             Instant updatedAt,

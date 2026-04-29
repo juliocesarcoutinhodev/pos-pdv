@@ -15,4 +15,6 @@ public interface CustomerRepository {
     boolean existsByTaxId(String taxId);
 
     PageResult<Customer> findAll(CustomerFilter filter, int page, int size, PageSort sort);
+
+    long countActiveCustomers();
 }

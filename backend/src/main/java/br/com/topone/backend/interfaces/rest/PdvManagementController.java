@@ -1,7 +1,9 @@
 package br.com.topone.backend.interfaces.rest;
 
 import br.com.topone.backend.application.usecase.pdv.*;
+import br.com.topone.backend.domain.model.PdvPaymentMethod;
 import br.com.topone.backend.domain.model.User;
+import br.com.topone.backend.domain.repository.PageSort;
 import br.com.topone.backend.infrastructure.security.AuthorizationPolicies;
 import br.com.topone.backend.interfaces.dto.*;
 import jakarta.validation.Valid;
@@ -12,10 +14,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.Set;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/pdv")
 @RequiredArgsConstructor
 public class PdvManagementController {
+
+    private static final Set<String> SALES_HISTORY_SORT_FIELDS = Set.of("createdAt", "totalAmount", "paymentMethod");
 
     private final OpenCashRegisterUseCase openCashRegisterUseCase;
     private final GetCurrentCashRegisterUseCase getCurrentCashRegisterUseCase;
@@ -23,6 +31,9 @@ public class PdvManagementController {
     private final LookupPdvProductUseCase lookupPdvProductUseCase;
     private final CreatePdvSaleUseCase createPdvSaleUseCase;
     private final ListRecentPdvSalesUseCase listRecentPdvSalesUseCase;
+    private final ListPdvSalesHistoryUseCase listPdvSalesHistoryUseCase;
+    private final GetDailySalesReportUseCase getDailySalesReportUseCase;
+    private final GetCashClosingReportUseCase getCashClosingReportUseCase;
     private final ListOpenCashRegistersForMonitoringUseCase listOpenCashRegistersForMonitoringUseCase;
     private final GetCashRegisterMonitoringSummaryUseCase getCashRegisterMonitoringSummaryUseCase;
 
@@ -101,6 +112,129 @@ public class PdvManagementController {
                 .map(this::toSaleResponse)
                 .toList();
         return ResponseEntity.ok(sales);
+    }
+
+    @GetMapping("/sales/history")
+    @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
+    public ResponseEntity<PageResponse<PdvSaleHistoryResponse>> listSalesHistory(
+            @RequestParam(required = false) LocalDate dateFrom,
+            @RequestParam(required = false) LocalDate dateTo,
+            @RequestParam(required = false) UUID userId,
+            @RequestParam(required = false) PdvPaymentMethod paymentMethod,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection
+    ) {
+        var currentUser = currentUser();
+        var isAdmin = isAdmin(currentUser);
+        var effectiveUserId = isAdmin ? userId : currentUser.getId();
+
+        var result = listPdvSalesHistoryUseCase.execute(new ListPdvSalesHistoryCommand(
+                effectiveUserId,
+                paymentMethod,
+                dateFrom,
+                dateTo,
+                page,
+                size,
+                PageSort.by(sortBy, sortDirection, SALES_HISTORY_SORT_FIELDS)
+        ));
+
+        var content = result.content().stream()
+                .map(item -> new PdvSaleHistoryResponse(
+                        item.id(),
+                        item.sessionId(),
+                        item.userId(),
+                        item.userName(),
+                        item.paymentMethod(),
+                        item.totalAmount(),
+                        item.paidAmount(),
+                        item.changeAmount(),
+                        item.itemsCount(),
+                        item.notes(),
+                        item.createdAt()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(new PageResponse<>(
+                content,
+                result.page(),
+                result.size(),
+                result.totalElements(),
+                result.totalPages()
+        ));
+    }
+
+    @GetMapping("/reports/daily-sales")
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
+    public ResponseEntity<DailySalesReportResponse> getDailySalesReport(
+            @RequestParam(required = false) LocalDate date
+    ) {
+        var result = getDailySalesReportUseCase.execute(date);
+        return ResponseEntity.ok(new DailySalesReportResponse(
+                result.referenceDate(),
+                result.salesCount(),
+                result.totalAmount(),
+                result.averageTicket(),
+                result.paymentSummary().stream()
+                        .map(item -> new DailySalesReportResponse.DailySalesPaymentSummaryResponse(
+                                item.paymentMethod(),
+                                item.totalAmount(),
+                                item.salesCount()
+                        ))
+                        .toList(),
+                result.hourlySummary().stream()
+                        .map(item -> new DailySalesReportResponse.DailySalesHourlySummaryResponse(
+                                item.hourOfDay(),
+                                item.totalAmount(),
+                                item.salesCount()
+                        ))
+                        .toList(),
+                result.topProducts().stream()
+                        .map(item -> new DailySalesReportResponse.DailySalesTopProductResponse(
+                                item.productId(),
+                                item.sku(),
+                                item.name(),
+                                item.totalQuantity(),
+                                item.totalAmount()
+                        ))
+                        .toList()
+        ));
+    }
+
+    @GetMapping("/reports/closing")
+    @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
+    public ResponseEntity<CashClosingReportResponse> getCashClosingReport(
+            @RequestParam(required = false) LocalDate date
+    ) {
+        var result = getCashClosingReportUseCase.execute(date);
+        return ResponseEntity.ok(new CashClosingReportResponse(
+                result.referenceDate(),
+                result.totalSessions(),
+                result.openSessions(),
+                result.closedSessions(),
+                result.totalOpeningAmount(),
+                result.totalSuppliesAmount(),
+                result.totalWithdrawalsAmount(),
+                result.totalSalesAmount(),
+                result.totalCashBalance(),
+                result.sessions().stream()
+                        .map(item -> new CashClosingReportResponse.CashClosingSessionResponse(
+                                item.sessionId(),
+                                item.userId(),
+                                item.userName(),
+                                item.status(),
+                                item.openedAt(),
+                                item.closedAt(),
+                                item.openingAmount(),
+                                item.suppliesAmount(),
+                                item.withdrawalsAmount(),
+                                item.salesAmount(),
+                                item.cashBalance(),
+                                item.salesCount()
+                        ))
+                        .toList()
+        ));
     }
 
     @GetMapping("/monitor/open-cash-registers")
@@ -197,5 +331,14 @@ public class PdvManagementController {
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    private boolean isAdmin(User user) {
+        if (user == null || user.getRoles() == null) {
+            return false;
+        }
+
+        return user.getRoles().stream()
+                .anyMatch(role -> "ADMIN".equalsIgnoreCase(role.getName()));
     }
 }

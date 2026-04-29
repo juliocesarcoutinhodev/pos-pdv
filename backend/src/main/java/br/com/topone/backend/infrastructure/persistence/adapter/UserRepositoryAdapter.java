@@ -90,6 +90,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public long countActiveUsers() {
+        return jpaRepository.countActiveUsers();
+    }
+
+    @Override
     public PageResult<User> findAll(
             UserFilter filter,
             int page,

@@ -42,3 +42,8 @@ security:
     domain: ${REFRESH_COOKIE_DOMAIN:}
     secure: true
     same-site: None
+
+app:
+  seed:
+    admin:
+      enabled: ${APP_SEED_ADMIN_ENABLED:false}

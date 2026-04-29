@@ -80,6 +80,11 @@ public class SupplierRepositoryAdapter implements SupplierRepository {
     }
 
     @Override
+    public long countActiveSuppliers() {
+        return supplierJpaRepository.countActiveSuppliers();
+    }
+
+    @Override
     public PageResult<Supplier> findAll(SupplierFilter filter, int page, int size, PageSort sort) {
         var namePattern = filter.name() != null && !filter.name().isBlank()
                 ? "%" + filter.name().toLowerCase() + "%" : null;

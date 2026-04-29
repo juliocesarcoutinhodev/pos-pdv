@@ -17,4 +17,6 @@ public interface SupplierRepository {
     Optional<Supplier> findByTaxIdExcludingId(String taxId, UUID excludeId);
 
     PageResult<Supplier> findAll(SupplierFilter filter, int page, int size, PageSort sort);
+
+    long countActiveSuppliers();
 }

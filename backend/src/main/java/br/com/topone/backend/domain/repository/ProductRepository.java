@@ -24,4 +24,8 @@ public interface ProductRepository {
     Optional<Product> findByBarcodeExcludingId(String barcode, UUID excludeId);
 
     PageResult<Product> findAll(ProductFilter filter, int page, int size, PageSort sort);
+
+    long countActiveProducts();
+
+    long countLowStockProducts();
 }

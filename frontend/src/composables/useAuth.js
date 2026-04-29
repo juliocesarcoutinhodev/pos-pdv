@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import { login as loginApi, logout as logoutApi } from '@/services/authService.js';
+import { toAppPath } from '@/utils/appBasePath.js';
 
 const user = ref(null);
 const isAuthenticated = computed(() => user.value !== null);
@@ -44,7 +45,7 @@ async function handleLogin(email, password) {
         sessionStorage.setItem('user', JSON.stringify(data));
         user.value = data;
         const forcePdv = hasCashierRole(data.roles) && !hasAdminRole(data.roles);
-        window.location.href = forcePdv ? '/sales/pos' : '/dashboard';
+        window.location.href = forcePdv ? toAppPath('/sales/pos') : toAppPath('/dashboard');
     } finally {
         loading.value = false;
     }
@@ -59,7 +60,7 @@ async function logout() {
     localStorage.removeItem('access_token');
     sessionStorage.removeItem('user');
     user.value = null;
-    window.location.href = '/auth/login';
+    window.location.href = toAppPath('/auth/login');
 }
 
 function getAccessToken() {
