@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -76,9 +77,6 @@ public class GetDailySalesReportUseCase {
     }
 
     private BigDecimal normalizeQuantity(BigDecimal value) {
-        if (value == null) {
-            return BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP);
-        }
-        return value.setScale(3, RoundingMode.HALF_UP);
+        return Objects.requireNonNullElse(value, BigDecimal.ZERO).setScale(3, RoundingMode.HALF_UP);
     }
 }

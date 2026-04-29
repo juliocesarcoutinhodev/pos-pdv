@@ -1,5 +1,6 @@
 package br.com.topone.backend.application.usecase.pdv;
 
+import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.repository.PageResult;
 import br.com.topone.backend.domain.repository.PdvSaleHistoryFilter;
 import br.com.topone.backend.domain.repository.PdvSaleRepository;
@@ -28,7 +29,7 @@ public class ListPdvSalesHistoryUseCase {
         var toExclusive = command.dateTo() != null ? command.dateTo().plusDays(1).atStartOfDay(zone).toInstant() : null;
 
         var safePage = Math.max(0, command.page());
-        var safeSize = Math.max(1, Math.min(command.size(), 100));
+        var safeSize = Math.clamp(command.size(), 1, 100);
 
         var page = pdvSaleRepository.findHistory(
                 new PdvSaleHistoryFilter(
@@ -72,14 +73,11 @@ public class ListPdvSalesHistoryUseCase {
             return "Usuário não informado";
         }
         return userRepository.findById(userId)
-                .map(user -> user.getName())
+                .map(User::getName)
                 .orElse("Usuário não encontrado");
     }
 
     private BigDecimal normalizeMoney(BigDecimal value) {
-        if (value == null) {
-            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        }
-        return value.setScale(2, RoundingMode.HALF_UP);
+        return CashRegisterBalanceCalculator.normalize(value);
     }
 }

@@ -1,5 +1,6 @@
 package br.com.topone.backend.application.usecase.pdv;
 
+import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -96,7 +98,7 @@ public class GetDashboardOverviewUseCase {
         }
 
         return userRepository.findById(userId)
-                .map(user -> user.getName())
+                .map(User::getName)
                 .orElse("Usuário não encontrado");
     }
 
@@ -113,16 +115,10 @@ public class GetDashboardOverviewUseCase {
     }
 
     private BigDecimal normalizeMoney(BigDecimal value) {
-        if (value == null) {
-            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        }
-        return value.setScale(2, RoundingMode.HALF_UP);
+        return CashRegisterBalanceCalculator.normalize(value);
     }
 
     private BigDecimal normalizeQuantity(BigDecimal value) {
-        if (value == null) {
-            return BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP);
-        }
-        return value.setScale(3, RoundingMode.HALF_UP);
+        return Objects.requireNonNullElse(value, BigDecimal.ZERO).setScale(3, RoundingMode.HALF_UP);
     }
 }

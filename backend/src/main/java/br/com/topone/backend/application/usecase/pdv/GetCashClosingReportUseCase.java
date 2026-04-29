@@ -2,6 +2,7 @@ package br.com.topone.backend.application.usecase.pdv;
 
 import br.com.topone.backend.domain.model.CashMovementType;
 import br.com.topone.backend.domain.model.CashRegisterSessionStatus;
+import br.com.topone.backend.domain.model.User;
 import br.com.topone.backend.domain.repository.CashMovementRepository;
 import br.com.topone.backend.domain.repository.CashRegisterSessionRepository;
 import br.com.topone.backend.domain.repository.PdvSaleRepository;
@@ -45,7 +46,7 @@ public class GetCashClosingReportUseCase {
                     ));
 
                     var userName = userRepository.findById(session.getUserId())
-                            .map(user -> user.getName())
+                            .map(User::getName)
                             .orElse("Usuário não encontrado");
 
                     return new CashClosingReportResult.CashClosingSessionResult(

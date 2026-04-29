@@ -22,7 +22,7 @@ public class ListRecentPdvSalesUseCase {
         var session = cashRegisterSessionRepository.findOpenByUserId(userId)
                 .orElseThrow(CashRegisterSessionNotOpenException::new);
 
-        var safeLimit = Math.max(1, Math.min(limit, 50));
+        var safeLimit = Math.clamp(limit, 1, 50);
         return pdvSaleRepository.findRecentBySession(session.getId(), safeLimit).stream()
                 .map(sale -> new PdvSaleResult(
                         sale.getId(),
