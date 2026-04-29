@@ -26,6 +26,7 @@ public class PdvManagementController {
     private static final Set<String> SALES_HISTORY_SORT_FIELDS = Set.of("createdAt", "totalAmount", "paymentMethod");
 
     private final OpenCashRegisterUseCase openCashRegisterUseCase;
+    private final CloseCashRegisterUseCase closeCashRegisterUseCase;
     private final GetCurrentCashRegisterUseCase getCurrentCashRegisterUseCase;
     private final CreateCashMovementUseCase createCashMovementUseCase;
     private final LookupPdvProductUseCase lookupPdvProductUseCase;
@@ -52,6 +53,29 @@ public class PdvManagementController {
                 request.openingAmount()
         ));
         return ResponseEntity.status(HttpStatus.CREATED).body(toCashStatusResponse(result));
+    }
+
+    @PostMapping("/cash/close")
+    @PreAuthorize(AuthorizationPolicies.AUTHENTICATED)
+    public ResponseEntity<CloseCashRegisterResponse> closeCash(@Valid @RequestBody CloseCashRegisterRequest request) {
+        var result = closeCashRegisterUseCase.execute(new CloseCashRegisterCommand(
+                currentUser().getId(),
+                request.closingAmount()
+        ));
+
+        return ResponseEntity.ok(new CloseCashRegisterResponse(
+                result.sessionId(),
+                result.userId(),
+                result.openingAmount(),
+                result.suppliesAmount(),
+                result.withdrawalsAmount(),
+                result.salesAmount(),
+                result.expectedCashAmount(),
+                result.closingAmount(),
+                result.differenceAmount(),
+                result.openedAt(),
+                result.closedAt()
+        ));
     }
 
     @PostMapping("/cash/movements")

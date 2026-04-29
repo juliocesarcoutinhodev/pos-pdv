@@ -5,7 +5,7 @@ import { useToast } from 'primevue/usetoast';
 import { useAuth } from '@/composables/useAuth.js';
 import { useErrorHandler } from '@/services/errorHandler.js';
 import { listProducts } from '@/services/productService.js';
-import { createCashMovement, createPdvSale, getCurrentCashRegister, listRecentPdvSales, lookupPdvProduct, openCashRegister } from '@/services/pdvService.js';
+import { closeCashRegister, createCashMovement, createPdvSale, getCurrentCashRegister, listRecentPdvSales, lookupPdvProduct, openCashRegister } from '@/services/pdvService.js';
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -13,8 +13,10 @@ const { showApiErrorToast } = useErrorHandler();
 const { logout } = useAuth();
 
 const loading = ref(false);
+const closingCash = ref(false);
 const finalizingSale = ref(false);
 const cashDialogVisible = ref(false);
+const closeCashDialogVisible = ref(false);
 const movementDialogVisible = ref(false);
 const paymentDialogVisible = ref(false);
 const movementType = ref('SUPPLY');
@@ -23,6 +25,7 @@ const productLookupLoading = ref(false);
 const codeInputRef = ref(null);
 const paidAmountInputRef = ref(null);
 const cashAmountInputRef = ref(null);
+const closeCashAmountInputRef = ref(null);
 const movementAmountInputRef = ref(null);
 const selectedCartItem = ref(null);
 const productCode = ref('');
@@ -43,6 +46,9 @@ const cashForm = ref({
 const movementForm = ref({
     amount: null,
     note: ''
+});
+const closeCashForm = ref({
+    closingAmountInput: ''
 });
 
 const currentCash = ref(null);
@@ -103,6 +109,23 @@ const isCashOpen = computed(() => Boolean(currentCash.value?.sessionId));
 
 function normalizeMoney(value) {
     return Number(toNumericValue(value).toFixed(2));
+}
+
+function formatTypedCurrencyInput(value) {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (!digits) {
+        return '';
+    }
+
+    const amount = Number(digits) / 100;
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(amount);
+}
+
+function handleCloseCashAmountInput(event) {
+    closeCashForm.value.closingAmountInput = formatTypedCurrencyInput(event?.target?.value);
 }
 
 function normalizeQuantity(value) {
@@ -205,6 +228,12 @@ function focusPaidAmount() {
 
 function focusCashAmount() {
     const inputElement = cashAmountInputRef.value?.$el?.querySelector('input');
+    inputElement?.focus();
+    inputElement?.select();
+}
+
+function focusCloseCashAmount() {
+    const inputElement = closeCashAmountInputRef.value?.$el?.querySelector('input');
     inputElement?.focus();
     inputElement?.select();
 }
@@ -355,6 +384,11 @@ function closeTopmostDialog() {
         return true;
     }
 
+    if (closeCashDialogVisible.value) {
+        closeCashDialogVisible.value = false;
+        return true;
+    }
+
     if (movementDialogVisible.value) {
         movementDialogVisible.value = false;
         return true;
@@ -456,6 +490,65 @@ function openCashDialog() {
     nextTick(() => {
         focusCashAmount();
     });
+}
+
+function openCloseCashDialog() {
+    if (!ensureCashOpen()) {
+        return;
+    }
+
+    if (cartItems.value.length > 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Carrinho em andamento',
+            detail: 'Finalize ou limpe a venda atual antes de fechar o caixa.',
+            life: 3500
+        });
+        return;
+    }
+
+    closeCashForm.value.closingAmountInput = formatTypedCurrencyInput(currentCash.value?.cashBalance);
+    closeCashDialogVisible.value = true;
+    nextTick(() => {
+        focusCloseCashAmount();
+    });
+}
+
+async function handleCloseCash() {
+    const closingAmount = toNumericValue(closeCashForm.value.closingAmountInput);
+    if (closingAmount < 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Valor inválido',
+            detail: 'O valor contado não pode ser negativo.',
+            life: 3000
+        });
+        return;
+    }
+
+    closingCash.value = true;
+    try {
+        const result = await closeCashRegister({
+            closingAmount: normalizeMoney(closingAmount)
+        });
+
+        closeCashDialogVisible.value = false;
+        resetSale();
+        await refreshPdvState();
+
+        const hasDifference = Math.abs(toNumericValue(result?.differenceAmount)) > 0;
+        toast.add({
+            severity: hasDifference ? 'warn' : 'success',
+            summary: hasDifference ? 'Caixa fechado com divergência' : 'Caixa fechado',
+            detail: hasDifference ? `Diferença apurada no fechamento: ${formatCurrency(result.differenceAmount)}.` : 'Fechamento concluído sem divergências.',
+            life: 4500
+        });
+        focusCodeInput();
+    } catch (error) {
+        showApiErrorToast(toast, error);
+    } finally {
+        closingCash.value = false;
+    }
 }
 
 function openMovementDialog(type) {
@@ -687,7 +780,8 @@ onUnmounted(() => {
                     <strong>{{ formatCurrency(currentCash.cashBalance) }}</strong>
                 </div>
                 <div class="pdv-actions-group">
-                    <Button icon="pi pi-lock-open" label="Abrir caixa" severity="success" @click="openCashDialog" />
+                    <Button icon="pi pi-lock-open" label="Abrir caixa" severity="success" :disabled="isCashOpen" @click="openCashDialog" />
+                    <Button icon="pi pi-lock" label="Fechar caixa" severity="danger" outlined :disabled="!isCashOpen" @click="openCloseCashDialog" />
                     <Button icon="pi pi-plus-circle" label="Suprimento" severity="info" outlined :disabled="!isCashOpen" @click="openMovementDialog('SUPPLY')" />
                     <Button icon="pi pi-minus-circle" label="Sangria" severity="warn" outlined :disabled="!isCashOpen" @click="openMovementDialog('WITHDRAWAL')" />
                 </div>
@@ -818,6 +912,48 @@ onUnmounted(() => {
                 <div class="pdv-dialog-actions">
                     <Button label="Cancelar" severity="secondary" outlined @click="movementDialogVisible = false" />
                     <Button icon="pi pi-check" label="Confirmar movimentação" @click="handleCashMovement" />
+                </div>
+            </template>
+        </Dialog>
+
+        <Dialog v-model:visible="closeCashDialogVisible" modal :closeOnEscape="false" header="Fechamento de caixa" :style="{ width: '44rem', maxWidth: '95vw' }" :breakpoints="{ '1200px': '80vw', '768px': '95vw' }">
+            <div class="close-cash-dialog">
+                <div class="close-cash-summary">
+                    <div class="close-cash-item">
+                        <span>Abertura</span>
+                        <strong>{{ formatCurrency(currentCash?.openingAmount) }}</strong>
+                    </div>
+                    <div class="close-cash-item">
+                        <span>Suprimentos</span>
+                        <strong>{{ formatCurrency(currentCash?.suppliesAmount) }}</strong>
+                    </div>
+                    <div class="close-cash-item">
+                        <span>Sangrias</span>
+                        <strong>{{ formatCurrency(currentCash?.withdrawalsAmount) }}</strong>
+                    </div>
+                    <div class="close-cash-item">
+                        <span>Vendas no período</span>
+                        <strong>{{ formatCurrency(currentCash?.salesAmount) }}</strong>
+                    </div>
+                    <div class="close-cash-item highlight">
+                        <span>Saldo esperado</span>
+                        <strong>{{ formatCurrency(currentCash?.cashBalance) }}</strong>
+                    </div>
+                    <div class="close-cash-item">
+                        <span>Abertura em</span>
+                        <strong class="close-cash-opened-at">{{ currentCash?.openedAt ? new Date(currentCash.openedAt).toLocaleString('pt-BR') : '-' }}</strong>
+                    </div>
+                </div>
+                <div>
+                    <label class="block mb-2">Valor contado no caixa físico</label>
+                    <InputText ref="closeCashAmountInputRef" v-model="closeCashForm.closingAmountInput" inputmode="numeric" class="w-full" placeholder="Digite apenas números" @input="handleCloseCashAmountInput" />
+                </div>
+                <small class="text-color-secondary">A diferença será registrada automaticamente no fechamento para auditoria operacional.</small>
+            </div>
+            <template #footer>
+                <div class="pdv-dialog-actions">
+                    <Button label="Cancelar" severity="secondary" outlined :disabled="closingCash" @click="closeCashDialogVisible = false" />
+                    <Button icon="pi pi-lock" label="Confirmar fechamento" severity="danger" :loading="closingCash" @click="handleCloseCash" />
                 </div>
             </template>
         </Dialog>
@@ -1032,6 +1168,51 @@ onUnmounted(() => {
     gap: 1rem;
 }
 
+.close-cash-dialog {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.close-cash-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+}
+
+.close-cash-item {
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    background: var(--surface-ground);
+    padding: 0.65rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.close-cash-item span {
+    font-size: 0.78rem;
+    color: var(--text-color-secondary);
+}
+
+.close-cash-item strong {
+    font-size: 1rem;
+}
+
+.close-cash-item.highlight {
+    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--surface-border));
+    background: color-mix(in srgb, var(--primary-color) 10%, var(--surface-card));
+}
+
+.close-cash-item.highlight strong {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.close-cash-opened-at {
+    font-size: 0.9rem;
+    word-break: break-word;
+}
+
 .payment-totals {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1137,7 +1318,8 @@ onUnmounted(() => {
     }
 
     .payment-totals,
-    .payment-fields {
+    .payment-fields,
+    .close-cash-summary {
         grid-template-columns: 1fr;
     }
 

@@ -10,6 +10,11 @@ export async function openCashRegister(payload) {
     return response.data;
 }
 
+export async function closeCashRegister(payload) {
+    const response = await api.post('/api/v1/pdv/cash/close', payload);
+    return response.data;
+}
+
 export async function createCashMovement(payload) {
     const response = await api.post('/api/v1/pdv/cash/movements', payload);
     return response.data;
