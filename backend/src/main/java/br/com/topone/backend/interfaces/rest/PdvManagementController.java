@@ -263,8 +263,11 @@ public class PdvManagementController {
 
     @GetMapping("/monitor/open-cash-registers")
     @PreAuthorize(AuthorizationPolicies.ADMIN_ONLY)
-    public ResponseEntity<java.util.List<OpenCashRegisterMonitorResponse>> listOpenCashRegistersForMonitoring() {
-        var result = listOpenCashRegistersForMonitoringUseCase.execute().stream()
+    public ResponseEntity<java.util.List<OpenCashRegisterMonitorResponse>> listOpenCashRegistersForMonitoring(
+            @RequestParam(required = false) LocalDate dateFrom,
+            @RequestParam(required = false) LocalDate dateTo
+    ) {
+        var result = listOpenCashRegistersForMonitoringUseCase.execute(dateFrom, dateTo).stream()
                 .map(item -> new OpenCashRegisterMonitorResponse(
                         item.sessionId(),
                         item.userId(),

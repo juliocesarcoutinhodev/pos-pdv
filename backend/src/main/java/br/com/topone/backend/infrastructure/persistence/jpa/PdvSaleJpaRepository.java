@@ -88,12 +88,12 @@ public interface PdvSaleJpaRepository extends JpaRepository<PdvSaleEntity, UUID>
     List<Object[]> sumTotalsByPaymentMethodBetween(@Param("fromInclusive") Instant fromInclusive, @Param("toExclusive") Instant toExclusive);
 
     @Query("""
-            SELECT FUNCTION('HOUR', s.createdAt), COALESCE(SUM(s.totalAmount), 0), COUNT(s.id)
+            SELECT EXTRACT(HOUR FROM s.createdAt), COALESCE(SUM(s.totalAmount), 0), COUNT(s.id)
             FROM PdvSaleEntity s
             WHERE s.createdAt >= :fromInclusive
               AND s.createdAt < :toExclusive
-            GROUP BY FUNCTION('HOUR', s.createdAt)
-            ORDER BY FUNCTION('HOUR', s.createdAt)
+            GROUP BY EXTRACT(HOUR FROM s.createdAt)
+            ORDER BY EXTRACT(HOUR FROM s.createdAt)
             """)
     List<Object[]> sumHourlyTotalsBetween(@Param("fromInclusive") Instant fromInclusive, @Param("toExclusive") Instant toExclusive);
 

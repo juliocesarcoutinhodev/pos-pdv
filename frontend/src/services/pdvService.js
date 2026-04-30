@@ -94,8 +94,11 @@ export async function getCashClosingReport(date) {
     return response.data;
 }
 
-export async function listOpenCashRegistersForMonitoring() {
-    const response = await api.get('/api/v1/pdv/monitor/open-cash-registers');
+export async function listOpenCashRegistersForMonitoring(params = {}) {
+    const query = {};
+    if (params.dateFrom) query.dateFrom = params.dateFrom;
+    if (params.dateTo) query.dateTo = params.dateTo;
+    const response = await api.get('/api/v1/pdv/monitor/open-cash-registers', { params: query });
     return Array.isArray(response.data) ? response.data : [];
 }
 

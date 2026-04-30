@@ -568,20 +568,109 @@ Query params opcionais: `referenceDate` (`yyyy-MM-dd`), `sortBy` (`createdAt`, `
 **GET `/api/v1/labels/jobs/{id}/report`** — 200 OK  
 Retorna o PDF (`application/pdf`) do lote com base no template `reports/labels/gondola-label.jrxml`.
 
-### PDV e Monitoramento de Caixa
+### Dashboard (requer JWT)
 
-| Metodo | Path                                               | Auth | Descricao |
-| ------ | -------------------------------------------------- | ---- | --------- |
-| GET    | `/api/v1/pdv/cash/current`                         | Sim  | Retorna o caixa aberto do usuário logado |
-| POST   | `/api/v1/pdv/cash/open`                            | Sim  | Abre caixa para o usuário logado |
-| POST   | `/api/v1/pdv/cash/movements`                       | Sim  | Lança suprimento/sangria no caixa atual |
-| GET    | `/api/v1/pdv/sales/recent?limit=10`                | Sim  | Lista últimas vendas do caixa atual |
-| GET    | `/api/v1/pdv/monitor/open-cash-registers`          | Sim (ADMIN) | Lista caixas abertos para monitoramento |
-| GET    | `/api/v1/pdv/monitor/open-cash-registers/{id}/summary` | Sim (ADMIN) | Resumo do caixa (vendas e formas de pagamento) |
+| Metodo | Path                        | Auth | Descricao                                        |
+| ------ | --------------------------- | ---- | ------------------------------------------------ |
+| GET    | `/api/v1/dashboard/overview`| Sim  | Totais do dia, top produtos e resumo de pagamentos |
 
-Permissões:
-- Endpoints operacionais de PDV exigem usuário autenticado.
-- Endpoints `/api/v1/pdv/monitor/**` exigem role `ADMIN`.
+**GET `/api/v1/dashboard/overview`** — 200 OK
+```json
+{
+  "todaySalesAmount": 1580.00,
+  "todaySalesCount": 42,
+  "todayAverageTicket": 37.62,
+  "activeUsers": 5,
+  "activeCustomers": 310,
+  "activeSuppliers": 12,
+  "activeProducts": 480,
+  "lowStockProducts": 7,
+  "openCashRegisters": 2,
+  "recentSales": [...],
+  "topProducts": [...],
+  "paymentSummary": [...]
+}
+```
+
+### PDV - Caixa e Vendas (requer JWT)
+
+| Metodo | Path                                | Auth | Descricao                                     |
+| ------ | ----------------------------------- | ---- | --------------------------------------------- |
+| GET    | `/api/v1/pdv/cash/current`          | Sim  | Retorna o caixa aberto do usuário logado      |
+| POST   | `/api/v1/pdv/cash/open`             | Sim  | Abre caixa para o usuário logado              |
+| POST   | `/api/v1/pdv/cash/close`            | Sim  | Fecha o caixa atual com o valor contado       |
+| POST   | `/api/v1/pdv/cash/movements`        | Sim  | Lança suprimento ou sangria no caixa atual    |
+| GET    | `/api/v1/pdv/products/lookup`       | Sim  | Busca produto por SKU ou código de barras     |
+| POST   | `/api/v1/pdv/sales`                 | Sim  | Registra uma venda no caixa aberto            |
+| GET    | `/api/v1/pdv/sales/recent`          | Sim  | Lista últimas N vendas do caixa atual         |
+| GET    | `/api/v1/pdv/sales/history`         | Sim  | Histórico paginado de vendas (admin vê todos) |
+
+**POST `/api/v1/pdv/cash/open`** — 201 Created
+```json
+{ "openingAmount": 100.00 }
+```
+
+**POST `/api/v1/pdv/cash/close`** — 200 OK
+```json
+{ "closingAmount": 185.40 }
+```
+Response inclui `openingAmount`, `suppliesAmount`, `withdrawalsAmount`, `salesAmount`, `expectedCashAmount`, `closingAmount` e `differenceAmount`.
+
+**POST `/api/v1/pdv/cash/movements`** — 201 Created
+```json
+{
+  "type": "SUPPLY",
+  "amount": 50.00,
+  "note": "Suprimento de troco"
+}
+```
+`type`: `SUPPLY` (suprimento) ou `WITHDRAWAL` (sangria).
+
+**GET `/api/v1/pdv/products/lookup?code=144236`** — 200 OK  
+Busca por SKU ou código de barras. Retorna `id`, `sku`, `barcode`, `name`, `unit`, `unitPrice` e `stockQuantity`.
+
+**POST `/api/v1/pdv/sales`** — 201 Created
+```json
+{
+  "paymentMethod": "CASH",
+  "discountAmount": 0.00,
+  "paidAmount": 50.00,
+  "notes": "Troco para R$ 50",
+  "items": [
+    { "productId": "uuid-do-produto", "quantity": 2 }
+  ]
+}
+```
+`paymentMethod`: `CASH`, `PIX`, `DEBIT_CARD`, `CREDIT_CARD`, `OTHER`.
+
+**GET `/api/v1/pdv/sales/history?page=0&size=20`** — 200 OK  
+Query params opcionais: `dateFrom`, `dateTo` (`yyyy-MM-dd`), `userId` (apenas ADMIN), `paymentMethod`, `sortBy` (`createdAt`, `totalAmount`, `paymentMethod`), `sortDirection` (`asc`/`desc`).
+
+### PDV - Relatorios (requer role ADMIN)
+
+| Metodo | Path                                  | Auth        | Descricao                                      |
+| ------ | ------------------------------------- | ----------- | ---------------------------------------------- |
+| GET    | `/api/v1/pdv/reports/daily-sales`     | Sim (ADMIN) | Totais, horarios e top produtos do dia         |
+| GET    | `/api/v1/pdv/reports/closing`         | Sim (ADMIN) | Resumo de fechamento por sessao de caixa       |
+
+**GET `/api/v1/pdv/reports/daily-sales?date=2026-04-30`** — 200 OK  
+`date` opcional (padrão = hoje). Retorna `salesCount`, `totalAmount`, `averageTicket`, quebra por `paymentSummary`, `hourlySummary` (hora a hora) e `topProducts` (top 10 por quantidade).
+
+**GET `/api/v1/pdv/reports/closing?date=2026-04-30`** — 200 OK  
+`date` opcional (padrão = hoje). Retorna totalizadores globais e por sessao: `openingAmount`, `suppliesAmount`, `withdrawalsAmount`, `salesAmount`, `cashBalance`, `closingAmount` e diferença.
+
+### PDV - Monitoramento (requer role ADMIN)
+
+| Metodo | Path                                                       | Auth        | Descricao                                              |
+| ------ | ---------------------------------------------------------- | ----------- | ------------------------------------------------------ |
+| GET    | `/api/v1/pdv/monitor/open-cash-registers`                  | Sim (ADMIN) | Lista caixas abertos e fechados do período             |
+| GET    | `/api/v1/pdv/monitor/open-cash-registers/{sessionId}/summary` | Sim (ADMIN) | Resumo completo de uma sessao de caixa              |
+
+**GET `/api/v1/pdv/monitor/open-cash-registers?dateFrom=2026-04-30&dateTo=2026-04-30`** — 200 OK  
+Query params opcionais (padrão = hoje). Retorna caixas abertos e fechados no período com saldo esperado, valor de fechamento e diferença.
+
+**GET `/api/v1/pdv/monitor/open-cash-registers/{sessionId}/summary`** — 200 OK  
+Retorna detalhes completos: movimentações (suprimentos, sangrias), resumo por forma de pagamento e últimas vendas da sessão.
 
 ### Imagens (MinIO)
 
@@ -803,6 +892,108 @@ Para atribuir um perfil a um usuario, consulte primeiro `GET /api/v1/roles` e us
 | ---------- | ---- | ------------------------------------------------- |
 | supplier_id| UUID | FK → tb_suppliers(id), CASCADE DELETE             |
 | contact_id | UUID | FK → tb_contacts(id), CASCADE DELETE, UNIQUE      |
+
+### Product (`tb_products`)
+
+| Campo             | Tipo           | Notas                                              |
+| ----------------- | -------------- | -------------------------------------------------- |
+| id                | UUID           | PK, auto-gen                                       |
+| sku               | VARCHAR(60)    | UNIQUE, NOT NULL                                   |
+| barcode           | VARCHAR(20)    | UNIQUE, Nullable                                   |
+| name              | VARCHAR(150)   | NOT NULL                                           |
+| description       | VARCHAR(1000)  | Nullable                                           |
+| brand             | VARCHAR(120)   | Nullable                                           |
+| category          | VARCHAR(100)   | Nullable                                           |
+| unit              | VARCHAR(10)    | NOT NULL (ex.: UN, KG, CX)                        |
+| cost_price        | NUMERIC(15,2)  | Nullable                                           |
+| sale_price        | NUMERIC(15,2)  | NOT NULL                                           |
+| promotional_price | NUMERIC(15,2)  | Nullable                                           |
+| stock_quantity    | NUMERIC(15,3)  | NOT NULL, default 0                                |
+| minimum_stock     | NUMERIC(15,3)  | NOT NULL, default 0                                |
+| supplier_id       | UUID           | FK → tb_suppliers(id), Nullable                   |
+| ncm/cest/cfop     | VARCHAR        | Campos fiscais opcionais                           |
+| image_id          | VARCHAR(120)   | Nullable (referencia lógica no MinIO)             |
+| created_at        | TIMESTAMP      | Auto                                               |
+| updated_at        | TIMESTAMP      | Auto                                               |
+| deleted_at        | TIMESTAMP      | Nullable (soft delete)                             |
+
+### LabelPrintJob (`tb_label_print_jobs`)
+
+| Campo          | Tipo     | Notas                          |
+| -------------- | -------- | ------------------------------ |
+| id             | UUID     | PK                             |
+| reference_date | DATE     | NOT NULL                       |
+| created_at     | TIMESTAMPTZ | Auto                        |
+
+### LabelPrintJobItem (`tb_label_print_job_items`)
+
+| Campo             | Tipo           | Notas                              |
+| ----------------- | -------------- | ---------------------------------- |
+| id                | UUID           | PK                                 |
+| job_id            | UUID           | FK → tb_label_print_jobs(id), CASCADE DELETE |
+| product_id        | UUID           | FK → tb_products(id)               |
+| sku               | VARCHAR(60)    | Snapshot no momento da impressão  |
+| barcode           | VARCHAR(20)    | Nullable, snapshot                 |
+| name              | VARCHAR(150)   | Snapshot                           |
+| unit              | VARCHAR(10)    | Snapshot                           |
+| sale_price        | NUMERIC(15,2)  | Snapshot                           |
+| promotional_price | NUMERIC(15,2)  | Nullable, snapshot                 |
+| quantity          | INTEGER        | Quantidade de etiquetas            |
+
+### CashRegisterSession (`tb_cash_register_sessions`)
+
+| Campo          | Tipo          | Notas                              |
+| -------------- | ------------- | ---------------------------------- |
+| id             | UUID          | PK, auto-gen                       |
+| user_id        | UUID          | FK → tb_users(id)                  |
+| opening_amount | NUMERIC(15,2) | NOT NULL                           |
+| opened_at      | TIMESTAMP     | Auto                               |
+| closed_at      | TIMESTAMP     | Nullable                           |
+| closing_amount | NUMERIC(15,2) | Nullable (preenchido no fechamento)|
+| status         | VARCHAR(20)   | `OPEN` ou `CLOSED`                 |
+
+### CashMovement (`tb_cash_register_movements`)
+
+| Campo                    | Tipo          | Notas                            |
+| ------------------------ | ------------- | -------------------------------- |
+| id                       | UUID          | PK, auto-gen                     |
+| cash_register_session_id | UUID          | FK → tb_cash_register_sessions(id) |
+| user_id                  | UUID          | FK → tb_users(id)                |
+| type                     | VARCHAR(20)   | `SUPPLY` ou `WITHDRAWAL`         |
+| amount                   | NUMERIC(15,2) | NOT NULL                         |
+| note                     | VARCHAR(255)  | Nullable                         |
+| created_at               | TIMESTAMP     | Auto                             |
+
+### PdvSale (`tb_pdv_sales`)
+
+| Campo                    | Tipo          | Notas                              |
+| ------------------------ | ------------- | ---------------------------------- |
+| id                       | UUID          | PK, auto-gen                       |
+| cash_register_session_id | UUID          | FK → tb_cash_register_sessions(id) |
+| user_id                  | UUID          | FK → tb_users(id)                  |
+| payment_method           | VARCHAR(20)   | `CASH`, `PIX`, `DEBIT_CARD`, `CREDIT_CARD`, `OTHER` |
+| subtotal_amount          | NUMERIC(15,2) | NOT NULL                           |
+| discount_amount          | NUMERIC(15,2) | NOT NULL                           |
+| total_amount             | NUMERIC(15,2) | NOT NULL                           |
+| paid_amount              | NUMERIC(15,2) | NOT NULL                           |
+| change_amount            | NUMERIC(15,2) | NOT NULL                           |
+| notes                    | VARCHAR(255)  | Nullable                           |
+| created_at               | TIMESTAMP     | Auto                               |
+
+### PdvSaleItem (`tb_pdv_sale_items`)
+
+| Campo      | Tipo          | Notas                          |
+| ---------- | ------------- | ------------------------------ |
+| id         | UUID          | PK, auto-gen                   |
+| sale_id    | UUID          | FK → tb_pdv_sales(id)          |
+| product_id | UUID          | FK → tb_products(id), Nullable |
+| sku        | VARCHAR(60)   | Snapshot                       |
+| barcode    | VARCHAR(20)   | Nullable, snapshot             |
+| name       | VARCHAR(150)  | Snapshot                       |
+| unit       | VARCHAR(10)   | Nullable, snapshot             |
+| unit_price | NUMERIC(15,2) | NOT NULL, snapshot             |
+| quantity   | NUMERIC(15,3) | NOT NULL                       |
+| line_total | NUMERIC(15,2) | NOT NULL                       |
 
 ### Usuário Admin Padrão
 

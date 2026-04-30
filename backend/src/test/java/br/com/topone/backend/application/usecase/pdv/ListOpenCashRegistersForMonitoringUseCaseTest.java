@@ -17,11 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,7 +68,7 @@ class ListOpenCashRegistersForMonitoringUseCaseTest {
                 .provider(AuthProvider.LOCAL)
                 .build();
 
-        when(cashRegisterSessionRepository.findAllSessions()).thenReturn(List.of(openSession, closedSession));
+        when(cashRegisterSessionRepository.findOpenedBetween(any(Instant.class), any(Instant.class))).thenReturn(List.of(openSession, closedSession));
         when(cashMovementRepository.sumAmountBySessionAndType(sessionId, CashMovementType.SUPPLY)).thenReturn(new BigDecimal("20.00"));
         when(cashMovementRepository.sumAmountBySessionAndType(sessionId, CashMovementType.WITHDRAWAL)).thenReturn(new BigDecimal("10.00"));
         when(pdvSaleRepository.sumCashNetBySession(sessionId)).thenReturn(new BigDecimal("55.40"));
@@ -75,7 +77,7 @@ class ListOpenCashRegistersForMonitoringUseCaseTest {
         when(pdvSaleRepository.sumCashNetBySession(closedSession.getId())).thenReturn(new BigDecimal("50.00"));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        var result = useCase.execute();
+        var result = useCase.execute(LocalDate.now(), LocalDate.now());
 
         assertThat(result).hasSize(2);
         var first = result.getFirst();

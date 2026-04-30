@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -22,8 +24,14 @@ public class ListOpenCashRegistersForMonitoringUseCase {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public List<OpenCashRegisterMonitorResult> execute() {
-        return cashRegisterSessionRepository.findAllSessions().stream()
+    public List<OpenCashRegisterMonitorResult> execute(LocalDate dateFrom, LocalDate dateTo) {
+        var zone = ZoneId.systemDefault();
+        var effectiveDateFrom = dateFrom != null ? dateFrom : LocalDate.now(zone);
+        var effectiveDateTo = dateTo != null ? dateTo : effectiveDateFrom;
+        var fromInclusive = effectiveDateFrom.atStartOfDay(zone).toInstant();
+        var toExclusive = effectiveDateTo.plusDays(1).atStartOfDay(zone).toInstant();
+
+        return cashRegisterSessionRepository.findOpenedBetween(fromInclusive, toExclusive).stream()
                 .map(session -> {
                     var supplies = CashRegisterBalanceCalculator.normalize(
                             cashMovementRepository.sumAmountBySessionAndType(session.getId(), CashMovementType.SUPPLY)

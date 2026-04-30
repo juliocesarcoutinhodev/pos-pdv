@@ -14,6 +14,13 @@ const summaryLoading = ref(false);
 const summaryDialogVisible = ref(false);
 const selectedSummary = ref(null);
 
+function todayString() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+const dateFrom = ref(todayString());
+const dateTo = ref(todayString());
+
 const paymentMethodLabels = {
     CASH: 'Dinheiro',
     PIX: 'PIX',
@@ -30,9 +37,7 @@ function formatCurrency(value) {
 }
 
 function formatDateTime(value) {
-    if (!value) {
-        return '-';
-    }
+    if (!value) return '-';
     return new Intl.DateTimeFormat('pt-BR', {
         dateStyle: 'short',
         timeStyle: 'short'
@@ -43,10 +48,13 @@ function paymentMethodLabel(value) {
     return paymentMethodLabels[value] ?? value;
 }
 
-async function loadOpenCashRegisters() {
+async function loadCashRegisters() {
     loading.value = true;
     try {
-        cashRegisters.value = await listOpenCashRegistersForMonitoring();
+        cashRegisters.value = await listOpenCashRegistersForMonitoring({
+            dateFrom: dateFrom.value,
+            dateTo: dateTo.value
+        });
     } catch (error) {
         showApiErrorToast(toast, error);
     } finally {
@@ -77,20 +85,43 @@ async function openSummary(sessionId) {
 }
 
 onMounted(() => {
-    loadOpenCashRegisters();
+    loadCashRegisters();
 });
 </script>
 
 <template>
     <div class="card">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div class="font-semibold text-xl">Monitoramento dos Caixas</div>
-            <Button icon="pi pi-refresh" label="Atualizar" outlined size="small" :loading="loading" @click="loadOpenCashRegisters" />
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-muted-color whitespace-nowrap">De</label>
+                    <InputText
+                        v-model="dateFrom"
+                        type="date"
+                        size="small"
+                        :max="dateTo || undefined"
+                        style="width: 8rem"
+                    />
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-muted-color whitespace-nowrap">Até</label>
+                    <InputText
+                        v-model="dateTo"
+                        type="date"
+                        size="small"
+                        :min="dateFrom || undefined"
+                        style="width: 8rem"
+                    />
+                </div>
+                <Button icon="pi pi-search" label="Filtrar" size="small" :loading="loading" @click="loadCashRegisters" />
+                <Button icon="pi pi-refresh" outlined size="small" :loading="loading" @click="loadCashRegisters" />
+            </div>
         </div>
 
         <ProgressSpinner v-if="loading" style="width: 2rem; height: 2rem" strokeWidth="6" class="block mx-auto my-8" />
 
-        <Message v-else-if="cashRegisters.length === 0" severity="info" :closable="false"> Nenhum caixa encontrado no momento. </Message>
+        <Message v-else-if="cashRegisters.length === 0" severity="info" :closable="false">Nenhum caixa encontrado para o período selecionado.</Message>
 
         <div v-else class="grid grid-cols-12 gap-4">
             <div v-for="cashRegister in cashRegisters" :key="cashRegister.sessionId" class="col-span-12 md:col-span-6 xl:col-span-4">

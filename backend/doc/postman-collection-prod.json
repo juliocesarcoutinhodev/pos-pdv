@@ -104,6 +104,14 @@
       "key": "zip_code",
       "value": "03195000",
       "type": "string"
+    },
+    {
+      "key": "pdv_session_id",
+      "value": ""
+    },
+    {
+      "key": "pdv_product_code",
+      "value": "144236"
     }
   ],
   "item": [
@@ -2392,6 +2400,540 @@
               ]
             },
             "description": "Lookup address data by ZIP code using the external CNPJA provider."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard (authenticated)",
+      "item": [
+        {
+          "name": "Dashboard Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/dashboard/overview",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "dashboard",
+                "overview"
+              ]
+            },
+            "description": "Returns today's sales totals, counts, top products, payment summary and recent sales."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "PDV - Caixa e Vendas (authenticated)",
+      "item": [
+        {
+          "name": "Get Current Cash Register",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/cash/current",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "cash",
+                "current"
+              ]
+            },
+            "description": "Returns the open cash register session for the logged-in user."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Get cash register\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var body = pm.response.json();",
+                  "    if (body.sessionId) pm.collectionVariables.set('pdv_session_id', body.sessionId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Open Cash Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"openingAmount\": 100.0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/cash/open",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "cash",
+                "open"
+              ]
+            },
+            "description": "Opens a new cash register session for the logged-in user."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Cash register opened\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var body = pm.response.json();",
+                  "    if (body.sessionId) pm.collectionVariables.set('pdv_session_id', body.sessionId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Close Cash Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"closingAmount\": 185.4\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/cash/close",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "cash",
+                "close"
+              ]
+            },
+            "description": "Closes the open cash register session. Returns closing summary with difference."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Cash Movement (Supply)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"SUPPLY\",\n  \"amount\": 50.0,\n  \"note\": \"Suprimento de troco\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/cash/movements",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "cash",
+                "movements"
+              ]
+            },
+            "description": "Creates a cash movement. type: SUPPLY (suprimento) or WITHDRAWAL (sangria)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Cash Movement (Withdrawal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"WITHDRAWAL\",\n  \"amount\": 30.0,\n  \"note\": \"Sangria para cofre\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/cash/movements",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "cash",
+                "movements"
+              ]
+            },
+            "description": "Creates a withdrawal movement."
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup Product",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/products/lookup?code={{pdv_product_code}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "products",
+                "lookup"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "{{pdv_product_code}}"
+                }
+              ]
+            },
+            "description": "Finds a product by SKU or barcode. Used in the PDV screen to add items."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Sale",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"CASH\",\n  \"discountAmount\": 0.0,\n  \"paidAmount\": 50.0,\n  \"notes\": \"Venda teste\",\n  \"items\": [\n    {\n      \"productId\": \"{{product_id}}\",\n      \"quantity\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/sales",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "sales"
+              ]
+            },
+            "description": "Registers a sale on the current open cash register. paymentMethod: CASH, PIX, DEBIT_CARD, CREDIT_CARD, OTHER."
+          },
+          "response": []
+        },
+        {
+          "name": "List Recent Sales",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/sales/recent?limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "sales",
+                "recent"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Returns the last N sales for the current open cash register."
+          },
+          "response": []
+        },
+        {
+          "name": "Sales History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/sales/history?page=0&size=20&dateFrom=2026-04-30&dateTo=2026-04-30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "sales",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2026-04-30"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2026-04-30"
+                }
+              ]
+            },
+            "description": "Paginated sales history. ADMIN can filter by userId; cashier sees only own sales. Optional: paymentMethod, sortBy (createdAt, totalAmount, paymentMethod), sortDirection."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "PDV - Relatorios (requires ADMIN)",
+      "item": [
+        {
+          "name": "Daily Sales Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/reports/daily-sales?date=2026-04-30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "reports",
+                "daily-sales"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-04-30"
+                }
+              ]
+            },
+            "description": "Returns aggregated sales totals for the given date: total amount, count, average ticket, hourly breakdown, top products and payment method summary."
+          },
+          "response": []
+        },
+        {
+          "name": "Cash Closing Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/reports/closing?date=2026-04-30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "reports",
+                "closing"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-04-30"
+                }
+              ]
+            },
+            "description": "Returns a closing summary per cash register session for the given date: opening amounts, movements, sales, closing amounts and differences."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "PDV - Monitoramento (requires ADMIN)",
+      "item": [
+        {
+          "name": "List Cash Registers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/monitor/open-cash-registers?dateFrom=2026-04-30&dateTo=2026-04-30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "monitor",
+                "open-cash-registers"
+              ],
+              "query": [
+                {
+                  "key": "dateFrom",
+                  "value": "2026-04-30"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2026-04-30"
+                }
+              ]
+            },
+            "description": "Lists all cash register sessions (open and closed) for the selected period. Defaults to today when params are omitted."
+          },
+          "response": []
+        },
+        {
+          "name": "Cash Register Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pdv/monitor/open-cash-registers/{{pdv_session_id}}/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pdv",
+                "monitor",
+                "open-cash-registers",
+                "{{pdv_session_id}}",
+                "summary"
+              ]
+            },
+            "description": "Full summary of a cash register session: movements, payment methods and recent sales."
           },
           "response": []
         }
